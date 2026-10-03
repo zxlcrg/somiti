@@ -1,0 +1,415 @@
+/* Nominees: profile panel and editor. Each nominee has a hue (--h) shared by its bar segment and card. */
+
+.nominees {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 1.4rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  scroll-margin-top: 5rem;
+}
+
+.nominees-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.nominees-head h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.nominees-head p {
+  margin: 0.15rem 0 0;
+}
+
+.celebrate.small {
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.95rem;
+}
+
+/* ---------- Share bar ---------- */
+
+.share-bar {
+  display: flex;
+  gap: 3px;
+  height: 2.2rem;
+  margin-bottom: 1rem;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.share-bar.big {
+  height: 2.8rem;
+  margin: 0;
+}
+
+.share-bar.empty {
+  height: 0.8rem;
+  background: repeating-linear-gradient(45deg, var(--line), var(--line) 8px, transparent 8px, transparent 16px);
+}
+
+.share-bar span {
+  --h: 168;
+  display: grid;
+  flex-basis: 0;
+  min-width: 0;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(135deg, hsl(var(--h) 70% 45%), hsl(calc(var(--h) + 30) 75% 55%));
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: flex-grow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: grow-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.share-bar span.rest {
+  background: transparent;
+  animation: none;
+}
+
+@keyframes grow-in {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+}
+
+/* ---------- Nominee cards (profile) ---------- */
+
+.nominee-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nominee-card {
+  --h: 168;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-left: 5px solid hsl(var(--h) 70% 48%);
+  border-radius: 1rem;
+  background: var(--bg);
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: rise 0.4s ease-out both;
+}
+
+.nominee-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.nominee-dot {
+  --h: 168;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, hsl(var(--h) 70% 45%), hsl(calc(var(--h) + 30) 75% 55%));
+  color: #fff;
+  font-weight: 800;
+}
+
+.nominee-body {
+  display: grid;
+  flex: 1;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.nominee-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.chip.minor {
+  background: color-mix(in srgb, var(--accent-2) 22%, transparent);
+  color: color-mix(in srgb, var(--accent-2) 65%, var(--fg));
+}
+
+.nominee-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.8rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.nominee-share {
+  display: grid;
+  justify-items: end;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: hsl(var(--h) 65% 40%);
+  font-variant-numeric: tabular-nums;
+}
+
+.nominee-share small {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .nominee-share {
+    color: hsl(var(--h) 70% 65%);
+  }
+}
+
+.nominees-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0 0.25rem;
+  text-align: center;
+}
+
+.nominees-empty .share-bar {
+  justify-self: stretch;
+}
+
+.nominees-empty p {
+  margin: 0 0 0.5rem;
+  max-width: 28rem;
+}
+
+/* ---------- Editor ---------- */
+
+.nominee-editor {
+  display: grid;
+  gap: 1rem;
+  max-width: 56rem;
+}
+
+.share-meter {
+  position: sticky;
+  top: 4.2rem;
+  z-index: 5;
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 2px solid var(--line);
+  border-radius: 1.2rem;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+  transition: border-color 0.3s;
+}
+
+.share-meter.complete {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.share-meter.over {
+  border-color: rgba(229, 72, 77, 0.6);
+}
+
+.share-meter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.share-meter-row strong {
+  font-size: 1.1rem;
+}
+
+.share-status {
+  flex: 1;
+  font-weight: 600;
+  color: var(--accent-2);
+}
+
+.share-meter.complete .share-status {
+  color: var(--accent);
+}
+
+.share-meter.over .share-status {
+  color: #e5484d;
+}
+
+.nominee-rows {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nominee-row {
+  --h: 168;
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem 1.25rem;
+  border: 1px solid var(--line);
+  border-top: 5px solid hsl(var(--h) 70% 48%);
+  border-radius: 1.1rem;
+  background: var(--card);
+  animation: rise 0.35s ease-out;
+}
+
+.nominee-row header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.nominee-row header strong {
+  flex: 1;
+  font-size: 1.05rem;
+}
+
+.nominee-row .nominee-dot {
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+.link.danger {
+  color: #e5484d;
+}
+
+.nominee-row .field > input,
+.nominee-row .field > select,
+.pct-input {
+  height: 3rem;
+  border: 1.5px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.nominee-row .field > input,
+.nominee-row .field > select {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  outline: 0;
+}
+
+.nominee-row .field > input:focus,
+.nominee-row .field > select:focus,
+.pct-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.nominee-row .field.has-error > input,
+.nominee-row .field.has-error > select,
+.share-field.has-error .pct-input {
+  border-color: #e5484d;
+}
+
+.share-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.share-inputs .slider {
+  flex: 1;
+  margin: 0;
+  background: linear-gradient(90deg, hsl(var(--h) 70% 48%) var(--fill), var(--line) var(--fill));
+}
+
+.share-inputs .slider::-webkit-slider-thumb {
+  background: hsl(var(--h) 70% 48%);
+}
+
+.share-inputs .slider::-moz-range-thumb {
+  background: hsl(var(--h) 70% 48%);
+}
+
+.pct-input {
+  display: flex;
+  flex: none;
+  align-items: center;
+  width: 6.5rem;
+  padding-right: 0.7rem;
+}
+
+.pct-input input {
+  width: 100%;
+  min-width: 0;
+  padding: 0 0.3rem 0 0.8rem;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: right;
+  outline: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.pct-input span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.minor-box {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px dashed color-mix(in srgb, var(--accent-2) 60%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--accent-2) 8%, transparent);
+  animation: rise 0.3s ease-out;
+}
+
+.minor-box p {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.add-row {
+  padding: 1rem;
+  border: 2px dashed var(--line);
+  border-radius: 1.1rem;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.add-row:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+@media (max-width: 640px) {
+  .nominees {
+    padding: 1.1rem;
+  }
+
+  .share-meter {
+    top: 3.6rem;
+  }
+}

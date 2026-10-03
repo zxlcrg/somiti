@@ -3,6 +3,16 @@ import { check, date, foreignKey, index, integer, pgEnum, pgTable, text, timesta
 import { appUser, branch, localeEnum, tenant } from "./tenancy";
 
 export const memberStatusEnum = pgEnum("member_status", ["active", "exited", "deceased"]);
+export const nomineeRelationEnum = pgEnum("nominee_relation", [
+  "spouse",
+  "son",
+  "daughter",
+  "father",
+  "mother",
+  "brother",
+  "sister",
+  "other",
+]);
 export const guardianRelationEnum = pgEnum("guardian_relation", ["father", "husband"]);
 
 /**
@@ -63,6 +73,68 @@ export const member = pgTable(
     check("member_no_positive", sql`${t.memberNo} > 0`),
     check(
       "member_nid_complete",
+      sql`(${t.nidCipher} IS NULL) = (${t.nidHash} IS NULL) AND (${t.nidCipher} IS NULL) = (${t.nidLast4} IS NULL)`,
+    ),
+  ],
+);
+
+/**
+ * Who receives a member's savings if the member dies, and in what share.
+ *
+ * A member's nominees are saved as one set: the previous set is marked
+ * removed (never deleted) and the new one inserted, so earlier nominations
+ * stay on record. The active shares of a member always total 100% or 0%,
+ * checked at commit by a constraint trigger (drizzle/0007).
+ *
+ * share_bp is in basis points: 10000 = 100%. A nominee under 18 needs a
+ * guardian, named in either script.
+ */
+export const nominee = pgTable(
+  "nominee",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    memberId: uuid("member_id").notNull(),
+    nameEn: text("name_en"),
+    nameBn: text("name_bn"),
+    relation: nomineeRelationEnum("relation").notNull(),
+    phone: text("phone"),
+    nidCipher: text("nid_cipher"),
+    nidHash: text("nid_hash"),
+    nidLast4: text("nid_last4"),
+    dateOfBirth: date("date_of_birth", { mode: "string" }),
+    minorGuardianNameEn: text("minor_guardian_name_en"),
+    minorGuardianNameBn: text("minor_guardian_name_bn"),
+    shareBp: integer("share_bp").notNull(),
+    createdBy: uuid("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    removedBy: uuid("removed_by"),
+    removedAt: timestamp("removed_at", { withTimezone: true }),
+  },
+  (t) => [
+    foreignKey({
+      name: "nominee_member_fk",
+      columns: [t.tenantId, t.memberId],
+      foreignColumns: [member.tenantId, member.id],
+    }),
+    foreignKey({
+      name: "nominee_created_by_fk",
+      columns: [t.tenantId, t.createdBy],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    foreignKey({
+      name: "nominee_removed_by_fk",
+      columns: [t.tenantId, t.removedBy],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    index("nominee_tenant_member").on(t.tenantId, t.memberId),
+    check("nominee_has_name", sql`${t.nameEn} IS NOT NULL OR ${t.nameBn} IS NOT NULL`),
+    check("nominee_share_range", sql`${t.shareBp} BETWEEN 1 AND 10000`),
+    check("nominee_removed_together", sql`(${t.removedAt} IS NULL) = (${t.removedBy} IS NULL)`),
+    check(
+      "nominee_nid_complete",
       sql`(${t.nidCipher} IS NULL) = (${t.nidHash} IS NULL) AND (${t.nidCipher} IS NULL) = (${t.nidLast4} IS NULL)`,
     ),
   ],
