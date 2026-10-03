@@ -492,8 +492,13 @@
 }
 
 .admit-form .field > input {
+  height: 3rem;
   font-size: 1rem;
   padding: 0.65rem 0.85rem;
+}
+
+.admit-form .phone-input {
+  height: 3rem;
 }
 
 .admit-form .phone-input input {

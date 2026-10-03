@@ -276,6 +276,8 @@
 
 .field {
   display: grid;
+  /* Stay at natural height when a neighbouring field in the row is taller. */
+  align-content: start;
   gap: 0.35rem;
 }
 
