@@ -13,3 +13,18 @@ export {
   type MemberView,
 } from "./service";
 export type { AdmitMemberInput, MemberErrorCode, MemberFieldErrors } from "./validation";
+export {
+  ADULT_AGE,
+  equalShares,
+  listNominees,
+  MAX_NOMINEES,
+  NOMINEE_RELATIONS,
+  parseSharePercent,
+  saveNominees,
+  type NomineeErrorCode,
+  type NomineeInput,
+  type NomineeRelation,
+  type NomineeRowErrors,
+  type NomineeView,
+  type SaveNomineesResult,
+} from "./nominees";

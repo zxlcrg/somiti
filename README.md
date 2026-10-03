@@ -99,8 +99,27 @@ other staff can look members up.
   admission record can't be changed, and every admission is in the audit log.
 - `journal_line.member_id` now points at a real member.
 
-Nominees, photos, share purchase and exit come next. Code: `src/modules/members/`,
-pages in `src/app/members/`, tests in `tests/members.test.ts`.
+### Nominees
+
+Who receives a member's savings if the member dies, on the member's page and
+at `/members/<id>/nominees`.
+
+- Each nominee has a name in either script, a relationship, a share and,
+  optionally, phone, NID (encrypted like members') and date of birth. A
+  nominee under 18 needs a guardian.
+- Shares are basis points (10000 = 100%). A member's active shares total
+  exactly 100% or 0%. The app checks this, and a deferred constraint trigger
+  (`drizzle/0007`, SQLSTATE SM008) enforces it at commit.
+- Nominees are saved as one set: the previous set is marked removed, never
+  deleted or edited (SM009, and no UPDATE grant beyond `removed_at`/`removed_by`),
+  so earlier nominations stay on record. A kept nominee keeps its NID
+  without retyping it, and saving the same set again changes nothing. Every
+  change is in the audit log, without NIDs.
+- Only the roles that admit members can change nominees, and only while the
+  member is active.
+
+Photos, share purchase and exit come next. Code: `src/modules/members/`, pages
+in `src/app/members/`, tests in `tests/members.test.ts` and `tests/nominees.test.ts`.
 
 Tests need a Postgres superuser to create the `somiti_test` database
 (defaults to `postgres:postgres@localhost`; override with `TEST_ADMIN_URL`):
@@ -118,10 +137,10 @@ src/db/                      schema, withTenant, migration runner
 src/modules/ledger/          posting service, reversals, periods, trial balance, default chart
 src/modules/tenancy/         new somiti setup
 src/modules/auth/            SMS-code sign-in and sessions
-src/modules/members/         admission, KYC, search
+src/modules/members/         admission, KYC, search, nominees
 src/modules/audit/           append-only audit log
 src/lib/                     money, rounding, digits, dates, formatting
-tests/                       ledger invariants, RLS isolation, sign-in, members, money and i18n
+tests/                       ledger invariants, RLS isolation, sign-in, members, nominees, money and i18n
 ```
 
 ## Still to check with an accountant (M0)

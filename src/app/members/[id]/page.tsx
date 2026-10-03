@@ -10,21 +10,22 @@ import { toBanglaDigits } from "@/lib/digits";
 import { formatDate, formatInteger } from "@/lib/format";
 import { primaryName, secondaryName } from "@/lib/names";
 import { formatBdPhone } from "@/lib/phone";
-import { canViewMembers, getMember } from "@/modules/members";
+import { canManageMembers, canViewMembers, getMember, listNominees } from "@/modules/members";
 import { requireUser } from "../../auth";
 import { MemberAvatar, memberHue } from "../member-avatar";
+import { NomineesPanel } from "./nominees-panel";
 
 async function load(id: string) {
   const user = await requireUser();
-  if (!canViewMembers(user.roles)) return { user, member: null, addedBy: null };
+  if (!canViewMembers(user.roles)) return { user, member: null, addedBy: null, nominees: [] };
   return withTenant(getAppDb(), user.tenantId, async (ctx) => {
     const member = await getMember(ctx, id);
-    if (!member) return { user, member: null, addedBy: null };
+    if (!member) return { user, member: null, addedBy: null, nominees: [] };
     const [addedBy] = await ctx.tx
       .select({ nameEn: appUser.nameEn, nameBn: appUser.nameBn })
       .from(appUser)
       .where(and(eq(appUser.tenantId, ctx.tenantId), eq(appUser.id, member.createdBy)));
-    return { user, member, addedBy: addedBy ?? null };
+    return { user, member, addedBy: addedBy ?? null, nominees: await listNominees(ctx, member.id) };
   });
 }
 
@@ -44,7 +45,6 @@ function ageOn(birth: string, on: string): number {
 const soonIcons = {
   savings: "M4 7h16v12H4zM4 7l2-3h12l2 3M9 12h6",
   loans: "M3 12h18M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4",
-  nominees: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm-7 9a7 7 0 0 1 14 0",
   photo: "M4 7h4l2-3h4l2 3h4v12H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
 };
 
@@ -53,17 +53,19 @@ export default async function MemberPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ admitted?: string }>;
+  searchParams: Promise<{ admitted?: string; nominees?: string }>;
 }) {
   const tDash = await getTranslations("dashboard");
   const t = await getTranslations("members");
-  const { user, member, addedBy } = await load((await params).id);
+  const { user, member, addedBy, nominees } = await load((await params).id);
   if (!canViewMembers(user.roles)) return <p className="notice">{t("noAccess")}</p>;
   if (!member) notFound();
 
   const raw = await getLocale();
   const locale: Locale = isLocale(raw) ? raw : defaultLocale;
-  const justAdmitted = (await searchParams).admitted === "1";
+  const search = await searchParams;
+  const justAdmitted = search.admitted === "1";
+  const nomineeNotice = search.nominees === "saved" || search.nominees === "unchanged" ? search.nominees : undefined;
   const digits = (s: string) => (locale === "bn" ? toBanglaDigits(s) : s);
   const name = primaryName(member, locale);
   const second = secondaryName(member, locale);
@@ -130,9 +132,18 @@ export default async function MemberPage({
         ))}
       </dl>
 
+      <NomineesPanel
+        nominees={nominees}
+        memberId={member.id}
+        memberName={name}
+        locale={locale}
+        canEdit={canManageMembers(user.roles) && member.status === "active"}
+        notice={nomineeNotice}
+      />
+
       <h2 className="section-title">{t("profile.soonTitle")}</h2>
       <section className="features">
-        {(["savings", "loans", "nominees", "photo"] as const).map((k) => (
+        {(["savings", "loans", "photo"] as const).map((k) => (
           <article className="feature soon" key={k}>
             <span className="pill">{tDash("soon")}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">

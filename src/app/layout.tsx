@@ -9,6 +9,7 @@ import { signOutAction } from "./sign-in/actions";
 import "./globals.css";
 import "./auth.css";
 import "./members.css";
+import "./nominees.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");

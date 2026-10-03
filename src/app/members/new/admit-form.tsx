@@ -94,7 +94,13 @@ export function AdmitForm({ nextNo, businessDate, businessDateLabel }: { nextNo:
           setV(Object.fromEntries(new FormData(ev.currentTarget)) as Values);
           const target: EventTarget = ev.target;
           if (target instanceof HTMLInputElement && target.name) {
-            setEdited((prev) => new Set(prev).add(target.name));
+            // "Enter it in English or Bangla" errors sit on the English field; typing either script answers them.
+            const partner: Record<string, string> = { nameBn: "nameEn", guardianNameBn: "guardianNameEn" };
+            setEdited((prev) => {
+              const next = new Set(prev).add(target.name);
+              if (partner[target.name]) next.add(partner[target.name]!);
+              return next;
+            });
           }
         }}
       >

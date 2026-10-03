@@ -27,3 +27,8 @@ export function formatDate(date: IsoDate, locale: Locale): string {
     timeZone: "Asia/Dhaka",
   }).format(new Date(`${date}T00:00:00+06:00`));
 }
+
+/** Basis points as a percentage: 3333 -> "33.33%" / "৩৩.৩৩%". */
+export function formatPercentBp(bp: number, locale: Locale): string {
+  return new Intl.NumberFormat(intlLocale[locale], { style: "percent", maximumFractionDigits: 2 }).format(bp / 10_000);
+}
