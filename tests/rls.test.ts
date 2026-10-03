@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
+import { otpChallenge, userSession } from "../src/db/schema";
 import { postEntry, reverseEntry } from "../src/modules/ledger";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
@@ -26,6 +27,11 @@ beforeAll(async () => {
   for (const t of [a, b]) {
     const posted = await t.run((ctx) => postEntry(ctx, deposit(t, 1_000n, { idempotencyKey: `seed-${t.tenantId}` })));
     await t.run((ctx) => reverseEntry(ctx, { entryId: posted.entry.id, reason: "seed", createdBy: t.adminUserId }));
+    await t.run(async ({ tx, tenantId }) => {
+      const later = sql`now() + interval '1 day'`;
+      await tx.insert(otpChallenge).values({ tenantId, userId: t.adminUserId, codeHash: "seed", expiresAt: later });
+      await tx.insert(userSession).values({ tenantId, userId: t.adminUserId, tokenHash: `seed-${tenantId}`, expiresAt: later });
+    });
   }
 });
 

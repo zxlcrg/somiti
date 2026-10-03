@@ -77,7 +77,7 @@ export const branch = pgTable(
   ],
 );
 
-/** Staff and members who sign in. Login itself (phone + OTP) arrives with auth in the next M1 PR. */
+/** Staff and members who sign in, with their phone and an SMS code (src/modules/auth). */
 export const appUser = pgTable(
   "app_user",
   {

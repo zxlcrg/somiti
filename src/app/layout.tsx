@@ -1,29 +1,45 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
+import { getCurrentUser } from "./auth";
 import { LanguageSwitcher } from "./language-switcher";
+import { signOutAction } from "./sign-in/actions";
 import "./globals.css";
+import "./auth.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
-  return { title: t("name"), description: t("tagline") };
+  return { title: { default: t("name"), template: `%s · ${t("name")}` }, description: t("tagline") };
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
-  const t = await getTranslations("app");
+  const t = await getTranslations();
+  const user = await getCurrentUser();
   return (
     <html lang={locale}>
       <body>
         <NextIntlClientProvider>
           <header className="topbar">
-            <strong className="brand">
+            <Link href={user ? "/dashboard" : "/"} className="brand">
               <span className="logo" aria-hidden="true">
                 ৳
               </span>
-              {t("name")}
-            </strong>
-            <LanguageSwitcher />
+              {t("app.name")}
+            </Link>
+            <nav className="topbar-actions">
+              <LanguageSwitcher />
+              {user ? (
+                <form action={signOutAction}>
+                  <button className="btn ghost small">{t("nav.signOut")}</button>
+                </form>
+              ) : (
+                <Link href="/sign-in" className="btn primary small">
+                  {t("nav.signIn")}
+                </Link>
+              )}
+            </nav>
           </header>
           <main>{children}</main>
         </NextIntlClientProvider>
