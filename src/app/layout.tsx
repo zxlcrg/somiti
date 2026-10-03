@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
+import { canViewMembers } from "@/modules/members";
 import { getCurrentUser } from "./auth";
 import { LanguageSwitcher } from "./language-switcher";
 import { signOutAction } from "./sign-in/actions";
 import "./globals.css";
 import "./auth.css";
+import "./members.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
@@ -22,13 +24,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <NextIntlClientProvider>
           <header className="topbar">
-            <Link href={user ? "/dashboard" : "/"} className="brand">
+            <Link href={user ? "/dashboard" : "/"} className="brand" aria-label={t("app.name")}>
               <span className="logo" aria-hidden="true">
                 ৳
               </span>
-              {t("app.name")}
+              <span className="brand-name">{t("app.name")}</span>
             </Link>
             <nav className="topbar-actions">
+              {user && canViewMembers(user.roles) && (
+                <Link href="/members" className="nav-link">
+                  {t("nav.members")}
+                </Link>
+              )}
               <LanguageSwitcher />
               {user ? (
                 <form action={signOutAction}>

@@ -37,6 +37,8 @@ services:
       TZ: Asia/Dhaka
       # Sign-in refuses to run without these in production. Put them in .env.
       AUTH_SECRET: ${AUTH_SECRET:-}
+      # Encrypts member NIDs. Back it up: without it stored NIDs can't be read.
+      MEMBER_DATA_KEY: ${MEMBER_DATA_KEY:-}
       # 1 = print sign-in codes to the log instead of texting them (until the SMS gateway lands in M2).
       SMS_CONSOLE: ${SMS_CONSOLE:-}
     ports:

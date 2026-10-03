@@ -6,6 +6,7 @@ import { createDb, resolveTenantSlug, withTenant } from "../src/db/client";
 import { todayInDhaka } from "../src/lib/dates";
 import { formatAmount } from "../src/lib/format";
 import { accountIdsByKey, postEntry, trialBalance } from "../src/modules/ledger";
+import { admitMember } from "../src/modules/members";
 import { createTenant } from "../src/modules/tenancy/create-tenant";
 
 const url = process.env.DATABASE_URL;
@@ -51,6 +52,20 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
       { accountId: a.cash_in_hand, credit: 40_000_00n },
     ],
   });
+
+  const sampleMembers = [
+    { nameEn: "Rahima Begum", nameBn: "রহিমা বেগম", guardianRelation: "husband", guardianNameBn: "আব্দুল করিম", phone: "01711000001", commLocale: "bn" },
+    { nameEn: "Abdul Karim", nameBn: "আব্দুল করিম", guardianNameEn: "Mohammad Ali", phone: "01811000002", nid: "1987654321" },
+    { nameEn: "Ayesha Khatun", nameBn: "আয়েশা খাতুন", guardianRelation: "husband", guardianNameEn: "Jamal Uddin", phone: "01911000003" },
+    { nameBn: "সালমা আক্তার", guardianNameBn: "নূরুল ইসলাম", phone: "01611000004", commLocale: "bn" },
+    { nameEn: "Jamal Uddin", guardianNameEn: "Kamal Uddin", phone: "01511000005", address: "Ward 3, Savar" },
+    { nameEn: "Fatema Akter", nameBn: "ফাতেমা আক্তার", phone: "01311000006" },
+  ] as const;
+  for (const m of sampleMembers) {
+    const admitted = await admitMember(ctx, m, { userId: somiti.adminUserId, device: "seed" });
+    if (!admitted.ok) throw new Error(`seed member: ${JSON.stringify(admitted.errors)}`);
+  }
+  console.log(`Admitted ${sampleMembers.length} sample members.`);
 
   const tb = await trialBalance(ctx, today);
   const col = (p: bigint) => formatAmount(p, "en").padStart(14);

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { toBanglaDigits } from "@/lib/digits";
 import { formatBdPhone } from "@/lib/phone";
+import { canViewMembers } from "@/modules/members";
 import { requireUser } from "../auth";
 import { signOutAction } from "../sign-in/actions";
 
@@ -66,16 +68,28 @@ export default async function DashboardPage() {
 
       <h2 className="section-title">{t("dashboard.comingTitle")}</h2>
       <section className="features">
-        {tiles.map((tile) => (
-          <article className="feature soon" key={tile.key}>
-            <span className="pill">{t("dashboard.soon")}</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d={tileIcons[tile.key]} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <h3>{tile.title}</h3>
-            <p>{tile.body}</p>
-          </article>
-        ))}
+        {tiles.map((tile) => {
+          const live = tile.key === "members" && canViewMembers(user.roles);
+          const body = (
+            <>
+              <span className={`pill${live ? " live" : ""}`}>{live ? t("dashboard.tiles.membersOpen") : t("dashboard.soon")}</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d={tileIcons[tile.key]} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <h3>{tile.title}</h3>
+              <p>{tile.body}</p>
+            </>
+          );
+          return live ? (
+            <Link href="/members" className="feature soon live" key={tile.key}>
+              {body}
+            </Link>
+          ) : (
+            <article className="feature soon" key={tile.key}>
+              {body}
+            </article>
+          );
+        })}
       </section>
     </div>
   );
