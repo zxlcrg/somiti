@@ -247,9 +247,7 @@
         "savings": "Savings accounts",
         "savingsBody": "Open savings accounts, record deposits and print the passbook.",
         "loans": "Loans",
-        "loansBody": "Applications, schedules and repayments.",
-        "photo": "Photo",
-        "photoBody": "A photo for KYC and the passbook."
+        "loansBody": "Applications, schedules and repayments."
       }
     },
     "languages": {
@@ -335,6 +333,38 @@
         "too_many": "A member can have at most 10 nominees.",
         "member_inactive": "Nominees can only be changed while the member is active.",
         "not_found": "This member could not be found.",
+        "server": "Something went wrong on our side. Please try again."
+      }
+    },
+    "photo": {
+      "change": "Change photo",
+      "add": "Add photo",
+      "title": "Member photo",
+      "hint": "A clear, front-facing photo for KYC and the passbook.",
+      "takePhoto": "Take photo",
+      "upload": "Upload photo",
+      "remove": "Remove photo",
+      "removeConfirm": "Remove this photo? It stays in the member's history.",
+      "capture": "Capture",
+      "retake": "Retake",
+      "cropHint": "Drag to position the face in the circle. Zoom with the slider or your mouse wheel.",
+      "zoom": "Zoom",
+      "save": "Save photo",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "back": "Back",
+      "close": "Close",
+      "cameraStarting": "Starting the camera…",
+      "saved": "Photo saved.",
+      "removed": "Photo removed.",
+      "errors": {
+        "camera": "The camera couldn't be opened. Allow camera access, or upload a photo instead.",
+        "unreadable": "That file couldn't be opened as an image.",
+        "empty": "The photo was empty. Please try again.",
+        "too_large": "The photo is too large.",
+        "not_image": "That file isn't a JPEG, PNG or WebP image.",
+        "not_found": "This member could not be found.",
+        "forbidden": "Your role can't change member photos.",
         "server": "Something went wrong on our side. Please try again."
       }
     }

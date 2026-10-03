@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
 import { otpChallenge, userSession } from "../src/db/schema";
-import { admitMember, saveNominees } from "../src/modules/members";
+import { admitMember, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry } from "../src/modules/ledger";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
@@ -37,6 +37,9 @@ beforeAll(async () => {
       const admitted = await admitMember(ctx, { nameEn: "Seed member", phone: "01711111111" }, { userId: t.adminUserId });
       if (!admitted.ok) throw new Error("seed member");
       await saveNominees(ctx, admitted.member.id, [{ nameEn: "Seed nominee", relation: "spouse", share: "100" }], {
+        userId: t.adminUserId,
+      });
+      await setMemberPhoto(ctx, admitted.member.id, new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]), {
         userId: t.adminUserId,
       });
     });

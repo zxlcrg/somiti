@@ -8,14 +8,17 @@ import { nidLookupHash, sealNid } from "./nid";
 import { validateAdmission, type AdmitMemberInput, type MemberFieldErrors } from "./validation";
 
 export type MemberRow = typeof member.$inferSelect;
-/** A member as screens see it: never the NID itself, only its last four digits. */
-export type MemberView = Omit<MemberRow, "nidCipher" | "nidHash">;
+/**
+ * A member as screens see it: never the NID itself, only its last four
+ * digits. photoVersion is set when the member has a photo (see photos.ts).
+ */
+export type MemberView = Omit<MemberRow, "nidCipher" | "nidHash"> & { photoVersion: string | null };
 export type MemberStatus = MemberRow["status"];
 
-function view(row: MemberRow): MemberView {
+function view(row: MemberRow, photoVersion: string | null = null): MemberView {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { nidCipher, nidHash, ...rest } = row;
-  return rest;
+  return { ...rest, photoVersion };
 }
 
 const viewColumns = {
@@ -37,6 +40,11 @@ const viewColumns = {
   status: member.status,
   createdBy: member.createdBy,
   createdAt: member.createdAt,
+  // Columns qualified by hand: inside the subquery an unqualified "id" would mean the photo's own id.
+  photoVersion: sql<string | null>`(
+    select left(p.sha256, 16) from member_photo p
+     where p.tenant_id = "member"."tenant_id" and p.member_id = "member"."id" and p.removed_at is null
+  )`,
 };
 
 export type AdmitResult = { ok: true; member: MemberView } | { ok: false; errors: MemberFieldErrors };

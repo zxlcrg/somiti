@@ -57,6 +57,20 @@
       "when": 1791055017844,
       "tag": "0007_nominees_shares_rls_and_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791056347049,
+      "tag": "0008_member_photo",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791056347856,
+      "tag": "0009_member_photo_rls_and_grants",
+      "breakpoints": true
     }
   ]
 }
