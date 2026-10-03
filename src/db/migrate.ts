@@ -1,3 +1,4 @@
+import { pathToFileURL } from "node:url";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { createDb } from "./client";
 
@@ -11,7 +12,9 @@ export async function runMigrations(ownerUrl: string): Promise<void> {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Run when called as a script. pathToFileURL keeps this working on Windows,
+// where argv[1] is "D:\\..." and import.meta.url is "file:///D:/...".
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const url = process.env.DATABASE_OWNER_URL;
   if (!url) {
     console.error("DATABASE_OWNER_URL is not set");

@@ -16,8 +16,8 @@
     "test": "vitest run",
     "check:i18n": "tsx scripts/check-i18n.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/db/migrate.ts",
-    "db:seed": "tsx scripts/seed-dev.ts"
+    "db:migrate": "tsx --env-file-if-exists=.env src/db/migrate.ts",
+    "db:seed": "tsx --env-file-if-exists=.env scripts/seed-dev.ts"
   },
   "dependencies": {
     "drizzle-orm": "~0.45.3",
