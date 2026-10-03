@@ -5,7 +5,13 @@ import { redirect } from "next/navigation";
 import { getAppDb } from "@/db/client";
 import { LOCALE_COOKIE } from "@/i18n/config";
 import { formatBdPhone, normalizeBdPhone } from "@/lib/phone";
-import { getSmsSender, requestSignInCode, revokeSession, verifySignInCode } from "@/modules/auth";
+import {
+  getSmsSender,
+  requestSignInCode,
+  revokeSession,
+  verifySignInCode,
+  type SmsSender,
+} from "@/modules/auth";
 import { LAST_SLUG_COOKIE, SESSION_COOKIE } from "../auth";
 
 export type SignInError =
@@ -28,7 +34,12 @@ export interface SignInState {
   resendIn?: number;
   /** Changes on every send, so the page restarts its countdown. */
   sentAt?: number;
+  /** Development only: the SMS that would have been sent, for the browser console. */
+  devSms?: { to: string; text: string };
 }
+
+/** Never true in a production build, so a code can't reach the browser there. */
+const SHOW_CODE_IN_BROWSER = process.env.NODE_ENV === "development";
 
 const YEAR = 60 * 60 * 24 * 365;
 
@@ -46,7 +57,17 @@ export async function signInAction(prev: SignInState, form: FormData): Promise<S
   if (intent === "request" || intent === "resend") {
     if (!slug || !phoneInput.trim()) return { ...prev, step: "phone", slug, phone: phoneInput, error: "missing" };
     try {
-      const result = await requestSignInCode(getAppDb(), { slug, phone: phoneInput, sms: getSmsSender() });
+      const sender = getSmsSender();
+      let devSms: SignInState["devSms"];
+      const sms: SmsSender = SHOW_CODE_IN_BROWSER
+        ? {
+            async send(to, text) {
+              await sender.send(to, text);
+              devSms = { to, text };
+            },
+          }
+        : sender;
+      const result = await requestSignInCode(getAppDb(), { slug, phone: phoneInput, sms });
       if (result.status === "invalid_phone" || result.status === "unknown_somiti") {
         return { step: "phone", slug, phone: phoneInput, error: result.status };
       }
@@ -55,7 +76,7 @@ export async function signInAction(prev: SignInState, form: FormData): Promise<S
       if (result.status === "too_many") {
         return { step: intent === "resend" ? "code" : "phone", slug, phone, error: "too_many" };
       }
-      return { step: "code", slug, phone, resendIn: result.resendInSeconds, sentAt: Date.now() };
+      return { step: "code", slug, phone, resendIn: result.resendInSeconds, sentAt: Date.now(), devSms };
     } catch (err) {
       console.error(err);
       return { ...prev, slug, phone: phoneInput, error: "server" };

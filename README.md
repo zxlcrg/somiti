@@ -61,8 +61,9 @@ Staff and members sign in with their somiti code and mobile number, then a
 six-digit code sent by SMS. There is no password.
 
 - Until the SMS gateway arrives (M2), codes are printed in the terminal running
-  `pnpm dev`. After `pnpm db:seed`, sign in at `/sign-in` with somiti code
-  `demo` and mobile `01700-000000`.
+  `pnpm dev` and, in development only, in the browser console. After
+  `pnpm db:seed`, sign in at `/sign-in` with somiti code `demo` and mobile
+  `01700-000000`.
 - A code lasts 5 minutes and locks after 5 wrong tries. A new code can be sent
   once a minute, at most 5 an hour. Only an HMAC of each code is stored.
 - The answer never reveals whether a number is registered.

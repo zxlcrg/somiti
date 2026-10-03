@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { toBanglaDigits } from "@/lib/digits";
+import { toBanglaDigits, toLatinDigits } from "@/lib/digits";
 import { signInAction, type SignInState } from "./actions";
 import { OtpInput } from "./otp-input";
 
@@ -33,6 +33,17 @@ export function SignInForm({ initialSlug, devHint }: { initialSlug: string; devH
   const formRef = useRef<HTMLFormElement>(null);
   const verifyRef = useRef<HTMLButtonElement>(null);
   const resendLeft = useCountdown(state.resendIn, state.sentAt);
+
+  // Development only (see signInAction): show the would-be SMS once per code sent.
+  useEffect(() => {
+    if (!state.devSms) return;
+    const code = /\d{6}/.exec(toLatinDigits(state.devSms.text))?.[0];
+    console.info(
+      `%c[Somiti dev] sign-in code: ${code ?? "?"}%c\nSMS to ${state.devSms.to}: ${state.devSms.text}`,
+      "background:#0b9b6c;color:#fff;font-weight:bold;font-size:14px;padding:2px 8px;border-radius:4px",
+      "color:inherit",
+    );
+  }, [state.sentAt, state.devSms]);
 
   const error = state.error ? (
     <p className="form-error" role="alert" key={`${state.error}-${state.attemptsLeft}`}>

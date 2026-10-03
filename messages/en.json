@@ -110,7 +110,7 @@
     "verifying": "Checking…",
     "resend": "Send a new code",
     "resendIn": "New code in {seconds}s",
-    "devHint": "Development mode: no SMS is sent. The code is printed in the terminal running pnpm dev.",
+    "devHint": "Development mode: no SMS is sent. The code is in the browser console (F12) and in the terminal running pnpm dev.",
     "artTitle": "Your somiti's books, in your pocket",
     "artPoints": {
       "one": "Savings, loans and shares in one place",
