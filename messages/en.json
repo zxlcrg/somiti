@@ -11,7 +11,8 @@
   "nav": {
     "signIn": "Sign in",
     "signOut": "Sign out",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "members": "Members"
   },
   "home": {
     "badge": "Foundation release",
@@ -142,7 +143,8 @@
       "vouchers": "Vouchers",
       "vouchersBody": "Record deposits, withdrawals and expenses.",
       "trialBalance": "Trial balance",
-      "trialBalanceBody": "See every account balanced, as of any day."
+      "trialBalanceBody": "See every account balanced, as of any day.",
+      "membersOpen": "Open"
     }
   },
   "roles": {
@@ -152,5 +154,122 @@
     "cashier": "Cashier",
     "field_collector": "Field collector",
     "member": "Member"
+  },
+  "members": {
+    "title": "Members",
+    "subtitle": "Everyone admitted to {somiti}.",
+    "add": "Add member",
+    "stats": {
+      "total": "Members",
+      "active": "Active",
+      "thisMonth": "Joined this month"
+    },
+    "searchLabel": "Search members",
+    "searchPlaceholder": "Name in English or বাংলা, member no. or phone",
+    "filters": {
+      "all": "All",
+      "active": "Active",
+      "exited": "Exited",
+      "deceased": "Deceased"
+    },
+    "sort": {
+      "label": "Sort",
+      "number": "Newest",
+      "name": "Name"
+    },
+    "status": {
+      "active": "Active",
+      "exited": "Exited",
+      "deceased": "Deceased"
+    },
+    "no": "No. {no}",
+    "joined": "Joined {date}",
+    "showing": "{from, number}–{to, number} of {total, number}",
+    "previous": "Previous",
+    "next": "Next",
+    "empty": {
+      "title": "No members yet",
+      "body": "Admit the first member to get started. Their savings and loans will hang off this record.",
+      "searchTitle": "Nobody matches “{q}”",
+      "searchBody": "Try part of the name in the other script, the member number, or a few digits of the phone number."
+    },
+    "noAccess": "Your role can't see member records.",
+    "form": {
+      "title": "Admit a member",
+      "subtitle": "The member number is given automatically. Fields marked * are required.",
+      "identity": "Identity",
+      "nameEn": "Name in English",
+      "nameBn": "Name in Bangla",
+      "nameHint": "At least one of the two. Both is best, as KYC papers use both.",
+      "guardian": "Father's or husband's name",
+      "father": "Father",
+      "husband": "Husband",
+      "guardianEn": "In English",
+      "guardianBn": "In Bangla",
+      "contact": "Contact",
+      "phone": "Mobile number",
+      "phoneHint": "SMS receipts go here.",
+      "address": "Address",
+      "kyc": "KYC",
+      "nid": "National ID (NID)",
+      "nidHint": "10, 13 or 17 digits. Stored encrypted.",
+      "dob": "Date of birth",
+      "membership": "Membership",
+      "admissionDate": "Admission date",
+      "admissionHint": "Up to today's business date ({date}).",
+      "commLocale": "Language for SMS and receipts",
+      "somitiDefault": "Somiti default",
+      "submit": "Admit member",
+      "submitting": "Admitting…",
+      "cancel": "Cancel",
+      "preview": "Preview",
+      "previewName": "Member's name",
+      "nextNo": "Next number"
+    },
+    "profile": {
+      "admitted": "Member admitted. Welcome, {name}!",
+      "back": "All members",
+      "guardian": {
+        "father": "Father",
+        "husband": "Husband"
+      },
+      "phone": "Mobile",
+      "nid": "NID",
+      "none": "Not given",
+      "dob": "Date of birth",
+      "age": "{age, plural, one {# year} other {# years}}",
+      "address": "Address",
+      "commLocale": "SMS and receipts in",
+      "admissionDate": "Admitted",
+      "addedBy": "Admitted by",
+      "soonTitle": "Coming next for this member",
+      "soon": {
+        "savings": "Savings accounts",
+        "savingsBody": "Open savings accounts, record deposits and print the passbook.",
+        "loans": "Loans",
+        "loansBody": "Applications, schedules and repayments.",
+        "nominees": "Nominees",
+        "nomineesBody": "Who receives the savings if the member dies.",
+        "photo": "Photo",
+        "photoBody": "A photo for KYC and the passbook."
+      }
+    },
+    "languages": {
+      "en": "English",
+      "bn": "বাংলা"
+    },
+    "errors": {
+      "name_required": "Enter the name in English or Bangla.",
+      "guardian_name_required": "Enter the father's or husband's name.",
+      "invalid_phone": "Use an 11-digit Bangladeshi mobile number starting with 01.",
+      "invalid_nid": "An NID has 10, 13 or 17 digits.",
+      "duplicate_nid": "A member with this NID is already admitted.",
+      "invalid_date": "That isn't a valid date.",
+      "admission_after_business_date": "Admission can't be after today's business date.",
+      "dob_after_admission": "Date of birth must be before the admission date.",
+      "too_long": "That's too long.",
+      "invalid": "Please check this field.",
+      "server": "Something went wrong on our side. Please try again."
+    }
   }
 }

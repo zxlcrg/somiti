@@ -16,6 +16,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { appUser, branch, tenant } from "./tenancy";
+import { member } from "./members";
 
 export const accountTypeEnum = pgEnum("account_type", [
   "asset",
@@ -164,8 +165,8 @@ export const journalEntry = pgTable(
 /**
  * One debit or one credit, in paisa. Lines may point at the member,
  * savings account or loan they concern, so per-member sub-ledgers come
- * from the same data. (Those tables arrive in M2 and M3, which add the
- * foreign keys.)
+ * from the same data. member_id has its foreign key; savings accounts
+ * and loans add theirs when those tables arrive (M2, M3).
  */
 export const journalLine = pgTable(
   "journal_line",
@@ -196,6 +197,11 @@ export const journalLine = pgTable(
       name: "journal_line_account_fk",
       columns: [t.tenantId, t.accountId],
       foreignColumns: [ledgerAccount.tenantId, ledgerAccount.id],
+    }),
+    foreignKey({
+      name: "journal_line_member_fk",
+      columns: [t.tenantId, t.memberId],
+      foreignColumns: [member.tenantId, member.id],
     }),
     // Exactly one side is a positive amount.
     check(

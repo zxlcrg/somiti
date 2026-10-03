@@ -52,8 +52,9 @@ pnpm db:seed                     # optional: a demo somiti with a few entries
 pnpm dev
 ```
 
-Or run everything with `docker compose up --build` (set `AUTH_SECRET` and
-`SMS_CONSOLE=1` in `.env` first; the container runs in production mode).
+Or run everything with `docker compose up --build` (set `AUTH_SECRET`,
+`MEMBER_DATA_KEY` and `SMS_CONSOLE=1` in `.env` first; the container runs in
+production mode).
 
 ## Signing in
 
@@ -77,6 +78,30 @@ six-digit code sent by SMS. There is no password.
 Code: `src/modules/auth/`, pages in `src/app/sign-in/` and `src/app/dashboard/`,
 tests in `tests/auth.test.ts`.
 
+## Members
+
+`/members` lists the somiti's members, `/members/new` admits one and
+`/members/<id>` shows the record. The secretary, president and admin can admit;
+other staff can look members up.
+
+- Each somiti numbers its members from 1, with no gaps; simultaneous
+  admissions take turns for the next number.
+- Names are kept in English and Bangla, plus the father's or husband's name in
+  both. At least one script is required. Search matches part of a name in
+  either script (pg_trgm), a member number or part of a phone number, and
+  Bangla lists sort with the `bn-x-icu` collation.
+- The NID is encrypted with AES-256-GCM (`MEMBER_DATA_KEY`). A keyed hash
+  refuses a duplicate NID within a somiti, and screens only ever show the last
+  four digits.
+- Each member has a communication language for SMS and receipts, separate
+  from the staff member's screen language.
+- Members are never deleted: exit and death are statuses. `member_no` and the
+  admission record can't be changed, and every admission is in the audit log.
+- `journal_line.member_id` now points at a real member.
+
+Nominees, photos, share purchase and exit come next. Code: `src/modules/members/`,
+pages in `src/app/members/`, tests in `tests/members.test.ts`.
+
 Tests need a Postgres superuser to create the `somiti_test` database
 (defaults to `postgres:postgres@localhost`; override with `TEST_ADMIN_URL`):
 
@@ -93,9 +118,10 @@ src/db/                      schema, withTenant, migration runner
 src/modules/ledger/          posting service, reversals, periods, trial balance, default chart
 src/modules/tenancy/         new somiti setup
 src/modules/auth/            SMS-code sign-in and sessions
+src/modules/members/         admission, KYC, search
 src/modules/audit/           append-only audit log
 src/lib/                     money, rounding, digits, dates, formatting
-tests/                       ledger invariants, RLS isolation, sign-in, money and i18n
+tests/                       ledger invariants, RLS isolation, sign-in, members, money and i18n
 ```
 
 ## Still to check with an accountant (M0)

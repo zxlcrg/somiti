@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
 import { otpChallenge, userSession } from "../src/db/schema";
+import { admitMember } from "../src/modules/members";
 import { postEntry, reverseEntry } from "../src/modules/ledger";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
@@ -32,6 +33,7 @@ beforeAll(async () => {
       await tx.insert(otpChallenge).values({ tenantId, userId: t.adminUserId, codeHash: "seed", expiresAt: later });
       await tx.insert(userSession).values({ tenantId, userId: t.adminUserId, tokenHash: `seed-${tenantId}`, expiresAt: later });
     });
+    await t.run((ctx) => admitMember(ctx, { nameEn: "Seed member", phone: "01711111111" }, { userId: t.adminUserId }));
   }
 });
 
