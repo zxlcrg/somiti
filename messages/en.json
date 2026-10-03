@@ -1,0 +1,51 @@
+{
+  "app": {
+    "name": "Somiti",
+    "tagline": "Savings and loan management for cooperative somitis"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "bn": "বাংলা"
+  },
+  "home": {
+    "status": "Foundation release: the ledger core is in place. Sign-in, vouchers and the trial balance screen come next.",
+    "sampleHeading": "How numbers and dates will look",
+    "sampleAmount": "Amount",
+    "sampleDate": "Date",
+    "sampleCount": "Members"
+  },
+  "ledger": {
+    "accountType": {
+      "asset": "Asset",
+      "liability": "Liability",
+      "equity": "Equity",
+      "income": "Income",
+      "expense": "Expense"
+    },
+    "trialBalance": {
+      "title": "Trial balance",
+      "asOf": "As of {date}",
+      "code": "Code",
+      "account": "Account",
+      "debit": "Debit",
+      "credit": "Credit",
+      "total": "Total"
+    },
+    "errors": {
+      "INVALID_INPUT": "Some details are missing or invalid.",
+      "UNBALANCED": "Debits and credits must be equal.",
+      "APPEND_ONLY": "Posted entries cannot be changed. Post a reversal instead.",
+      "DAY_CLOSED": "That day is already closed. Post on today's date instead.",
+      "NO_OPEN_PERIOD": "There is no open fiscal year for that date.",
+      "AFTER_BUSINESS_DATE": "The date cannot be after today's business date.",
+      "WRONG_BUSINESS_DATE": "Only the current business day can be closed.",
+      "UNKNOWN_TENANT": "This somiti could not be found.",
+      "ACCOUNT_NOT_POSTABLE": "One of the accounts cannot take entries.",
+      "NOT_FOUND": "The entry could not be found.",
+      "ALREADY_REVERSED": "This entry has already been reversed.",
+      "CANNOT_REVERSE_REVERSAL": "A reversal cannot be reversed. Post a new entry instead.",
+      "IDEMPOTENCY_CONFLICT": "This request was already sent with different details."
+    }
+  }
+}

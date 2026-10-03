@@ -1,0 +1,45 @@
+# Phase 1 runs everything on one VPS: Postgres, a one-shot migration job and the app.
+# The pg-boss worker joins in M2, when there are jobs to run.
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      TZ: Asia/Dhaka
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      # Over TCP, so it only passes once the init script has finished.
+      test: ["CMD", "pg_isready", "-h", "127.0.0.1", "-U", "postgres", "-d", "somiti"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment:
+      DATABASE_OWNER_URL: postgres://somiti_owner:somiti_owner_dev@db:5432/somiti
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      target: app
+    environment:
+      DATABASE_URL: postgres://somiti_app:somiti_app_dev@db:5432/somiti
+      TZ: Asia/Dhaka
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:

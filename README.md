@@ -1,1 +1,80 @@
-# somiti
+# Somiti
+
+Savings and loan management for cooperative somitis: members, savings, loans,
+double-entry accounting and year-end, for one somiti first and many later.
+
+The design is in the architecture review (Claude Docs: "Somiti Architecture
+Review"). This repository follows its milestones; this is M1, the foundation
+and ledger core.
+
+## How the money side works
+
+Every money event is one balanced journal entry. Balances and reports are
+computed from journal lines and never edited by hand.
+
+| Rule | Where it is enforced |
+| --- | --- |
+| Debits equal credits, at least two lines | Deferred constraint trigger at commit, plus the service |
+| Each line is one positive debit or credit, in paisa (`bigint`) | `CHECK` constraint |
+| Posted entries never change | No `UPDATE`/`DELETE` grant for the app; a trigger blocks them even for the owner |
+| Lines can't be added to an entry later | Trigger compares the entry's creating transaction |
+| Mistakes are fixed by a reversal, at most once per entry | `reverses_id` with a unique index |
+| No posting on a closed day, after the business date, or outside an open fiscal year | `BEFORE INSERT` trigger on `journal_entry` |
+| Closed days and periods stay closed | Triggers on `tenant` and `fiscal_period` |
+| A retried or double-synced request posts once | `idempotency_key` table, keyed per somiti |
+| One somiti never sees another's rows | Postgres row-level security on every table, forced for the owner too |
+
+The app connects as `somiti_app`, which owns nothing and cannot bypass RLS.
+Migrations run as `somiti_owner`. App code reaches the database only through
+`withTenant()` in `src/db/client.ts`, which sets the tenant for one
+transaction. ESLint blocks bare `pg` imports and writes to journal tables
+outside `src/modules/ledger`.
+
+## Language
+
+English is the default and Bangla is one click away. Strings live in
+`messages/en.json` and `messages/bn.json`; CI fails when they drift apart.
+Amounts use lakh/crore grouping in both languages and Bangla digits in Bangla
+(`src/lib/format.ts`), and amount inputs accept either script
+(`parseTaka` in `src/lib/money.ts`). Tenant data such as account names is
+stored as `name_en` and `name_bn`, with Bangla collation for sorting.
+
+## Running it
+
+Needs Node 22, pnpm and Postgres 16.
+
+```sh
+pnpm install
+docker compose up -d db          # Postgres with the two roles (docker/postgres/init.sql)
+cp .env.example .env
+pnpm db:migrate                  # as somiti_owner
+pnpm db:seed                     # optional: a demo somiti with a few entries
+pnpm dev
+```
+
+Or run everything with `docker compose up --build`.
+
+Tests need a Postgres superuser to create the `somiti_test` database
+(defaults to `postgres:postgres@localhost`; override with `TEST_ADMIN_URL`):
+
+```sh
+pnpm test
+```
+
+## Layout
+
+```
+drizzle/                     migrations (0001 holds triggers, RLS and grants)
+messages/                    en and bn UI strings
+src/db/                      schema, withTenant, migration runner
+src/modules/ledger/          posting service, reversals, periods, trial balance, default chart
+src/modules/tenancy/         new somiti setup
+src/modules/audit/           append-only audit log
+src/lib/                     money, rounding, digits, dates, formatting
+tests/                       ledger invariants, RLS isolation, money and i18n
+```
+
+## Still to check with an accountant (M0)
+
+- The default chart of accounts and its Bangla names (`src/modules/ledger/default-chart.ts`).
+- The rounding rule: half away from zero (`mulDivRound` in `src/lib/money.ts`).
