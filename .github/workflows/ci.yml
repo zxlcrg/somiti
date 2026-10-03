@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: English and Bangla files have the same keys
+        run: pnpm check:i18n
+      - name: Migrations match the schema
+        run: |
+          pnpm db:generate
+          git diff --exit-code drizzle || (echo "Run pnpm db:generate and commit the migration." && exit 1)
+          test -z "$(git status --porcelain drizzle)"
+      - name: Tests (ledger invariants, RLS isolation, money, i18n)
+        run: pnpm test
+        env:
+          TEST_ADMIN_URL: postgres://postgres:postgres@localhost:5432/postgres
+      - name: Build
+        run: pnpm build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compose file is valid
+        run: docker compose config --quiet
+      - name: App image builds
+        run: docker build --target app -t somiti-app .
