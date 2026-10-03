@@ -52,7 +52,29 @@ pnpm db:seed                     # optional: a demo somiti with a few entries
 pnpm dev
 ```
 
-Or run everything with `docker compose up --build`.
+Or run everything with `docker compose up --build` (set `AUTH_SECRET` and
+`SMS_CONSOLE=1` in `.env` first; the container runs in production mode).
+
+## Signing in
+
+Staff and members sign in with their somiti code and mobile number, then a
+six-digit code sent by SMS. There is no password.
+
+- Until the SMS gateway arrives (M2), codes are printed in the terminal running
+  `pnpm dev`. After `pnpm db:seed`, sign in at `/sign-in` with somiti code
+  `demo` and mobile `01700-000000`.
+- A code lasts 5 minutes and locks after 5 wrong tries. A new code can be sent
+  once a minute, at most 5 an hour. Only an HMAC of each code is stored.
+- The answer never reveals whether a number is registered.
+- The session cookie is httpOnly and holds a random token; the database keeps
+  only its SHA-256. Sessions last 30 days, end at sign-out, and stop working
+  when the user is deactivated.
+- Before sign-in there is no tenant, so a narrow policy (`tenant_by_slug` in
+  `drizzle/0003`) lets the app see only the somiti whose exact code was typed.
+- All expiry and cooldown checks use the database clock.
+
+Code: `src/modules/auth/`, pages in `src/app/sign-in/` and `src/app/dashboard/`,
+tests in `tests/auth.test.ts`.
 
 Tests need a Postgres superuser to create the `somiti_test` database
 (defaults to `postgres:postgres@localhost`; override with `TEST_ADMIN_URL`):
@@ -69,9 +91,10 @@ messages/                    en and bn UI strings
 src/db/                      schema, withTenant, migration runner
 src/modules/ledger/          posting service, reversals, periods, trial balance, default chart
 src/modules/tenancy/         new somiti setup
+src/modules/auth/            SMS-code sign-in and sessions
 src/modules/audit/           append-only audit log
 src/lib/                     money, rounding, digits, dates, formatting
-tests/                       ledger invariants, RLS isolation, money and i18n
+tests/                       ledger invariants, RLS isolation, sign-in, money and i18n
 ```
 
 ## Still to check with an accountant (M0)

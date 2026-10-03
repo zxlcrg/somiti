@@ -46,6 +46,19 @@ export async function withTenant<T>(
   }
 }
 
+/**
+ * Finds a somiti by the code a person typed, before anyone is signed in.
+ * The tenant_by_slug policy (drizzle/0003) shows only the row whose slug
+ * matches app.tenant_slug, which is set for this one transaction.
+ */
+export async function resolveTenantSlug(db: Db, slug: string): Promise<string | null> {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`select set_config('app.tenant_slug', ${slug}, true)`);
+    const rows = await tx.execute<{ id: string }>(sql`select id from tenant where slug = ${slug}`);
+    return rows.rows[0]?.id ?? null;
+  });
+}
+
 let appDb: Db | undefined;
 
 /** The app's shared pool, connected as the non-owner somiti_app role. */

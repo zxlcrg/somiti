@@ -8,6 +8,11 @@
     "en": "English",
     "bn": "বাংলা"
   },
+  "nav": {
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "dashboard": "Dashboard"
+  },
   "home": {
     "badge": "Foundation release",
     "heroTitle": "Every taka, accounted for.",
@@ -85,5 +90,67 @@
       "CANNOT_REVERSE_REVERSAL": "A reversal cannot be reversed. Post a new entry instead.",
       "IDEMPOTENCY_CONFLICT": "This request was already sent with different details."
     }
+  },
+  "auth": {
+    "title": "Sign in to your somiti",
+    "subtitle": "We'll text a one-time code to your phone. No password to remember.",
+    "slugLabel": "Somiti code",
+    "slugHint": "Ask your somiti office if you don't know it.",
+    "slugPlaceholder": "e.g. demo",
+    "phoneLabel": "Mobile number",
+    "phonePlaceholder": "017XX-XXXXXX",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "codeTitle": "Enter the 6-digit code",
+    "codeSentTo": "We sent it to {phone}.",
+    "changeNumber": "Change number",
+    "codeLabel": "Sign-in code",
+    "digit": "Digit {n} of 6",
+    "verify": "Sign in",
+    "verifying": "Checking…",
+    "resend": "Send a new code",
+    "resendIn": "New code in {seconds}s",
+    "devHint": "Development mode: no SMS is sent. The code is printed in the terminal running pnpm dev.",
+    "artTitle": "Your somiti's books, in your pocket",
+    "artPoints": {
+      "one": "Savings, loans and shares in one place",
+      "two": "Every taka balanced, every entry audited",
+      "three": "In English and বাংলা"
+    },
+    "errors": {
+      "missing": "Enter your somiti code and mobile number.",
+      "invalid_phone": "That doesn't look like a Bangladeshi mobile number. Use 11 digits starting with 01.",
+      "unknown_somiti": "We couldn't find a somiti with that code.",
+      "too_many": "Too many codes requested. Please wait an hour and try again.",
+      "invalid_code": "That code isn't right.",
+      "attemptsLeft": "{count, plural, one {# try left} other {# tries left}}.",
+      "expired": "That code has expired. Ask for a new one.",
+      "locked": "Too many wrong tries. Ask for a new code.",
+      "server": "Something went wrong on our side. Please try again."
+    }
+  },
+  "dashboard": {
+    "greeting": "Welcome, {name}",
+    "somiti": "Somiti",
+    "phone": "Mobile",
+    "roles": "Your roles",
+    "comingTitle": "Coming next",
+    "soon": "Soon",
+    "tiles": {
+      "members": "Members",
+      "membersBody": "Register members and their savings accounts.",
+      "vouchers": "Vouchers",
+      "vouchersBody": "Record deposits, withdrawals and expenses.",
+      "trialBalance": "Trial balance",
+      "trialBalanceBody": "See every account balanced, as of any day."
+    }
+  },
+  "roles": {
+    "admin": "Admin",
+    "president": "President",
+    "secretary": "Secretary",
+    "cashier": "Cashier",
+    "field_collector": "Field collector",
+    "member": "Member"
   }
 }

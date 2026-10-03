@@ -2,7 +2,7 @@
  * Creates a demo somiti with a few balanced entries, for local development.
  * Usage: DATABASE_URL=... pnpm db:seed
  */
-import { createDb, withTenant } from "../src/db/client";
+import { createDb, resolveTenantSlug, withTenant } from "../src/db/client";
 import { todayInDhaka } from "../src/lib/dates";
 import { formatAmount } from "../src/lib/format";
 import { accountIdsByKey, postEntry, trialBalance } from "../src/modules/ledger";
@@ -13,12 +13,15 @@ if (!url) throw new Error("DATABASE_URL is not set");
 const { db, pool } = createDb(url);
 
 const today = todayInDhaka();
+// "demo" is easy to type on the sign-in page; later runs get a unique code.
+const slug = (await resolveTenantSlug(db, "demo")) ? `demo-${Date.now()}` : "demo";
+const adminPhone = "+8801700000000";
 const somiti = await createTenant(db, {
-  slug: `demo-${Date.now()}`,
+  slug,
   nameEn: "Demo Somiti",
   nameBn: "ডেমো সমিতি",
   businessDate: today,
-  admin: { nameEn: "Demo Admin", nameBn: "ডেমো অ্যাডমিন", phone: "+8801700000000" },
+  admin: { nameEn: "Demo Admin", nameBn: "ডেমো অ্যাডমিন", phone: adminPhone },
 });
 
 await withTenant(db, somiti.tenantId, async (ctx) => {
@@ -55,5 +58,8 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
   for (const r of tb.rows) console.log(`  ${r.code} ${(r.nameEn ?? "").padEnd(28)} ${col(r.debit)} ${col(r.credit)}`);
   console.log(`  ${"Total".padEnd(33)} ${col(tb.totalDebit)} ${col(tb.totalCredit)}`);
 });
+
+console.log(`\nSign in at http://localhost:3000/sign-in with somiti code "${slug}" and mobile 01700-000000.`);
+console.log("The code is printed in the terminal running pnpm dev.");
 
 await pool.end();

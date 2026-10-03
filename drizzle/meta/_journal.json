@@ -15,6 +15,20 @@
       "when": 1791039758340,
       "tag": "0001_ledger_invariants_and_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791050030781,
+      "tag": "0002_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791050031567,
+      "tag": "0003_auth_rls_and_grants",
+      "breakpoints": true
     }
   ]
 }
