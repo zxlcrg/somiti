@@ -17,7 +17,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <NextIntlClientProvider>
           <header className="topbar">
-            <strong>{t("name")}</strong>
+            <strong className="brand">
+              <span className="logo" aria-hidden="true">
+                ৳
+              </span>
+              {t("name")}
+            </strong>
             <LanguageSwitcher />
           </header>
           <main>{children}</main>
