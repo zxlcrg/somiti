@@ -10,6 +10,7 @@ import "./globals.css";
 import "./auth.css";
 import "./members.css";
 import "./nominees.css";
+import "./photo.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");

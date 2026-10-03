@@ -118,8 +118,26 @@ at `/members/<id>/nominees`.
 - Only the roles that admit members can change nominees, and only while the
   member is active.
 
-Photos, share purchase and exit come next. Code: `src/modules/members/`, pages
-in `src/app/members/`, tests in `tests/members.test.ts` and `tests/nominees.test.ts`.
+### Photos
+
+A member's photo, for KYC and the passbook. Staff who manage members click the
+avatar on the member's page to take one with the webcam (or the phone's
+camera) or upload one, then drag and zoom to crop it.
+
+- The browser crops to 512×512 and compresses to JPEG, about 50 KB, before
+  upload. The server accepts only real JPEG, PNG or WebP files, judged by
+  their first bytes, up to 500 KB.
+- Photos are stored in Postgres (`member_photo`, bytea), so they share the
+  tenant isolation, backups and audit trail of the rest of the record. One
+  photo is current per member; a replaced or removed photo stays on record
+  (SM009, no DELETE).
+- `/members/<id>/photo?v=<version>` serves it to signed-in staff of the same
+  somiti only, with `nosniff` and a sandboxing CSP. The version is the
+  start of the SHA-256, so a URL can be cached for good.
+
+Share purchase and exit come next. Code: `src/modules/members/`, pages in
+`src/app/members/`, tests in `tests/members.test.ts`, `tests/nominees.test.ts`
+and `tests/photos.test.ts`.
 
 Tests need a Postgres superuser to create the `somiti_test` database
 (defaults to `postgres:postgres@localhost`; override with `TEST_ADMIN_URL`):
@@ -137,10 +155,10 @@ src/db/                      schema, withTenant, migration runner
 src/modules/ledger/          posting service, reversals, periods, trial balance, default chart
 src/modules/tenancy/         new somiti setup
 src/modules/auth/            SMS-code sign-in and sessions
-src/modules/members/         admission, KYC, search, nominees
+src/modules/members/         admission, KYC, search, nominees, photos
 src/modules/audit/           append-only audit log
 src/lib/                     money, rounding, digits, dates, formatting
-tests/                       ledger invariants, RLS isolation, sign-in, members, nominees, money and i18n
+tests/                       ledger invariants, RLS isolation, sign-in, members, nominees, photos, money and i18n
 ```
 
 ## Still to check with an accountant (M0)

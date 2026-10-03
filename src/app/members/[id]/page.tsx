@@ -14,6 +14,7 @@ import { canManageMembers, canViewMembers, getMember, listNominees } from "@/mod
 import { requireUser } from "../../auth";
 import { MemberAvatar, memberHue } from "../member-avatar";
 import { NomineesPanel } from "./nominees-panel";
+import { PhotoDialog } from "./photo/photo-dialog";
 
 async function load(id: string) {
   const user = await requireUser();
@@ -45,7 +46,6 @@ function ageOn(birth: string, on: string): number {
 const soonIcons = {
   savings: "M4 7h16v12H4zM4 7l2-3h12l2 3M9 12h6",
   loans: "M3 12h18M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4",
-  photo: "M4 7h4l2-3h4l2 3h4v12H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
 };
 
 export default async function MemberPage({
@@ -112,7 +112,15 @@ export default async function MemberPage({
       )}
 
       <section className="profile-hero" style={{ "--h": memberHue(member.memberNo) } as React.CSSProperties}>
-        <MemberAvatar member={member} locale={locale} size="lg" />
+        {canManageMembers(user.roles) ? (
+          <PhotoDialog
+            memberId={member.id}
+            hasPhoto={!!member.photoVersion}
+            trigger={<MemberAvatar member={member} locale={locale} size="lg" />}
+          />
+        ) : (
+          <MemberAvatar member={member} locale={locale} size="lg" />
+        )}
         <div className="profile-id">
           <div className="member-card-top">
             <span className="member-no">#{formatInteger(member.memberNo, locale)}</span>
@@ -143,7 +151,7 @@ export default async function MemberPage({
 
       <h2 className="section-title">{t("profile.soonTitle")}</h2>
       <section className="features">
-        {(["savings", "loans", "photo"] as const).map((k) => (
+        {(["savings", "loans"] as const).map((k) => (
           <article className="feature soon" key={k}>
             <span className="pill">{tDash("soon")}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">

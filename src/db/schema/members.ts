@@ -1,5 +1,19 @@
 import { sql } from "drizzle-orm";
-import { check, date, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import {
+  check,
+  customType,
+  date,
+  foreignKey,
+  index,
+  integer,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { appUser, branch, localeEnum, tenant } from "./tenancy";
 
 export const memberStatusEnum = pgEnum("member_status", ["active", "exited", "deceased"]);
@@ -137,5 +151,62 @@ export const nominee = pgTable(
       "nominee_nid_complete",
       sql`(${t.nidCipher} IS NULL) = (${t.nidHash} IS NULL) AND (${t.nidCipher} IS NULL) = (${t.nidLast4} IS NULL)`,
     ),
+  ],
+);
+
+/** Raw bytes in Postgres (bytea), as a Buffer. */
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType: () => "bytea",
+});
+
+/**
+ * A member's photo, for KYC and the passbook. Stored in the database so it
+ * shares the tenant isolation, backups and audit trail of the rest of the
+ * record. The browser crops and compresses it (about 50 KB); the server
+ * checks the bytes really are an image and caps the size.
+ *
+ * One current photo per member. Replacing or removing one marks it
+ * removed, never deletes it, so earlier KYC photos stay on record.
+ */
+export const memberPhoto = pgTable(
+  "member_photo",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    memberId: uuid("member_id").notNull(),
+    contentType: text("content_type").notNull(),
+    bytes: bytea("bytes").notNull(),
+    byteSize: integer("byte_size").notNull(),
+    /** SHA-256 of the bytes; doubles as the cache-busting version in photo URLs. */
+    sha256: text("sha256").notNull(),
+    createdBy: uuid("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    removedBy: uuid("removed_by"),
+    removedAt: timestamp("removed_at", { withTimezone: true }),
+  },
+  (t) => [
+    foreignKey({
+      name: "member_photo_member_fk",
+      columns: [t.tenantId, t.memberId],
+      foreignColumns: [member.tenantId, member.id],
+    }),
+    foreignKey({
+      name: "member_photo_created_by_fk",
+      columns: [t.tenantId, t.createdBy],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    foreignKey({
+      name: "member_photo_removed_by_fk",
+      columns: [t.tenantId, t.removedBy],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    uniqueIndex("member_photo_one_current")
+      .on(t.tenantId, t.memberId)
+      .where(sql`${t.removedAt} IS NULL`),
+    check("member_photo_type", sql`${t.contentType} IN ('image/jpeg', 'image/png', 'image/webp')`),
+    check("member_photo_size", sql`${t.byteSize} BETWEEN 1 AND 512000 AND ${t.byteSize} = octet_length(${t.bytes})`),
+    check("member_photo_removed_together", sql`(${t.removedAt} IS NULL) = (${t.removedBy} IS NULL)`),
   ],
 );

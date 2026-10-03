@@ -28,3 +28,12 @@ export {
   type NomineeView,
   type SaveNomineesResult,
 } from "./nominees";
+export {
+  detectImageType,
+  getMemberPhoto,
+  MAX_PHOTO_BYTES,
+  removeMemberPhoto,
+  setMemberPhoto,
+  type PhotoType,
+  type SetPhotoResult,
+} from "./photos";

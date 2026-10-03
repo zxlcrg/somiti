@@ -1,0 +1,253 @@
+/* Member photos: avatars with a photo, the change-photo button and the photo dialog. */
+
+.member-avatar.has-photo {
+  padding: 0;
+  overflow: hidden;
+  background: var(--line);
+}
+
+.member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------- Change-photo button on the profile ---------- */
+
+.photo-trigger {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 1.5rem;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.photo-trigger .member-avatar {
+  transition: transform 0.2s, filter 0.2s;
+}
+
+.photo-trigger:hover .member-avatar,
+.photo-trigger:focus-visible .member-avatar {
+  transform: scale(1.04);
+  filter: brightness(0.92);
+}
+
+.photo-trigger:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 3px;
+}
+
+.photo-trigger-badge {
+  position: absolute;
+  right: -0.35rem;
+  bottom: -0.35rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid hsl(var(--h, 170) 65% 40%);
+  border-radius: 50%;
+  background: #fff;
+  color: #0b9b6c;
+  box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s;
+}
+
+.photo-trigger:hover .photo-trigger-badge {
+  transform: scale(1.12) rotate(-8deg);
+}
+
+.photo-trigger-badge svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ---------- Dialog ---------- */
+
+.photo-dialog {
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 0;
+  border: 0;
+  border-radius: 1.5rem;
+  background: var(--card);
+  color: var(--fg);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.5);
+}
+
+.photo-dialog[open] {
+  animation: dialog-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.photo-dialog::backdrop {
+  background: rgba(8, 18, 15, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+}
+
+.photo-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.25rem 0;
+}
+
+.photo-dialog h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.icon-close {
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.icon-close:hover {
+  color: var(--fg);
+}
+
+.photo-step {
+  display: grid;
+  justify-items: center;
+  gap: 0.9rem;
+  padding: 1.25rem;
+  text-align: center;
+  animation: step-in 0.3s ease-out;
+}
+
+.photo-step p {
+  margin: 0;
+}
+
+.photo-step .small {
+  font-size: 0.85rem;
+}
+
+/* The circle everything happens in: 18rem = the cropper's 288px. */
+.photo-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 18rem;
+  height: 18rem;
+  max-width: 100%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
+    var(--bg);
+  overflow: hidden;
+  box-shadow:
+    0 0 0 4px var(--card),
+    0 0 0 7px color-mix(in srgb, var(--accent) 45%, transparent),
+    0 20px 40px -20px rgba(0, 0, 0, 0.45);
+}
+
+.photo-stage.idle .member-avatar.lg {
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
+  font-size: 4rem;
+}
+
+.photo-stage.camera video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.photo-stage-note {
+  position: absolute;
+  color: var(--muted);
+  font-weight: 600;
+  animation: pulse-opacity 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-opacity {
+  to {
+    opacity: 0.4;
+  }
+}
+
+.photo-stage.crop {
+  display: block;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.photo-stage.crop:active {
+  cursor: grabbing;
+}
+
+.photo-stage.crop img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  pointer-events: none;
+  transform-origin: 0 0;
+}
+
+.zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.zoom-row .slider {
+  flex: 1;
+  margin: 0;
+}
+
+.photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.photo-actions .btn {
+  flex: 1 1 9rem;
+  justify-content: center;
+}
+
+.btn.shutter {
+  background: linear-gradient(135deg, #e5484d, #ff8a5c);
+  box-shadow: 0 10px 24px -10px #e5484d;
+}
+
+.photo-dialog .form-error {
+  margin: 0 1.25rem 1.25rem;
+}
+
+/* The crop circle keeps its exact size: the crop maths in photo-dialog.tsx assume 288px. */
+@media (max-width: 420px) {
+  .photo-stage:not(.crop) {
+    width: 15rem;
+    height: 15rem;
+  }
+
+  .photo-step {
+    padding-inline: 0.75rem;
+  }
+}
