@@ -9,11 +9,49 @@
     "bn": "বাংলা"
   },
   "home": {
+    "badge": "Foundation release",
+    "heroTitle": "Every taka, accounted for.",
     "status": "Foundation release: the ledger core is in place. Sign-in, vouchers and the trial balance screen come next.",
+    "ctaTry": "Try the number formatter",
+    "ctaRoadmap": "See what's next",
     "sampleHeading": "How numbers and dates will look",
     "sampleAmount": "Amount",
     "sampleDate": "Date",
-    "sampleCount": "Members"
+    "sampleCount": "Members",
+    "playground": {
+      "title": "Type an amount",
+      "hint": "English or Bangla digits, with or without ৳.",
+      "placeholder": "e.g. 1,00,000.50 or ১০০০",
+      "invalid": "Enter a positive amount with up to two decimal places.",
+      "english": "In English",
+      "bangla": "In Bangla",
+      "paisa": "Stored as {count} paisa, never as a floating-point number."
+    },
+    "balance": {
+      "title": "Double-entry, always balanced",
+      "lead": "Move the slider: every deposit debits cash and credits member savings by the same amount.",
+      "deposit": "Deposit",
+      "debit": "Debit · Cash in hand",
+      "credit": "Credit · Member savings",
+      "balanced": "Balanced"
+    },
+    "features": {
+      "ledgerTitle": "Append-only ledger",
+      "ledgerBody": "Posted entries are never edited. Corrections are reversals, so the audit trail stays complete.",
+      "tenantTitle": "Each somiti sealed off",
+      "tenantBody": "Row-level security in the database keeps every somiti's data separate.",
+      "bilingualTitle": "English and বাংলা",
+      "bilingualBody": "Lakh and crore grouping, Bangla digits and Dhaka dates throughout."
+    },
+    "roadmap": {
+      "title": "Roadmap",
+      "done": "Done",
+      "next": "Next",
+      "m1": "Ledger core, tenant isolation, bilingual interface",
+      "signin": "Sign-in and roles",
+      "vouchers": "Vouchers",
+      "trialBalance": "Trial balance screen"
+    }
   },
   "ledger": {
     "accountType": {
