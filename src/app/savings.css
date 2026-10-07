@@ -792,6 +792,410 @@
   grid-column: 1 / -1;
 }
 
+/* ---------- Withdrawals ---------- */
+
+.savings {
+  --wd: #c93a4f;
+}
+
+@media (prefers-color-scheme: dark) {
+  .savings {
+    --wd: #ff8a98;
+  }
+}
+
+.head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.head-actions .count-badge,
+.wd-tabs .count-badge {
+  margin-left: 0.4rem;
+}
+
+.withdraw-form,
+.deposit-form {
+  scroll-margin-top: 5.5rem;
+}
+
+.withdraw-form {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem 1.3rem;
+  border: 2px solid color-mix(in srgb, var(--wd) 35%, var(--line));
+  border-radius: 1.3rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--wd) 7%, var(--card)), var(--card) 50%);
+  box-shadow: var(--shadow);
+}
+
+.withdraw-form h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.withdraw-form .label {
+  font-weight: 700;
+}
+
+.withdraw-form .method-tiles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.withdraw-form .quick-picks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.withdraw-form .quick-picks button {
+  padding: 0.4rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.withdraw-form textarea {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  resize: vertical;
+}
+
+.withdraw-form textarea:focus {
+  outline: 2px solid color-mix(in srgb, var(--wd) 45%, transparent);
+  outline-offset: 1px;
+}
+
+.avail-pill {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+}
+
+.avail-pill span {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.avail-pill strong {
+  font-size: 1.35rem;
+  color: var(--accent);
+}
+
+.avail-pill small {
+  color: var(--muted);
+}
+
+.approval-note {
+  margin: 0;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--accent-2) 14%, var(--card));
+  font-size: 0.9rem;
+}
+
+.btn.primary.wd {
+  background: linear-gradient(135deg, var(--wd), color-mix(in srgb, var(--wd) 60%, var(--accent-2)));
+  box-shadow: 0 8px 20px -10px var(--wd);
+}
+
+/* Deposit / Withdraw tabs on the passbook side. */
+.side-tab-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  margin-bottom: 0.6rem;
+  padding: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+}
+
+.side-tab-bar button {
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.side-tab-bar button:hover {
+  color: var(--fg);
+}
+
+.side-tab-bar button.on {
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+}
+
+.on-withdraw .side-tab-bar button.on {
+  background: linear-gradient(135deg, var(--wd), color-mix(in srgb, var(--wd) 60%, var(--accent-2)));
+}
+
+/* Passbook rows going out. */
+.passbook-table .wdr {
+  color: var(--wd);
+  font-weight: 700;
+}
+
+.passbook-table .wd-tag {
+  color: var(--wd);
+}
+
+.passbook-table tr.reversed .wdr {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* Requests: on the passbook and on the withdrawals page. */
+.wd-pending {
+  display: grid;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.wd-pending h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.wd-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.wd-card {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.95rem 1.1rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--muted);
+  border-radius: 1rem;
+  background: var(--card);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.wd-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.wd-card.pending {
+  border-left-color: var(--accent-2);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent-2) 8%, var(--card)), var(--card) 60%);
+}
+
+.wd-card.approved {
+  border-left-color: var(--accent);
+}
+
+.wd-card.rejected {
+  border-left-color: var(--wd);
+}
+
+.wd-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.wd-icon {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--wd) 12%, var(--card));
+  font-size: 1.1rem;
+}
+
+.wd-main {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.wd-member {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.wd-member:hover {
+  color: var(--accent);
+}
+
+.wd-how {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.wd-reason {
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
+.wd-amount {
+  display: grid;
+  justify-items: end;
+  gap: 0.3rem;
+}
+
+.wd-amount strong {
+  color: var(--wd);
+  font-size: 1.15rem;
+  white-space: nowrap;
+}
+
+.wd-status {
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--muted) 15%, transparent);
+}
+
+.wd-status.pending {
+  background: color-mix(in srgb, var(--accent-2) 22%, transparent);
+}
+
+.wd-status.approved {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+
+.wd-status.rejected {
+  background: color-mix(in srgb, var(--wd) 14%, transparent);
+  color: var(--wd);
+}
+
+.wd-outcome {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.wd-decision .decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.wd-decision .btn {
+  justify-content: center;
+  font-weight: 700;
+}
+
+.wd-decision .btn.ghost {
+  border: 1px solid var(--line);
+}
+
+.wd-decision .decision-actions form {
+  flex: 0 1 auto;
+}
+
+.wd-decision .decision-actions .btn {
+  min-width: 9rem;
+}
+
+.wd-decision .reject-form {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.wd-decision .form-error {
+  margin: 0.5rem 0 0;
+}
+
+/* The "waiting" banner on the savings page. */
+.wd-callout {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 45%, var(--line));
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--accent-2) 12%, var(--card));
+  color: inherit;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.wd-callout:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.wd-callout-icon {
+  font-size: 1.5rem;
+}
+
+.wd-callout > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+}
+
+.wd-callout-go {
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.wd-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.wd-tabs a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.wd-tabs a[aria-current="page"] {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  color: #fff;
+}
+
+.wd-empty {
+  padding: 2rem 1rem;
+  border: 1px dashed var(--line);
+  border-radius: 1rem;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .wd-top {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .wd-amount {
+    grid-column: 1 / -1;
+    grid-auto-flow: column;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
 /* ---------- Narrow screens ---------- */
 
 @media (max-width: 900px) {

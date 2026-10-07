@@ -6,7 +6,7 @@ import type { Locale } from "@/i18n/config";
 import { formatDate, formatDateTime, formatInteger, formatTaka } from "@/lib/format";
 import { primaryName } from "@/lib/names";
 import { canViewMembers } from "@/modules/members";
-import { canManageSavings, listProducts, recentDeposits, savingsOverview, type SavingsOverview } from "@/modules/savings";
+import { canManageSavings, listProducts, listWithdrawals, recentDeposits, savingsOverview, type SavingsOverview } from "@/modules/savings";
 import { requireUser } from "../auth";
 import { pageLocale } from "../books";
 import { setProductActiveAction } from "./actions";
@@ -58,10 +58,11 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
   if (!canViewMembers(user.roles)) return <p className="notice">{t("noAccess")}</p>;
   const locale = await pageLocale();
   const { created } = await searchParams;
-  const { overview, products, recent } = await withTenant(getAppDb(), user.tenantId, async (ctx) => ({
+  const { overview, products, recent, waiting } = await withTenant(getAppDb(), user.tenantId, async (ctx) => ({
     overview: await savingsOverview(ctx),
     products: await listProducts(ctx),
     recent: await recentDeposits(ctx),
+    waiting: await listWithdrawals(ctx, { status: "pending", limit: 100 }),
   }));
   const manage = canManageSavings(user.roles);
   const taka = (p: bigint) => formatTaka(p, locale);
@@ -75,12 +76,31 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
           <h1>{t("title")}</h1>
           <p className="muted">{t("subtitle")}</p>
         </div>
-        {manage && (
-          <Link href="/savings/products/new" className="btn primary">
-            <span aria-hidden="true">＋</span> {t("newProduct")}
+        <div className="head-actions">
+          <Link href="/savings/withdrawals" className="btn ghost">
+            <span aria-hidden="true">⬆️</span> {t("withdrawals.title")}
+            {waiting.length > 0 && <span className="count-badge">{num(waiting.length)}</span>}
           </Link>
-        )}
+          {manage && (
+            <Link href="/savings/products/new" className="btn primary">
+              <span aria-hidden="true">＋</span> {t("newProduct")}
+            </Link>
+          )}
+        </div>
       </header>
+
+      {waiting.length > 0 && (
+        <Link href="/savings/withdrawals" className="wd-callout">
+          <span className="wd-callout-icon" aria-hidden="true">
+            ⏳
+          </span>
+          <span>
+            <strong>{t("withdrawals.waitingCount", { count: waiting.length })}</strong>
+            <small>{taka(waiting.reduce((s, w) => s + w.amount, 0n))}</small>
+          </span>
+          <span className="wd-callout-go">{t("withdrawals.waitingLink")} →</span>
+        </Link>
+      )}
 
       {fresh && (
         <p className="celebrate" role="status">

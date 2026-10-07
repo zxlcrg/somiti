@@ -97,7 +97,8 @@ export async function openAccount(
 
 export interface SavingsTxnView {
   id: string;
-  kind: "deposit";
+  kind: "deposit" | "withdrawal";
+  /** Always positive; `kind` says which way it went. */
   amount: bigint;
   channel: DepositChannel;
   paymentMethod: DepositMethod;
@@ -105,7 +106,7 @@ export interface SavingsTxnView {
   businessDate: string;
   createdAt: Date;
   journalEntryId: string;
-  /** Voucher number of the entry, printed as the receipt number. */
+  /** Voucher number of the entry, printed as the receipt or payment number. */
   entryNo: bigint;
   reversed: boolean;
   /** Running balance after this row, counting only rows that still count. */
@@ -127,11 +128,15 @@ export interface SavingsAccountView {
   openedOn: string;
   status: "active" | "closed";
   balance: bigint;
+  /** Everything ever deposited (not net of withdrawals); dues are measured against this. */
+  deposited: bigint;
   deposits: number;
   lastDepositOn: string | null;
   due: DueStatus | null;
 }
 
+/** Deposits add, withdrawals take away. */
+const signed = sql`case when t.kind = 'withdrawal' then -t.amount else t.amount end`;
 const counts = sql`not exists (select 1 from journal_entry r where r.tenant_id = t.tenant_id and r.reverses_id = t.journal_entry_id)`;
 
 async function accountRows(ctx: TenantTx, where: ReturnType<typeof and>): Promise<SavingsAccountView[]> {
@@ -151,16 +156,23 @@ async function accountRows(ctx: TenantTx, where: ReturnType<typeof and>): Promis
       openedOn: savingsAccount.openedOn,
       status: savingsAccount.status,
       balance: sql<string>`(
-        select coalesce(sum(t.amount), 0) from savings_transaction t
+        select coalesce(sum(${signed}), 0) from savings_transaction t
          where t.tenant_id = "savings_account"."tenant_id" and t.account_id = "savings_account"."id" and ${counts}
+      )`.mapWith((v: string | number) => BigInt(v)),
+      deposited: sql<string>`(
+        select coalesce(sum(t.amount), 0) from savings_transaction t
+         where t.tenant_id = "savings_account"."tenant_id" and t.account_id = "savings_account"."id"
+           and t.kind = 'deposit' and ${counts}
       )`.mapWith((v: string | number) => BigInt(v)),
       deposits: sql<number>`(
         select count(*)::int from savings_transaction t
-         where t.tenant_id = "savings_account"."tenant_id" and t.account_id = "savings_account"."id" and ${counts}
+         where t.tenant_id = "savings_account"."tenant_id" and t.account_id = "savings_account"."id"
+           and t.kind = 'deposit' and ${counts}
       )`,
       lastDepositOn: sql<string | null>`(
         select max(t.business_date)::text from savings_transaction t
-         where t.tenant_id = "savings_account"."tenant_id" and t.account_id = "savings_account"."id" and ${counts}
+         where t.tenant_id = "savings_account"."tenant_id" and t.account_id = "savings_account"."id"
+           and t.kind = 'deposit' and ${counts}
       )`,
     })
     .from(savingsAccount)
@@ -172,7 +184,7 @@ async function accountRows(ctx: TenantTx, where: ReturnType<typeof and>): Promis
     .orderBy(asc(savingsAccount.accountNo));
   return rows.map((r) => ({
     ...(r as Omit<SavingsAccountView, "due">),
-    due: r.status === "active" ? dueStatus(r.frequency, r.installment, r.openedOn, asOf, r.balance as bigint) : null,
+    due: r.status === "active" ? dueStatus(r.frequency, r.installment, r.openedOn, asOf, r.deposited as bigint) : null,
   }));
 }
 
@@ -214,7 +226,7 @@ export async function getAccount(
 
   let running = 0n;
   const transactions: SavingsTxnView[] = rows.map(({ takenByEn, takenByBn, ...r }) => {
-    if (!r.reversed) running += r.amount;
+    if (!r.reversed) running += r.kind === "withdrawal" ? -r.amount : r.amount;
     return { ...(r as Omit<SavingsTxnView, "balanceAfter" | "takenBy">), balanceAfter: running, takenBy: { nameEn: takenByEn, nameBn: takenByBn } };
   });
   return { ...account, transactions: transactions.reverse() };
@@ -372,7 +384,7 @@ export async function savingsOverview(ctx: TenantTx): Promise<SavingsOverview> {
     select d::date::text as date, coalesce(sum(t.amount), 0)::text as amount, count(t.id)::int as count
       from generate_series(${asOf}::date - 13, ${asOf}::date, interval '1 day') d
       left join savings_transaction t
-        on t.tenant_id = ${tenantId} and t.business_date = d::date and ${counts}
+        on t.tenant_id = ${tenantId} and t.business_date = d::date and t.kind = 'deposit' and ${counts}
      group by d order by d`);
   const series = daily.rows.map((r) => ({ date: r.date, amount: BigInt(r.amount), count: Number(r.count) }));
   const today = series[series.length - 1] ?? { amount: 0n, count: 0 };
@@ -419,7 +431,7 @@ export async function recentDeposits(ctx: TenantTx, limit = 8) {
     .from(savingsTransaction)
     .innerJoin(savingsAccount, and(eq(savingsAccount.tenantId, savingsTransaction.tenantId), eq(savingsAccount.id, savingsTransaction.accountId)))
     .innerJoin(member, and(eq(member.tenantId, savingsAccount.tenantId), eq(member.id, savingsAccount.memberId)))
-    .where(eq(savingsTransaction.tenantId, tenantId))
+    .where(and(eq(savingsTransaction.tenantId, tenantId), eq(savingsTransaction.kind, "deposit")))
     .orderBy(desc(savingsTransaction.createdAt))
     .limit(limit);
 }

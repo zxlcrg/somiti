@@ -16,7 +16,8 @@
     "accounts": "Accounts",
     "waiting": "{count} waiting for you",
     "savings": "Savings",
-    "label": "Main"
+    "label": "Main",
+    "savingsWaiting": "{count} withdrawals waiting for you"
   },
   "home": {
     "badge": "Foundation release",
@@ -737,7 +738,7 @@
       "date": "Date",
       "receipt": "Receipt",
       "details": "Details",
-      "amount": "Deposit",
+      "amount": "Amount",
       "runningBalance": "Balance",
       "takenBy": "by {name}",
       "reversed": "Reversed",
@@ -792,6 +793,105 @@
       "AFTER_BUSINESS_DATE": "The date is after today's business date.",
       "IDEMPOTENCY_CONFLICT": "This form was already used. Reload the page to start again.",
       "server": "Something went wrong on our side. Nothing was posted. Please try again."
+    },
+    "tabs": {
+      "deposit": "Deposit",
+      "withdraw": "Withdraw"
+    },
+    "withdrawForm": {
+      "title": "Withdraw money",
+      "available": "Available to withdraw",
+      "held": "{amount} is held by requests waiting for approval.",
+      "amount": "Amount",
+      "all": "All of it",
+      "half": "Half",
+      "paidBy": "Pay out by",
+      "ref": "Cheque or account number",
+      "refWallet": "The member's bKash or Nagad number or transaction ID.",
+      "refBank": "Optional: the cheque number or the member's bank account.",
+      "reason": "Reason (optional)",
+      "reasonPlaceholder": "e.g. Child's school fees",
+      "approvalNote": "A secretary, president or admin other than you approves it before any money is paid.",
+      "preview": "Ledger entry once approved",
+      "after": "Balance after {amount}",
+      "confirm": "Send {amount} for approval",
+      "sending": "Sending…",
+      "nothing": "Nothing to withdraw yet."
+    },
+    "withdrawErrors": {
+      "invalid_amount": "Enter an amount above zero.",
+      "too_large": "That's more than one withdrawal can take.",
+      "over_balance": "Only {amount} is available to withdraw.",
+      "invalid_method": "Choose how the member is paid.",
+      "ref_required": "Enter the member's bKash or Nagad number.",
+      "ref_too_long": "That reference is too long.",
+      "reason_too_long": "Keep the reason under 300 characters.",
+      "account_closed": "This account is closed.",
+      "not_found": "This account could not be found.",
+      "forbidden": "Your role can't request withdrawals.",
+      "IDEMPOTENCY_CONFLICT": "This form was already used. Reload the page to start again.",
+      "server": "Something went wrong on our side. Nothing was sent. Please try again.",
+      "DAY_CLOSED": "Today's business day is already closed.",
+      "NO_OPEN_PERIOD": "There is no open fiscal year for today's date."
+    },
+    "withdrawals": {
+      "title": "Withdrawals",
+      "subtitle": "Money going out of savings, with a second officer's approval.",
+      "waiting": "Waiting for approval",
+      "waitingCount": "{count, plural, one {# withdrawal waiting} other {# withdrawals waiting}}",
+      "waitingLink": "Review",
+      "pendingTab": "Waiting",
+      "decidedTab": "Decided",
+      "nonePending": "Nothing is waiting for approval.",
+      "noneDecided": "No withdrawals have been decided yet.",
+      "requestedBy": "Entered by {name} · {time}",
+      "status": {
+        "pending": "Waiting",
+        "approved": "Paid",
+        "rejected": "Rejected",
+        "cancelled": "Taken back"
+      },
+      "decided": {
+        "approved": "Approved by {name}",
+        "rejected": "Rejected by {name}",
+        "cancelled": "Taken back by {name}"
+      },
+      "payment": "Payment #{no}",
+      "account": "Account #{no}",
+      "approve": "Approve and pay",
+      "reject": "Reject",
+      "rejectReason": "Why are you rejecting it?",
+      "rejectPlaceholder": "e.g. Member not present",
+      "confirmReject": "Reject withdrawal",
+      "cancel": "Take back",
+      "confirmCancel": "Take back request",
+      "back": "Back",
+      "working": "Working…",
+      "yours": "You entered this. Another officer approves it.",
+      "notYours": "A secretary, president or admin approves this.",
+      "requested": "✓ {amount} sent for approval. Nothing is paid until another officer approves it.",
+      "approvedBanner": "🎉 Approved. Pay the member {amount}. Payment #{no}.",
+      "rejectedBanner": "Rejected. Nothing was paid.",
+      "cancelledBanner": "Taken back. Nothing was paid.",
+      "errors": {
+        "not_found": "This withdrawal could not be found.",
+        "decided": "This withdrawal has already been decided.",
+        "self_decision": "You entered this request, so another officer must approve or reject it.",
+        "not_maker": "Only the person who entered it can take it back.",
+        "note_required": "Write a reason for rejecting it.",
+        "over_balance": "The account no longer has enough to pay this.",
+        "account_closed": "This account is closed.",
+        "forbidden": "Your role can't approve withdrawals.",
+        "DAY_CLOSED": "Today's business day is already closed.",
+        "NO_OPEN_PERIOD": "There is no open fiscal year for today's date.",
+        "server": "Something went wrong. Please try again.",
+        "IDEMPOTENCY_CONFLICT": "This form was already used. Reload the page to start again."
+      }
+    },
+    "passbookExtra": {
+      "withdrawal": "Withdrawal",
+      "paidOutBy": "paid out by {name}",
+      "pending": "Waiting for approval"
     }
   }
 }

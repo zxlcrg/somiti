@@ -6,12 +6,15 @@ import { getAppDb, withTenant } from "@/db/client";
 import { formatDate, formatDateTime, formatInteger, formatTaka } from "@/lib/format";
 import { primaryName } from "@/lib/names";
 import { canViewMembers, getMember } from "@/modules/members";
-import { depositChannel, getAccount } from "@/modules/savings";
+import { canApproveWithdrawals, canRequestWithdrawals, depositChannel, getAccount, listWithdrawals } from "@/modules/savings";
 import { requireUser } from "../../../auth";
 import { pageLocale } from "../../../books";
 import { MemberAvatar } from "../../../members/member-avatar";
 import { FREQ_ICON, METHOD_ICON } from "../../ui";
+import { WithdrawalCard } from "../../withdrawals/withdrawal-card";
 import { DepositForm } from "./deposit-form";
+import { SideTabs } from "./side-tabs";
+import { WithdrawForm } from "./withdraw-form";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("savings.passbook");
@@ -23,7 +26,7 @@ export default async function PassbookPage({
   searchParams,
 }: {
   params: Promise<{ accountId: string }>;
-  searchParams: Promise<{ opened?: string; deposited?: string }>;
+  searchParams: Promise<{ opened?: string; deposited?: string; requested?: string; decided?: string; kind?: string; tab?: string }>;
 }) {
   const user = await requireUser();
   const t = await getTranslations("savings");
@@ -33,10 +36,11 @@ export default async function PassbookPage({
   const data = await withTenant(getAppDb(), user.tenantId, async (ctx) => {
     const account = await getAccount(ctx, accountId);
     if (!account) return null;
-    return { account, member: (await getMember(ctx, account.memberId))! };
+    const withdrawals = await listWithdrawals(ctx, { accountId, limit: 20 });
+    return { account, member: (await getMember(ctx, account.memberId))!, withdrawals };
   });
   if (!data) notFound();
-  const { account: a, member } = data;
+  const { account: a, member, withdrawals } = data;
   const locale = await pageLocale();
   const taka = (p: bigint) => formatTaka(p, locale);
   const num = (n: number | bigint) => formatInteger(n, locale);
@@ -44,6 +48,13 @@ export default async function PassbookPage({
   const productName = primaryName({ nameEn: a.productNameEn, nameBn: a.productNameBn }, locale);
   const channel = depositChannel(user.roles);
   const canDeposit = !!channel && a.status === "active" && member.status === "active";
+  const canWithdraw = canRequestWithdrawals(user.roles) && a.status === "active";
+  const viewer = { userId: user.userId, canApprove: canApproveWithdrawals(user.roles), canRequest: canRequestWithdrawals(user.roles) };
+  const pendingWd = withdrawals.filter((w) => w.status === "pending");
+  const held = pendingWd.reduce((s, w) => s + w.amount, 0n);
+  const requested = search.requested ? withdrawals.find((w) => w.id === search.requested) : undefined;
+  const decided = search.decided ? withdrawals.find((w) => w.id === search.decided) : undefined;
+  const here = `/savings/accounts/${a.id}`;
   const fresh = search.deposited ? a.transactions.find((x) => x.id === search.deposited) : undefined;
   const behind = a.due?.behind ?? 0n;
   const tone = !a.due ? "flex" : behind > 0n ? "late" : behind < 0n ? "ahead" : "ok";
@@ -63,6 +74,19 @@ export default async function PassbookPage({
         <p className="celebrate" role="status">
           <span aria-hidden="true">🎉</span>{" "}
           {t("passbook.deposited", { no: num(fresh.entryNo), amount: taka(fresh.amount), balance: taka(a.balance) })}
+        </p>
+      )}
+
+      {requested && (
+        <p className="celebrate" role="status">
+          {t("withdrawals.requested", { amount: taka(requested.amount) })}
+        </p>
+      )}
+      {decided && decided.status !== "pending" && (
+        <p className={`celebrate${decided.status === "approved" ? "" : " quiet"}`} role="status">
+          {decided.status === "approved"
+            ? t("withdrawals.approvedBanner", { amount: taka(decided.amount), no: num(decided.entryNo ?? 0n) })
+            : t(decided.status === "rejected" ? "withdrawals.rejectedBanner" : "withdrawals.cancelledBanner")}
         </p>
       )}
 
@@ -91,8 +115,18 @@ export default async function PassbookPage({
         </div>
       </section>
 
-      <div className={`passbook-grid${canDeposit ? "" : " solo"}`}>
+      <div className={`passbook-grid${canDeposit || canWithdraw ? "" : " solo"}`}>
         <section className="passbook-history" aria-labelledby="history-title">
+          {pendingWd.length > 0 && (
+            <div className="wd-pending">
+              <h2>
+                <span aria-hidden="true">⏳</span> {t("withdrawals.waiting")}
+              </h2>
+              {pendingWd.map((w) => (
+                <WithdrawalCard key={w.id} w={w} locale={locale} viewer={viewer} returnTo={here} />
+              ))}
+            </div>
+          )}
           {a.due && (
             <div className="due-meter wide">
               <div className="due-head">
@@ -127,21 +161,33 @@ export default async function PassbookPage({
                 </thead>
                 <tbody>
                   {a.transactions.map((x) => (
-                    <tr key={x.id} className={`${x.reversed ? "reversed" : ""}${x.id === fresh?.id ? " fresh" : ""}`}>
+                    <tr
+                      key={x.id}
+                      className={`${x.kind}${x.reversed ? " reversed" : ""}${x.id === fresh?.id || (decided?.entryNo != null && x.entryNo === decided.entryNo) ? " fresh" : ""}`}
+                    >
                       <td>
                         {formatDate(x.businessDate, locale)}
-                        <small className="muted">{t("passbook.receipt")} #{num(x.entryNo)}</small>
+                        <small className="muted">
+                          {x.kind === "withdrawal" ? t("withdrawals.payment", { no: num(x.entryNo) }) : `${t("passbook.receipt")} #${num(x.entryNo)}`}
+                        </small>
                       </td>
                       <td>
                         <span aria-hidden="true">{x.channel === "collector" ? "🚶" : METHOD_ICON[x.paymentMethod]}</span>{" "}
+                        {x.kind === "withdrawal" && <strong className="wd-tag">{t("passbookExtra.withdrawal")} · </strong>}
                         {x.channel === "collector" ? t("passbook.collector") : t(`methods.${x.paymentMethod}`)}
                         {x.paymentRef ? ` · ${x.paymentRef}` : ""}
                         {x.reversed && <span className="chip">{t("passbook.reversed")}</span>}
                         <small className="muted">
-                          {t("passbook.takenBy", { name: primaryName(x.takenBy, locale) })} · {formatDateTime(x.createdAt, locale)}
+                          {x.kind === "withdrawal"
+                            ? t("passbookExtra.paidOutBy", { name: primaryName(x.takenBy, locale) })
+                            : t("passbook.takenBy", { name: primaryName(x.takenBy, locale) })}{" "}
+                          · {formatDateTime(x.createdAt, locale)}
                         </small>
                       </td>
-                      <td className="num dep">+{taka(x.amount)}</td>
+                      <td className={`num ${x.kind === "withdrawal" ? "wdr" : "dep"}`}>
+                        {x.kind === "withdrawal" ? "−" : "+"}
+                        {taka(x.amount)}
+                      </td>
                       <td className="num">{taka(x.balanceAfter)}</td>
                     </tr>
                   ))}
@@ -151,17 +197,28 @@ export default async function PassbookPage({
           )}
         </section>
 
-        {canDeposit && (
+        {(canDeposit || canWithdraw) && (
           <aside className="deposit-side">
-            <DepositForm
-              accountId={a.id}
-              memberName={name}
-              channel={channel!}
-              installment={a.installment?.toString() ?? null}
-              behind={(behind > 0n ? behind : 0n).toString()}
-              balance={a.balance.toString()}
-              minDeposit={a.minDeposit.toString()}
-            />
+            {(() => {
+              const depositForm = canDeposit && (
+                <DepositForm
+                  accountId={a.id}
+                  memberName={name}
+                  channel={channel!}
+                  installment={a.installment?.toString() ?? null}
+                  behind={(behind > 0n ? behind : 0n).toString()}
+                  balance={a.balance.toString()}
+                  minDeposit={a.minDeposit.toString()}
+                />
+              );
+              const withdrawForm = canWithdraw && (
+                <WithdrawForm accountId={a.id} memberName={name} balance={a.balance.toString()} held={held.toString()} />
+              );
+              if (depositForm && withdrawForm) {
+                return <SideTabs key={search.tab ?? "deposit"} deposit={depositForm} withdraw={withdrawForm} start={search.tab === "withdraw" ? "withdraw" : "deposit"} />;
+              }
+              return depositForm || withdrawForm;
+            })()}
           </aside>
         )}
       </div>

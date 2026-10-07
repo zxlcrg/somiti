@@ -4,7 +4,7 @@ import { withTenant } from "../src/db/client";
 import { otpChallenge, userSession } from "../src/db/schema";
 import { admitMember, buyShares, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
-import { createProduct, deposit as depositSavings, openAccount } from "../src/modules/savings";
+import { createProduct, deposit as depositSavings, openAccount, requestWithdrawal } from "../src/modules/savings";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
 /**
@@ -68,6 +68,12 @@ beforeAll(async () => {
         { userId: t.adminUserId, channel: "office" },
       );
       if (!paid.ok) throw new Error("seed deposit");
+      const asked = await requestWithdrawal(
+        ctx,
+        { accountId: account.accountId, amount: "20", method: "cash", submitKey: `seed-withdrawal-${t.tenantId}` },
+        { userId: t.adminUserId },
+      );
+      if (!asked.ok) throw new Error("seed withdrawal");
     });
   }
 });
