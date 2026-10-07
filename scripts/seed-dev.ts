@@ -8,6 +8,7 @@ import { formatAmount } from "../src/lib/format";
 import { appUser, userRole } from "../src/db/schema";
 import { accountIdsByKey, approveVoucher, postEntry, submitVoucher, trialBalance } from "../src/modules/ledger";
 import { admitMember, buyShares } from "../src/modules/members";
+import { createProduct, deposit, openAccount } from "../src/modules/savings";
 import { createTenant } from "../src/modules/tenancy/create-tenant";
 
 const url = process.env.DATABASE_URL;
@@ -92,6 +93,33 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
   ] as const;
   // The demo admin also works the cash desk, so the demo can take payments.
   await ctx.tx.insert(userRole).values({ tenantId: somiti.tenantId, userId: somiti.adminUserId, role: "cashier" });
+  // Savings products as a typical somiti runs them, and a field collector for daily rounds.
+  const products: Record<string, string> = {};
+  for (const p of [
+    { code: "DS", nameEn: "Daily savings", nameBn: "দৈনিক সঞ্চয়", frequency: "daily", installment: "20" },
+    { code: "WS", nameEn: "Weekly savings", nameBn: "সাপ্তাহিক সঞ্চয়", frequency: "weekly", installment: "100" },
+    { code: "DPS", nameEn: "Monthly DPS", nameBn: "মাসিক ডিপিএস", frequency: "monthly", installment: "500" },
+    { code: "GS", nameEn: "General savings", nameBn: "সাধারণ সঞ্চয়", frequency: "flexible" },
+  ]) {
+    const made = await createProduct(ctx, p, { userId: somiti.adminUserId, device: "seed" });
+    if (!made.ok) throw new Error(`seed product: ${JSON.stringify(made.errors)}`);
+    products[p.code] = made.id;
+  }
+  const [collector] = await ctx.tx
+    .insert(appUser)
+    .values({ tenantId: ctx.tenantId, nameEn: "Demo Collector", nameBn: "ডেমো মাঠকর্মী", phone: "+8801700000002" })
+    .returning({ id: appUser.id });
+  await ctx.tx.insert(userRole).values({ tenantId: ctx.tenantId, userId: collector!.id, role: "field_collector" });
+  // Which products each sample member saves in, and what they have paid today.
+  const savingsPlan: [string, string][][] = [
+    [["DS", "20"], ["DPS", "500"]],
+    [["WS", "100"], ["GS", "2000"]],
+    [["DS", ""]],
+    [["DPS", "1000"], ["GS", "750"]],
+    [["DS", "40"]],
+    [["WS", ""]],
+  ];
+
   for (const [i, m] of sampleMembers.entries()) {
     const admitted = await admitMember(ctx, m, { userId: somiti.adminUserId, device: "seed" });
     if (!admitted.ok) throw new Error(`seed member: ${JSON.stringify(admitted.errors)}`);
@@ -101,8 +129,19 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
       { userId: somiti.adminUserId, device: "seed" },
     );
     if (!bought.ok) throw new Error(`seed shares: ${JSON.stringify(bought.errors)}`);
+    for (const [code, paid] of savingsPlan[i]!) {
+      const opened = await openAccount(ctx, { memberId: admitted.member.id, productId: products[code]! }, { userId: somiti.adminUserId, device: "seed" });
+      if (!opened.ok) throw new Error(`seed account: ${JSON.stringify(opened.errors)}`);
+      if (!paid) continue;
+      const done = await deposit(
+        ctx,
+        { accountId: opened.accountId, amount: paid, method: "cash", idempotencyKey: `seed-deposit-${opened.accountId}` },
+        { userId: code === "DS" ? collector!.id : somiti.adminUserId, channel: code === "DS" ? "collector" : "office", device: "seed" },
+      );
+      if (!done.ok) throw new Error(`seed deposit: ${JSON.stringify(done.errors)}`);
+    }
   }
-  console.log(`Admitted ${sampleMembers.length} sample members, each with some shares.`);
+  console.log(`Admitted ${sampleMembers.length} sample members, each with some shares and savings.`);
 
   const tb = await trialBalance(ctx, today);
   const col = (p: bigint) => formatAmount(p, "en").padStart(14);
@@ -113,6 +152,7 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
 
 console.log(`\nSign in at http://localhost:3000/sign-in with somiti code "${slug}" and mobile 01700-000000.`);
 console.log('To try approvals, sign in as the secretary with mobile 01700-000001.');
+console.log("To take deposits on a collection round, sign in as the collector with mobile 01700-000002.");
 console.log("The code is printed in the terminal running pnpm dev.");
 
 await pool.end();

@@ -14,6 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const tileIcons = {
+  savings: "M4 7h16v12H4zM4 7l2-3h12l2 3M9 12h6",
   members: "M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm13 9v-1a4 4 0 0 0-3-3.9M16 4.1a3 3 0 0 1 0 5.8",
   vouchers: "M4 4h16v16l-3-2-3 2-2-2-2 2-3-2-3 2V4zm4 5h8M8 13h5",
   trialBalance: "M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0L5 7zm14 0l-3 7a3 3 0 0 0 6 0l-3-7z",
@@ -27,7 +28,7 @@ export default async function DashboardPage() {
   const name = (bn ? (user.nameBn ?? user.nameEn) : (user.nameEn ?? user.nameBn)) ?? "";
   const somitiName = (bn ? (user.somiti.nameBn ?? user.somiti.nameEn) : (user.somiti.nameEn ?? user.somiti.nameBn)) ?? "";
   const phone = formatBdPhone(user.phone);
-  const tiles = (["members", "vouchers", "trialBalance"] as const).map((key) => ({
+  const tiles = (["members", "savings", "vouchers", "trialBalance"] as const).map((key) => ({
     key,
     title: t(`dashboard.tiles.${key}`),
     body: t(`dashboard.tiles.${key}Body`),
@@ -70,8 +71,8 @@ export default async function DashboardPage() {
       <h2 className="section-title">{t("dashboard.comingTitle")}</h2>
       <section className="features">
         {tiles.map((tile) => {
-          const href = { members: "/members", vouchers: "/vouchers", trialBalance: "/trial-balance" }[tile.key];
-          const live = tile.key === "members" ? canViewMembers(user.roles) : canViewBooks(user.roles);
+          const href = { members: "/members", savings: "/savings", vouchers: "/vouchers", trialBalance: "/trial-balance" }[tile.key];
+          const live = tile.key === "members" || tile.key === "savings" ? canViewMembers(user.roles) : canViewBooks(user.roles);
           const body = (
             <>
               <span className={`pill${live ? " live" : ""}`}>{live ? t("dashboard.tiles.membersOpen") : t("dashboard.soon")}</span>

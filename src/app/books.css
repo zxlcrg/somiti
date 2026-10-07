@@ -1131,7 +1131,7 @@
     white-space: nowrap;
   }
 
-  .topbar-actions .count-badge {
+  .main-nav .count-badge {
     margin-left: 0.2rem;
   }
 
@@ -1143,7 +1143,7 @@
     gap: 0.25rem;
   }
 
-  .topbar-actions .nav-link {
+  .main-nav .nav-link {
     padding-inline: 0.35rem;
     font-size: 0.85rem;
   }
@@ -1154,14 +1154,14 @@
     padding: 0.25rem 0.4rem;
   }
 
-  .topbar-actions .count-badge {
+  .main-nav .count-badge {
     min-width: 1.1rem;
     height: 1.1rem;
     padding: 0 0.25rem;
     font-size: 0.7rem;
   }
 
-  .topbar-actions .nav-link {
+  .main-nav .nav-link {
     padding-inline: 0.25rem;
   }
 }

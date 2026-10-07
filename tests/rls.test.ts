@@ -4,6 +4,7 @@ import { withTenant } from "../src/db/client";
 import { otpChallenge, userSession } from "../src/db/schema";
 import { admitMember, buyShares, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
+import { createProduct, deposit as depositSavings, openAccount } from "../src/modules/savings";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
 /**
@@ -57,6 +58,16 @@ beforeAll(async () => {
         ],
       });
       if (!v.ok) throw new Error("seed voucher");
+      const product = await createProduct(ctx, { code: "GS", nameEn: "General savings", frequency: "flexible" }, { userId: t.adminUserId });
+      if (!product.ok) throw new Error("seed product");
+      const account = await openAccount(ctx, { memberId: admitted.member.id, productId: product.id }, { userId: t.adminUserId });
+      if (!account.ok) throw new Error("seed account");
+      const paid = await depositSavings(
+        ctx,
+        { accountId: account.accountId, amount: "50", method: "cash", idempotencyKey: `seed-savings-${t.tenantId}` },
+        { userId: t.adminUserId, channel: "office" },
+      );
+      if (!paid.ok) throw new Error("seed deposit");
     });
   }
 });

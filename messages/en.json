@@ -14,7 +14,9 @@
     "dashboard": "Dashboard",
     "members": "Members",
     "accounts": "Accounts",
-    "waiting": "{count} waiting for you"
+    "waiting": "{count} waiting for you",
+    "savings": "Savings",
+    "label": "Main"
   },
   "home": {
     "badge": "Foundation release",
@@ -149,7 +151,9 @@
       "vouchersBody": "Record deposits, withdrawals and expenses.",
       "trialBalance": "Trial balance",
       "trialBalanceBody": "See every account balanced, as of any day.",
-      "membersOpen": "Open"
+      "membersOpen": "Open",
+      "savings": "Savings",
+      "savingsBody": "Products, deposits, dues and passbooks."
     }
   },
   "roles": {
@@ -249,8 +253,6 @@
       "addedBy": "Admitted by",
       "soonTitle": "Coming next for this member",
       "soon": {
-        "savings": "Savings accounts",
-        "savingsBody": "Open savings accounts, record deposits and print the passbook.",
         "loans": "Loans",
         "loansBody": "Applications, schedules and repayments."
       }
@@ -596,6 +598,200 @@
       "emptyBody": "Approved vouchers and deposits appear here.",
       "balanced": "Debits equal credits. The books balance.",
       "notBalanced": "Debits and credits differ. Tell the admin."
+    }
+  },
+  "savings": {
+    "title": "Savings",
+    "subtitle": "Every member's savings, deposits and dues in one place.",
+    "noAccess": "You don't have access to savings.",
+    "newProduct": "New product",
+    "stats": {
+      "total": "Total savings",
+      "accounts": "Open accounts",
+      "today": "Deposits today",
+      "todayCount": "{count, plural, one {# deposit} other {# deposits}}"
+    },
+    "chart": {
+      "title": "Deposits, last 14 days",
+      "tip": "{date}: {amount} from {count, plural, one {# deposit} other {# deposits}}",
+      "empty": "No deposits in the last 14 days."
+    },
+    "behind": {
+      "title": "Behind on installments",
+      "none": "Everyone is up to date.",
+      "by": "behind by {amount}"
+    },
+    "recent": {
+      "title": "Latest deposits",
+      "none": "No deposits yet.",
+      "collector": "collector"
+    },
+    "products": {
+      "title": "Products",
+      "none": "No savings products yet",
+      "noneBody": "Create a product first, such as daily savings of ৳20 or a monthly DPS of ৳500. Then open accounts for members.",
+      "accounts": "{count, plural, one {# account} other {# accounts}}",
+      "off": "Switched off",
+      "turnOff": "Switch off",
+      "turnOn": "Switch on",
+      "minDeposit": "Min. deposit {amount}",
+      "created": "Product {code} is ready. Members can now open accounts in it."
+    },
+    "frequency": {
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "flexible": "Flexible"
+    },
+    "every": {
+      "daily": "{amount} a day",
+      "weekly": "{amount} a week",
+      "monthly": "{amount} a month",
+      "flexible": "Any amount, any time"
+    },
+    "productForm": {
+      "title": "New savings product",
+      "subtitle": "Products are rules, not code: set the schedule and amount, and members can open accounts in it straight away.",
+      "code": "Short code",
+      "codeHint": "Up to 12 letters, digits or dashes, e.g. DS or DPS-500. It can't change later.",
+      "nameEn": "Name in English",
+      "nameBn": "Name in Bangla (optional)",
+      "frequency": "How often members save",
+      "frequencyHint": {
+        "daily": "A set amount every day, usually collected in the field.",
+        "weekly": "A set amount once a week.",
+        "monthly": "A set amount each month, like a DPS.",
+        "flexible": "Members save any amount whenever they like."
+      },
+      "installment": "Installment",
+      "minDeposit": "Smallest deposit accepted",
+      "minDepositHint": "Optional. ৳1 if left empty.",
+      "preview": "Preview",
+      "perYear": "About {amount} a year per member",
+      "save": "Create product",
+      "saving": "Saving…",
+      "cancel": "Cancel"
+    },
+    "productErrors": {
+      "required": "Required.",
+      "code_format": "Use up to 12 letters, digits or dashes.",
+      "code_taken": "Another product already uses this code.",
+      "too_long": "That's too long.",
+      "invalid_frequency": "Choose how often members save.",
+      "invalid_amount": "Enter an amount above zero.",
+      "too_large": "That amount is too large.",
+      "server": "Something went wrong on our side. Nothing was saved."
+    },
+    "panel": {
+      "title": "Savings",
+      "subtitle": "{name}'s savings accounts.",
+      "open": "Open account",
+      "none": "No savings accounts yet",
+      "noneBody": "Open an account in one of the somiti's savings products to start taking deposits.",
+      "noProducts": "There are no savings products yet. A secretary or admin can create one on the Savings page.",
+      "deposit": "Deposit",
+      "passbook": "Passbook",
+      "balance": "Balance",
+      "accountNo": "Account #{no}",
+      "upToDate": "Up to date",
+      "behind": "Behind {amount}",
+      "ahead": "Ahead {amount}",
+      "paidOf": "{paid} of {expected} due so far",
+      "lastDeposit": "Last deposit {date}",
+      "noDeposits": "No deposits yet",
+      "closed": "Closed"
+    },
+    "openForm": {
+      "title": "Open a savings account for {name}",
+      "subtitle": "Choose a product. The account starts today and the first installment is due today.",
+      "product": "Product",
+      "already": "Already open",
+      "installment": "Agreed installment",
+      "installmentHint": "Leave as is, or agree a bigger amount with the member.",
+      "save": "Open account",
+      "saving": "Opening…",
+      "cancel": "Cancel",
+      "opened": "Account #{no} is open. Take the first deposit below."
+    },
+    "openErrors": {
+      "invalid_product": "Choose a product.",
+      "product_inactive": "That product is switched off.",
+      "already_open": "{name} already has an open account in this product.",
+      "member_inactive": "Only active members can open accounts.",
+      "not_found": "This member could not be found.",
+      "invalid_amount": "Enter an amount above zero.",
+      "forbidden": "Only a secretary, president or admin can open accounts.",
+      "server": "Something went wrong on our side. Nothing was saved."
+    },
+    "passbook": {
+      "title": "Passbook",
+      "member": "Member",
+      "product": "Product",
+      "opened": "Opened {date}",
+      "balance": "Balance",
+      "schedule": "Schedule",
+      "due": "Due so far",
+      "paid": "Paid",
+      "history": "Transactions",
+      "none": "No transactions yet.",
+      "date": "Date",
+      "receipt": "Receipt",
+      "details": "Details",
+      "amount": "Deposit",
+      "runningBalance": "Balance",
+      "takenBy": "by {name}",
+      "reversed": "Reversed",
+      "collector": "Collector's round",
+      "deposited": "Receipt #{no}: {amount} deposited. New balance {balance}.",
+      "print": "Print"
+    },
+    "depositForm": {
+      "title": "Take a deposit",
+      "amount": "Amount",
+      "quick": "Quick amounts",
+      "installments": "{count, plural, one {# installment} other {# installments}}",
+      "clearDue": "Clear dues",
+      "paidBy": "Paid by",
+      "ref": "Transaction ID",
+      "refWallet": "The bKash or Nagad transaction ID from the member's phone.",
+      "refBank": "Optional: the bank slip number.",
+      "collectorNote": "You're on a collection round: this cash is held by you until you hand it over at the office.",
+      "preview": "Ledger entry",
+      "debit": "Debit",
+      "credit": "Credit",
+      "after": "New balance {amount}",
+      "confirm": "Receive {amount}",
+      "posting": "Posting…"
+    },
+    "methods": {
+      "cash": "Cash",
+      "bank": "Bank",
+      "mobile_wallet": "bKash / Nagad"
+    },
+    "accounts": {
+      "cash": "Cash in hand",
+      "bank": "Bank",
+      "mobile_wallet": "Mobile wallet",
+      "collector": "Cash with collector",
+      "member_savings": "Member savings"
+    },
+    "depositErrors": {
+      "invalid_amount": "Enter an amount above zero.",
+      "below_minimum": "This product's smallest deposit is {amount}.",
+      "too_large": "That's more than one deposit can take.",
+      "invalid_method": "Choose how the member paid.",
+      "collector_cash_only": "On a collection round you can take cash only.",
+      "ref_required": "Enter the bKash or Nagad transaction ID.",
+      "ref_too_long": "That reference is too long.",
+      "account_closed": "This account is closed.",
+      "member_inactive": "Only active members can deposit.",
+      "not_found": "This account could not be found.",
+      "forbidden": "Only a cashier or field collector can take deposits.",
+      "DAY_CLOSED": "Today's business day is already closed.",
+      "NO_OPEN_PERIOD": "There is no open fiscal year for today's date.",
+      "AFTER_BUSINESS_DATE": "The date is after today's business date.",
+      "IDEMPOTENCY_CONFLICT": "This form was already used. Reload the page to start again.",
+      "server": "Something went wrong on our side. Nothing was posted. Please try again."
     }
   }
 }

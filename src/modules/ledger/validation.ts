@@ -21,7 +21,7 @@ export const postEntryInput = z
     branchId: z.uuid(),
     /** Defaults to the somiti's current business date. */
     businessDate: z.iso.date().optional(),
-    source: z.enum(["opening_balance", "manual_voucher", "share_purchase", "system"]),
+    source: z.enum(["opening_balance", "manual_voucher", "share_purchase", "savings_deposit", "system"]),
     narration: z.string().trim().min(1).max(1000),
     createdBy: z.uuid(),
     /** Client-generated key; a repeat with the same key and body returns the first result. */
