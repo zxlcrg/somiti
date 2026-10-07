@@ -5,7 +5,8 @@
 import { createDb, resolveTenantSlug, withTenant } from "../src/db/client";
 import { todayInDhaka } from "../src/lib/dates";
 import { formatAmount } from "../src/lib/format";
-import { accountIdsByKey, postEntry, trialBalance } from "../src/modules/ledger";
+import { appUser, userRole } from "../src/db/schema";
+import { accountIdsByKey, approveVoucher, postEntry, submitVoucher, trialBalance } from "../src/modules/ledger";
 import { admitMember } from "../src/modules/members";
 import { createTenant } from "../src/modules/tenancy/create-tenant";
 
@@ -53,6 +54,34 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
     ],
   });
 
+  // A second officer, so a voucher made by one can be approved by the other.
+  const secretaryPhone = "+8801700000001";
+  const [sec] = await ctx.tx
+    .insert(appUser)
+    .values({ tenantId: ctx.tenantId, nameEn: "Demo Secretary", nameBn: "ডেমো সম্পাদক", phone: secretaryPhone })
+    .returning({ id: appUser.id });
+  await ctx.tx.insert(userRole).values({ tenantId: ctx.tenantId, userId: sec!.id, role: "secretary" });
+
+  const e = await accountIdsByKey(ctx, ["cash_in_hand", "sms_expense"]);
+  const voucher = (narration: string, taka: string, createdBy: string) =>
+    submitVoucher(ctx, {
+      narration,
+      lines: [
+        { accountId: e.sms_expense, debit: taka, credit: "" },
+        { accountId: e.cash_in_hand, debit: "", credit: taka },
+      ],
+      branchId: somiti.branchId,
+      createdBy,
+      device: "seed",
+    });
+  const paid = await voucher("SMS bundle for October", "500", somiti.adminUserId);
+  if (!paid.ok) throw new Error(`seed voucher: ${JSON.stringify(paid.errors)}`);
+  await approveVoucher(ctx, { voucherId: paid.voucherId, userId: sec!.id, device: "seed" });
+  // Waiting for the admin: made by the secretary.
+  const waiting = await voucher("SMS top-up", "250", sec!.id);
+  if (!waiting.ok) throw new Error(`seed voucher: ${JSON.stringify(waiting.errors)}`);
+  console.log("Added a demo secretary and two sample vouchers (one waiting for the admin).");
+
   const sampleMembers = [
     { nameEn: "Rahima Begum", nameBn: "রহিমা বেগম", guardianRelation: "husband", guardianNameBn: "আব্দুল করিম", phone: "01711000001", commLocale: "bn" },
     { nameEn: "Abdul Karim", nameBn: "আব্দুল করিম", guardianNameEn: "Mohammad Ali", phone: "01811000002", nid: "1987654321" },
@@ -75,6 +104,7 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
 });
 
 console.log(`\nSign in at http://localhost:3000/sign-in with somiti code "${slug}" and mobile 01700-000000.`);
+console.log('To try approvals, sign in as the secretary with mobile 01700-000001.');
 console.log("The code is printed in the terminal running pnpm dev.");
 
 await pool.end();

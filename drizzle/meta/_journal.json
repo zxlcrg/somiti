@@ -71,6 +71,20 @@
       "when": 1791056347856,
       "tag": "0009_member_photo_rls_and_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791384985265,
+      "tag": "0010_vouchers",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791385016353,
+      "tag": "0011_vouchers_maker_checker_rls_and_grants",
+      "breakpoints": true
     }
   ]
 }

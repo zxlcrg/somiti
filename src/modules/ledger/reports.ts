@@ -1,4 +1,4 @@
-import { and, asc, eq, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, lt, lte, ne, sql } from "drizzle-orm";
 import type { TenantTx } from "@/db/client";
 import { journalEntry, journalLine, ledgerAccount } from "@/db/schema";
 
@@ -68,4 +68,104 @@ export async function trialBalance(ctx: TenantTx, asOf: string): Promise<TrialBa
     result.push(row);
   }
   return { asOf, rows: result, totalDebit, totalCredit };
+}
+
+export interface CashBookRow {
+  entryId: string;
+  entryNo: bigint;
+  businessDate: string;
+  source: (typeof journalEntry.$inferSelect)["source"];
+  narration: string;
+  /** The other accounts in the entry: where the money came from or went to. */
+  contra: Array<{ code: string; nameEn: string | null; nameBn: string | null }>;
+  receipt: bigint;
+  payment: bigint;
+  balance: bigint;
+}
+
+export interface CashBook {
+  accountId: string;
+  from: string;
+  to: string;
+  opening: bigint;
+  receipts: bigint;
+  payments: bigint;
+  closing: bigint;
+  rows: CashBookRow[];
+}
+
+/** Accounts a cash book can be kept for. */
+export const CASH_BOOK_KEYS = ["cash_in_hand", "cash_with_collector", "bank", "mobile_wallet"] as const;
+
+/**
+ * Cash book for one cash or bank account between two business dates
+ * (inclusive): the opening balance, every receipt and payment with a
+ * running balance, and the closing balance.
+ */
+export async function cashBook(ctx: TenantTx, q: { accountId: string; from: string; to: string }): Promise<CashBook> {
+  const onAccount = and(eq(journalLine.tenantId, ctx.tenantId), eq(journalLine.accountId, q.accountId));
+  const join = and(eq(journalEntry.tenantId, journalLine.tenantId), eq(journalEntry.id, journalLine.entryId));
+
+  const [before] = await ctx.tx
+    .select({ net: sql<string>`coalesce(sum(${journalLine.debit} - ${journalLine.credit}), 0)` })
+    .from(journalLine)
+    .innerJoin(journalEntry, join)
+    .where(and(onAccount, lt(journalEntry.businessDate, q.from)));
+  const opening = BigInt(before?.net ?? 0);
+
+  const lines = await ctx.tx
+    .select({
+      entryId: journalEntry.id,
+      entryNo: journalEntry.entryNo,
+      businessDate: journalEntry.businessDate,
+      source: journalEntry.source,
+      narration: journalEntry.narration,
+      debit: journalLine.debit,
+      credit: journalLine.credit,
+    })
+    .from(journalLine)
+    .innerJoin(journalEntry, join)
+    .where(and(onAccount, gte(journalEntry.businessDate, q.from), lte(journalEntry.businessDate, q.to)))
+    .orderBy(asc(journalEntry.businessDate), asc(journalEntry.entryNo), asc(journalLine.lineNo));
+
+  const entryIds = [...new Set(lines.map((l) => l.entryId))];
+  const contraRows = entryIds.length
+    ? await ctx.tx
+        .selectDistinct({
+          entryId: journalLine.entryId,
+          code: ledgerAccount.code,
+          nameEn: ledgerAccount.nameEn,
+          nameBn: ledgerAccount.nameBn,
+        })
+        .from(journalLine)
+        .innerJoin(
+          ledgerAccount,
+          and(eq(ledgerAccount.tenantId, journalLine.tenantId), eq(ledgerAccount.id, journalLine.accountId)),
+        )
+        .where(
+          and(
+            eq(journalLine.tenantId, ctx.tenantId),
+            inArray(journalLine.entryId, entryIds),
+            ne(journalLine.accountId, q.accountId),
+          ),
+        )
+        .orderBy(asc(ledgerAccount.code))
+    : [];
+  const contra = new Map<string, CashBookRow["contra"]>();
+  for (const c of contraRows) {
+    const list = contra.get(c.entryId) ?? [];
+    list.push({ code: c.code, nameEn: c.nameEn, nameBn: c.nameBn });
+    contra.set(c.entryId, list);
+  }
+
+  let balance = opening;
+  let receipts = 0n;
+  let payments = 0n;
+  const rows = lines.map((l) => {
+    balance += l.debit - l.credit;
+    receipts += l.debit;
+    payments += l.credit;
+    return { ...l, contra: contra.get(l.entryId) ?? [], receipt: l.debit, payment: l.credit, balance };
+  });
+  return { accountId: q.accountId, from: q.from, to: q.to, opening, receipts, payments, closing: balance, rows };
 }

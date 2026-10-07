@@ -9,6 +9,7 @@ import {
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -206,6 +207,119 @@ export const journalLine = pgTable(
     // Exactly one side is a positive amount.
     check(
       "journal_line_one_side",
+      sql`${t.debit} >= 0 AND ${t.credit} >= 0 AND (${t.debit} > 0) <> (${t.credit} > 0)`,
+    ),
+  ],
+);
+
+export const voucherStatusEnum = pgEnum("voucher_status", ["pending", "approved", "rejected", "cancelled"]);
+
+/**
+ * A manual voucher waiting for a second officer (maker-checker). Nothing
+ * reaches the ledger until a different user approves it; approval posts
+ * one journal entry and records it in `entryId`. The database refuses an
+ * approval or rejection by the person who made the voucher.
+ */
+export const voucher = pgTable(
+  "voucher",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    branchId: uuid("branch_id").notNull(),
+    narration: text("narration").notNull(),
+    /** Sum of the debit lines, in paisa; kept for lists and the approval screen. */
+    total: bigint("total", { mode: "bigint" }).notNull(),
+    status: voucherStatusEnum("status").notNull().default("pending"),
+    createdBy: uuid("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Like journal_entry: lines can only be added in the transaction that made the voucher. */
+    createdTxid: bigint("created_txid", { mode: "bigint" })
+      .notNull()
+      .default(sql`txid_current()`),
+    /** Client-generated, so a double-clicked submit makes one voucher. */
+    submitKey: text("submit_key"),
+    decidedBy: uuid("decided_by"),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    /** Why it was rejected (required) or cancelled. */
+    decisionNote: text("decision_note"),
+    /** The journal entry an approval posted. */
+    entryId: uuid("entry_id"),
+  },
+  (t) => [
+    unique("voucher_tenant_id_id").on(t.tenantId, t.id),
+    unique("voucher_tenant_submit_key").on(t.tenantId, t.submitKey),
+    unique("voucher_tenant_entry").on(t.tenantId, t.entryId),
+    index("voucher_tenant_status_created").on(t.tenantId, t.status, t.createdAt),
+    foreignKey({
+      name: "voucher_branch_fk",
+      columns: [t.tenantId, t.branchId],
+      foreignColumns: [branch.tenantId, branch.id],
+    }),
+    foreignKey({
+      name: "voucher_created_by_fk",
+      columns: [t.tenantId, t.createdBy],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    foreignKey({
+      name: "voucher_decided_by_fk",
+      columns: [t.tenantId, t.decidedBy],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    foreignKey({
+      name: "voucher_entry_fk",
+      columns: [t.tenantId, t.entryId],
+      foreignColumns: [journalEntry.tenantId, journalEntry.id],
+    }),
+    check("voucher_total_positive", sql`${t.total} > 0`),
+    check(
+      "voucher_decision_complete",
+      sql`(${t.status} = 'pending') = (${t.decidedBy} IS NULL) AND (${t.decidedBy} IS NULL) = (${t.decidedAt} IS NULL)`,
+    ),
+    check("voucher_approved_has_entry", sql`(${t.status} = 'approved') = (${t.entryId} IS NOT NULL)`),
+    check(
+      "voucher_rejected_has_note",
+      sql`${t.status} <> 'rejected' OR length(trim(coalesce(${t.decisionNote}, ''))) > 0`,
+    ),
+    // Maker-checker: a different user, not just a different role.
+    check(
+      "voucher_checker_not_maker",
+      sql`${t.status} NOT IN ('approved', 'rejected') OR ${t.decidedBy} <> ${t.createdBy}`,
+    ),
+    // Only the maker can withdraw their own voucher.
+    check("voucher_cancelled_by_maker", sql`${t.status} <> 'cancelled' OR ${t.decidedBy} = ${t.createdBy}`),
+  ],
+);
+
+/** One debit or credit of a voucher, in paisa. Copied to journal_line on approval. */
+export const voucherLine = pgTable(
+  "voucher_line",
+  {
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    voucherId: uuid("voucher_id").notNull(),
+    lineNo: integer("line_no").notNull(),
+    accountId: uuid("account_id").notNull(),
+    debit: bigint("debit", { mode: "bigint" }).notNull().default(sql`0`),
+    credit: bigint("credit", { mode: "bigint" }).notNull().default(sql`0`),
+    memo: text("memo"),
+  },
+  (t) => [
+    primaryKey({ columns: [t.tenantId, t.voucherId, t.lineNo] }),
+    foreignKey({
+      name: "voucher_line_voucher_fk",
+      columns: [t.tenantId, t.voucherId],
+      foreignColumns: [voucher.tenantId, voucher.id],
+    }),
+    foreignKey({
+      name: "voucher_line_account_fk",
+      columns: [t.tenantId, t.accountId],
+      foreignColumns: [ledgerAccount.tenantId, ledgerAccount.id],
+    }),
+    check(
+      "voucher_line_one_side",
       sql`${t.debit} >= 0 AND ${t.credit} >= 0 AND (${t.debit} > 0) <> (${t.credit} > 0)`,
     ),
   ],

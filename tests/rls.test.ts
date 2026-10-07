@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
 import { otpChallenge, userSession } from "../src/db/schema";
 import { admitMember, saveNominees, setMemberPhoto } from "../src/modules/members";
-import { postEntry, reverseEntry } from "../src/modules/ledger";
+import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
 /**
@@ -42,6 +42,16 @@ beforeAll(async () => {
       await setMemberPhoto(ctx, admitted.member.id, new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]), {
         userId: t.adminUserId,
       });
+      const v = await submitVoucher(ctx, {
+        branchId: t.branchId,
+        createdBy: t.adminUserId,
+        narration: "Seed voucher",
+        lines: [
+          { accountId: t.accounts.bank, debit: "10", credit: "" },
+          { accountId: t.accounts.cash_in_hand, debit: "", credit: "10" },
+        ],
+      });
+      if (!v.ok) throw new Error("seed voucher");
     });
   }
 });

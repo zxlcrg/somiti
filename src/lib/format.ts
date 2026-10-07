@@ -32,3 +32,12 @@ export function formatDate(date: IsoDate, locale: Locale): string {
 export function formatPercentBp(bp: number, locale: Locale): string {
   return new Intl.NumberFormat(intlLocale[locale], { style: "percent", maximumFractionDigits: 2 }).format(bp / 10_000);
 }
+
+/** A moment in Dhaka time, e.g. "3 Oct 2026, 2:05 pm" / "৩ অক্টো, ২০২৬, ২:০৫ PM". */
+export function formatDateTime(at: Date, locale: Locale): string {
+  return new Intl.DateTimeFormat(intlLocale[locale], {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Dhaka",
+  }).format(at);
+}
