@@ -3,7 +3,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
 import { appUser, otpChallenge, savingsFine, tenant, userRole, userSession } from "../src/db/schema";
 import { closeDay } from "../src/modules/dayend";
-import { admitMember, buyShares, saveNominees, setMemberPhoto } from "../src/modules/members";
+import { admitMember, approveExit, buyShares, requestExit, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
 import { createProduct, deposit as depositSavings, openAccount, receiveHandover, requestWithdrawal } from "../src/modules/savings";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
@@ -101,6 +101,21 @@ beforeAll(async () => {
         { userId: t.adminUserId },
       );
       if (!handed.ok) throw new Error("seed handover");
+      const leaver = await admitMember(ctx, { nameEn: "Seed leaver", phone: "01722222222" }, { userId: t.adminUserId });
+      if (!leaver.ok) throw new Error("seed leaver");
+      await buyShares(
+        ctx,
+        { memberId: leaver.member.id, shares: 1, method: "cash", idempotencyKey: `seed-leaver-shares-${t.tenantId}` },
+        { userId: t.adminUserId },
+      );
+      const exitAsked = await requestExit(
+        ctx,
+        { memberId: leaver.member.id, reason: "Seed exit", method: "cash", submitKey: `seed-exit-${t.tenantId}` },
+        { userId: t.adminUserId },
+      );
+      if (!exitAsked.ok) throw new Error("seed exit");
+      const exited = await approveExit(ctx, { exitId: exitAsked.exitId, userId: collector!.id });
+      if (!exited.ok) throw new Error("seed exit approval");
       const [day] = await ctx.tx.select({ d: tenant.businessDate }).from(tenant).where(eq(tenant.id, t.tenantId));
       const closed = await closeDay(ctx, { date: day!.d, pieces: {}, note: "Seed close" }, { userId: t.adminUserId });
       if (!closed.ok) throw new Error("seed day close");

@@ -30,7 +30,7 @@ export interface BuySharesInput {
 export interface ShareTxnView {
   id: string;
   /** "opening" is a holding brought over from the old books. */
-  kind: "purchase" | "opening";
+  kind: "purchase" | "opening" | "refund";
   shares: number;
   price: bigint;
   amount: bigint;
@@ -190,9 +190,11 @@ export async function shareHolding({ tx, tenantId }: TenantTx, memberId: string)
     .where(and(eq(shareTransaction.tenantId, tenantId), eq(shareTransaction.memberId, memberId)))
     .orderBy(desc(shareTransaction.createdAt));
   const counted = transactions.filter((t) => !t.reversed);
+  // Purchases and opening holdings add; an exit refund takes them back out.
+  const sign = (t: ShareTxnView) => (t.kind === "refund" ? -1 : 1);
   return {
-    shares: counted.reduce((sum, t) => sum + t.shares, 0),
-    amount: counted.reduce((sum, t) => sum + t.amount, 0n),
+    shares: counted.reduce((sum, t) => sum + sign(t) * t.shares, 0),
+    amount: counted.reduce((sum, t) => sum + BigInt(sign(t)) * t.amount, 0n),
     transactions,
   };
 }
