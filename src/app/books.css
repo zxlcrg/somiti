@@ -1,0 +1,1179 @@
+/* Books: vouchers, cash book, trial balance. */
+
+.books {
+  padding: 1.5rem 0 3rem;
+}
+
+/* One colour per account type, used for dots, tiles and voucher lines. */
+.t-asset {
+  --tc: #1fb6c9;
+}
+.t-liability {
+  --tc: #f2a900;
+}
+.t-equity {
+  --tc: #8b5cf6;
+}
+.t-income {
+  --tc: #0b9b6c;
+}
+.t-expense {
+  --tc: #f26b3a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .t-asset {
+    --tc: #4dd8ea;
+  }
+  .t-liability {
+    --tc: #ffc23d;
+  }
+  .t-equity {
+    --tc: #a78bfa;
+  }
+  .t-income {
+    --tc: #2fd398;
+  }
+  .t-expense {
+    --tc: #ff8a5c;
+  }
+}
+
+.tone-d {
+  --tone: #e5484d;
+}
+
+.tone-e {
+  --tone: #8b5cf6;
+}
+
+.stat-tile small {
+  display: block;
+  color: var(--muted);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-row.four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.money-figure {
+  font-size: 1.45rem !important;
+  white-space: nowrap;
+}
+
+/* ---------- Tabs ---------- */
+
+.books-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin: -0.25rem 0 1.25rem;
+  padding: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.books-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+
+.books-tabs a:hover {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.books-tabs a[aria-current="page"] {
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  color: #fff;
+}
+
+.books-tabs svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.count-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  margin-left: 0.35rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #e5484d;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1;
+  animation: pop 0.35s ease-out;
+}
+
+/* ---------- Voucher list ---------- */
+
+.attention {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+  padding: 0.8rem 1.1rem;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-2) 22%, var(--card)), var(--card));
+  border: 1px solid color-mix(in srgb, var(--accent-2) 45%, var(--line));
+  color: var(--fg);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.2s;
+}
+
+.attention:hover {
+  transform: translateX(4px);
+}
+
+.attention > span:last-child {
+  margin-left: auto;
+}
+
+.attention-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--accent-2);
+  animation: pulse 1.6s infinite;
+}
+
+.voucher-filter {
+  margin-bottom: 1rem;
+}
+
+.voucher-list {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.voucher-list li {
+  animation: rise 0.35s ease-out both;
+  animation-delay: calc(var(--i, 0) * 35ms);
+}
+
+.voucher-card {
+  --sc: var(--muted);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(8rem, auto) 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.95rem 1.2rem 0.95rem 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.voucher-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.35rem;
+  background: var(--sc);
+}
+
+.voucher-card:hover,
+.voucher-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+  border-color: color-mix(in srgb, var(--sc) 45%, var(--line));
+}
+
+.voucher-card.pending {
+  --sc: var(--accent-2);
+}
+.voucher-card.approved {
+  --sc: var(--accent);
+}
+.voucher-card.rejected {
+  --sc: #e5484d;
+}
+.voucher-card.cancelled {
+  --sc: var(--muted);
+  opacity: 0.8;
+}
+
+.voucher-card.needs-you {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent-2) 10%, var(--card)), var(--card) 60%);
+}
+
+.voucher-amount {
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.voucher-main {
+  display: grid;
+  min-width: 0;
+}
+
+.voucher-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voucher-main .muted {
+  font-size: 0.85rem;
+}
+
+.voucher-side {
+  display: grid;
+  justify-items: end;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.status-pill.pending {
+  background: color-mix(in srgb, var(--accent-2) 22%, transparent);
+  color: color-mix(in srgb, var(--accent-2) 60%, var(--fg));
+}
+.status-pill.approved {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+}
+.status-pill.rejected {
+  background: rgba(229, 72, 77, 0.14);
+  color: #e5484d;
+}
+.status-pill.cancelled {
+  background: color-mix(in srgb, var(--muted) 18%, transparent);
+  color: var(--muted);
+}
+
+.needs-you-tag {
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  background: var(--accent-2);
+  color: #1b1300;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ---------- Voucher form ---------- */
+
+.voucher-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  align-items: start;
+  gap: 1.5rem;
+}
+
+.voucher-editor {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: 1.3rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.voucher-editor textarea,
+.reject-form textarea {
+  width: 100%;
+  padding: 0.7rem 0.95rem;
+  border: 2px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  resize: vertical;
+  outline: 0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.voucher-editor textarea:focus,
+.reject-form textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.voucher-editor textarea[aria-invalid="true"] {
+  border-color: #e5484d;
+}
+
+.line-head,
+.voucher-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr) 4.5rem;
+  gap: 0.6rem;
+}
+
+.line-head {
+  padding: 0 0.6rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.voucher-lines {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.voucher-line {
+  --tc: var(--line);
+  align-items: start;
+  padding: 0.6rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--tc);
+  border-radius: 0.95rem;
+  background: color-mix(in srgb, var(--tc) 5%, var(--bg));
+  animation: rise 0.25s ease-out;
+  transition: border-color 0.25s, background 0.25s;
+}
+
+.voucher-line .cell {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.voucher-line select,
+.money-input,
+.voucher-line .memo,
+.date-range input {
+  width: 100%;
+  border: 2px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  outline: 0;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.voucher-line select {
+  padding: 0.55rem 0.6rem;
+  min-height: 2.75rem;
+}
+
+.money-input {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.money-input span {
+  padding-left: 0.65rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.money-input input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.5rem 0.6rem 0.5rem 0.35rem;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  outline: 0;
+}
+
+.money.debit .money-input:focus-within {
+  border-color: var(--accent-3);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-3) 20%, transparent);
+}
+
+.money.credit .money-input:focus-within {
+  border-color: var(--accent-2);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-2) 22%, transparent);
+}
+
+.voucher-line select:focus,
+.voucher-line .memo:focus,
+.date-range input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.voucher-line .has-error select,
+.voucher-line .has-error .money-input {
+  border-color: #e5484d;
+}
+
+.voucher-line .memo {
+  grid-column: 1 / -1;
+  padding: 0.4rem 0.7rem;
+  border-width: 1px;
+  border-style: dashed;
+  font-size: 0.9rem;
+}
+
+.line-error {
+  grid-column: 1 / -1;
+}
+
+.tools {
+  display: flex !important;
+  gap: 0.3rem;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 2.75rem;
+}
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s, color 0.2s;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+}
+
+.icon-btn.balance {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  color: var(--accent);
+  animation: pop 0.3s ease-out;
+}
+
+.icon-btn.balance:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.icon-btn.remove:hover {
+  background: #e5484d;
+  color: #fff;
+}
+
+.add-line {
+  justify-self: start;
+  border: 1px dashed var(--line);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.voucher-summary {
+  position: sticky;
+  top: 5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.balance-card {
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 1.3rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.balance-card.is-balanced {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  box-shadow: 0 16px 40px -20px var(--glow-1);
+}
+
+.balance-card.is-off {
+  border-color: color-mix(in srgb, var(--accent-2) 55%, var(--line));
+}
+
+.off-by {
+  margin: 1.1rem 0 0;
+  color: color-mix(in srgb, var(--accent-2) 65%, var(--fg));
+  font-weight: 700;
+}
+
+.checker-note {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent-3) 12%, var(--card));
+  font-size: 0.9rem;
+}
+
+.voucher-summary .form-actions .btn {
+  flex: 1;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.voucher-summary .form-actions .btn.ghost {
+  flex: 0 0 auto;
+}
+
+/* ---------- Voucher detail ---------- */
+
+.celebrate.quiet {
+  background: color-mix(in srgb, var(--muted) 12%, var(--card));
+}
+
+.voucher-hero {
+  --h1: 160;
+  --h2: 190;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1.75rem;
+  border-radius: 1.5rem;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.25), transparent 40%),
+    linear-gradient(135deg, hsl(var(--h1) 65% 36%), hsl(var(--h2) 70% 46%));
+  color: #fff;
+  box-shadow: 0 20px 40px -24px hsl(var(--h1) 70% 30%);
+  animation: rise 0.4s ease-out;
+}
+
+.voucher-hero.pending {
+  --h1: 32;
+  --h2: 44;
+}
+.voucher-hero.rejected {
+  --h1: 355;
+  --h2: 15;
+}
+.voucher-hero.cancelled {
+  --h1: 200;
+  --h2: 210;
+  filter: saturate(0.25);
+}
+
+.voucher-hero h1 {
+  margin: 0.4rem 0 0;
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.voucher-hero p {
+  margin: 0.3rem 0 0;
+  font-size: 1.1rem;
+  opacity: 0.92;
+}
+
+.voucher-hero .status-pill {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.hero-entry {
+  display: grid;
+  justify-items: end;
+  padding: 0.7rem 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.16);
+  text-align: right;
+}
+
+.hero-entry strong {
+  font-size: 1.6rem;
+}
+
+.voucher-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  align-items: start;
+  gap: 1.25rem;
+}
+
+.lines-card {
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 1.3rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.lines-card h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.ledger-table th,
+.ledger-table td {
+  padding: 0.6rem 0.65rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.ledger-table thead th {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ledger-table tbody tr {
+  transition: background 0.15s;
+}
+
+.ledger-table tbody tr:hover {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.ledger-table tfoot th,
+.ledger-table tfoot td {
+  border-bottom: 0;
+  border-top: 2px solid var(--fg);
+  font-weight: 800;
+}
+
+.ledger-table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.ledger-table td.debit {
+  color: color-mix(in srgb, var(--accent-3) 70%, var(--fg));
+  font-weight: 600;
+}
+
+.ledger-table td.credit {
+  color: color-mix(in srgb, var(--accent-2) 60%, var(--fg));
+  font-weight: 600;
+}
+
+.type-dot {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  margin-right: 0.45rem;
+  border-radius: 50%;
+  background: var(--tc);
+  vertical-align: 0.05em;
+}
+
+.acct-code {
+  color: var(--muted);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.memo-text {
+  display: block;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.voucher-side-col {
+  display: grid;
+  gap: 1rem;
+}
+
+.timeline {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 1.3rem;
+  background: var(--card);
+  list-style: none;
+}
+
+.timeline li {
+  --dc: var(--accent);
+  position: relative;
+  display: grid;
+  padding: 0 0 1rem 1.6rem;
+}
+
+.timeline li:last-child {
+  padding-bottom: 0;
+}
+
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: 0.2rem;
+  top: 0.35rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: var(--dc);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--dc) 20%, transparent);
+}
+
+.timeline li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 0.55rem;
+  top: 1.3rem;
+  bottom: 0.1rem;
+  width: 2px;
+  background: var(--line);
+}
+
+.timeline li.waiting {
+  --dc: var(--accent-2);
+}
+
+.timeline li.waiting::before {
+  animation: pulse 1.6s infinite;
+}
+
+.timeline li.rejected {
+  --dc: #e5484d;
+}
+
+.timeline li.cancelled {
+  --dc: var(--muted);
+}
+
+.timeline q {
+  margin-top: 0.3rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.6rem;
+  background: var(--bg);
+  font-style: italic;
+}
+
+.decision {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.2rem;
+  border: 2px solid color-mix(in srgb, var(--accent) 45%, var(--line));
+  border-radius: 1.3rem;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 10%, var(--card)), var(--card));
+  animation: rise 0.4s ease-out;
+}
+
+.decision.maker {
+  border-color: color-mix(in srgb, var(--accent-2) 50%, var(--line));
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent-2) 12%, var(--card)), var(--card));
+}
+
+.decision h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.decision p {
+  margin: 0;
+}
+
+.decision-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.decision-actions form,
+.decision-actions .btn.big {
+  flex: 1;
+}
+
+.decision .btn {
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.decision .btn.ghost {
+  border: 1px solid var(--line);
+}
+
+.btn.big {
+  width: 100%;
+  padding: 0.85rem 1.3rem;
+  font-size: 1.05rem;
+}
+
+.btn.danger {
+  background: linear-gradient(135deg, #e5484d, #f26b3a);
+  color: #fff;
+  box-shadow: 0 10px 24px -12px #e5484d;
+}
+
+.reject-form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.reject-form label {
+  font-weight: 600;
+}
+
+.small-note {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* ---------- Cash book ---------- */
+
+.books-toolbar {
+  align-items: center;
+}
+
+.date-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.date-range label {
+  display: grid;
+  gap: 0.15rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.date-range input {
+  padding: 0.35rem 0.55rem;
+  border-width: 1px;
+}
+
+.date-range .btn {
+  border: 1px solid var(--line);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.spark {
+  display: block;
+  width: 100%;
+  height: 5rem;
+  margin: -0.25rem 0 1.25rem;
+  border-radius: 1rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+
+.opening-row td {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.particulars {
+  display: block;
+  font-weight: 600;
+}
+
+.contra {
+  display: block;
+  font-size: 0.82rem;
+}
+
+.chip.reversal {
+  display: inline-block;
+  margin-top: 0.2rem;
+  background: color-mix(in srgb, var(--muted) 18%, transparent);
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.cash-table tr.in td:first-child,
+.cash-table tr.out td:first-child {
+  box-shadow: inset 3px 0 0 var(--rc);
+}
+
+.cash-table tr.in {
+  --rc: var(--accent-3);
+}
+
+.cash-table tr.out {
+  --rc: var(--accent-2);
+}
+
+/* ---------- Trial balance ---------- */
+
+.type-tiles {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.type-tile {
+  position: relative;
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--tc);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tc) 10%, var(--card)), var(--card));
+  animation: rise 0.35s ease-out both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+  transition: transform 0.2s;
+}
+
+.type-tile:hover {
+  transform: translateY(-3px);
+}
+
+.type-tile span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.type-tile strong {
+  color: color-mix(in srgb, var(--tc) 55%, var(--fg));
+  font-variant-numeric: tabular-nums;
+}
+
+.group-row th {
+  padding-top: 1rem !important;
+  color: color-mix(in srgb, var(--tc) 60%, var(--fg));
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.tb-bar {
+  display: block;
+  height: 0.3rem;
+  margin-top: 0.3rem;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.tb-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  animation: grow-in 0.6s ease-out;
+}
+
+.tb-bar .debit {
+  background: var(--debit);
+}
+
+.tb-bar .credit {
+  background: var(--credit);
+}
+
+/* ---------- Narrow screens ---------- */
+
+@media (max-width: 900px) {
+  .voucher-form,
+  .voucher-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .voucher-summary {
+    position: static;
+  }
+
+  .type-tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .stat-row.four {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .voucher-card {
+    grid-template-columns: 1fr auto;
+  }
+
+  .voucher-amount {
+    grid-column: 1 / -1;
+  }
+
+  .line-head {
+    display: none;
+  }
+
+  .voucher-line {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .voucher-line .account {
+    grid-column: 1 / -1;
+  }
+
+  .voucher-line .tools {
+    grid-column: 1 / -1;
+    min-height: 0;
+  }
+
+  .voucher-editor {
+    padding: 1rem;
+  }
+
+  .type-tiles {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .books-tabs {
+    width: 100%;
+  }
+
+  .books-tabs a {
+    flex: 1;
+    justify-content: center;
+    padding: 0.45rem 0.6rem;
+  }
+}
+
+/* Sign out: words on wide screens, a door icon on phones so the header fits. */
+.sign-out {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.sign-out svg {
+  display: none;
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.lang-short {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .lang-short {
+    display: inline;
+  }
+
+  .lang-full {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .topbar-actions .sign-out {
+    padding: 0.4rem;
+  }
+
+  .sign-out svg {
+    display: block;
+  }
+
+  .sign-out-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 420px) {
+  .books-tabs svg {
+    display: none;
+  }
+
+  .topbar-actions .btn.small {
+    white-space: nowrap;
+  }
+
+  .topbar-actions .count-badge {
+    margin-left: 0.2rem;
+  }
+
+  .topbar {
+    padding-inline: 0.6rem;
+  }
+
+  .topbar-actions {
+    gap: 0.25rem;
+  }
+
+  .topbar-actions .nav-link {
+    padding-inline: 0.35rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .topbar-actions .switcher button {
+    padding: 0.25rem 0.4rem;
+  }
+
+  .topbar-actions .count-badge {
+    min-width: 1.1rem;
+    height: 1.1rem;
+    padding: 0 0.25rem;
+    font-size: 0.7rem;
+  }
+
+  .topbar-actions .nav-link {
+    padding-inline: 0.25rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .type-tile {
+    min-width: 0;
+    padding: 0.75rem;
+  }
+
+  .type-tile strong {
+    font-size: 0.95rem;
+    overflow-wrap: anywhere;
+  }
+}

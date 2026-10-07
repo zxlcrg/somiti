@@ -1,6 +1,9 @@
 /* Members: list, admission form, profile. */
 
 .nav-link {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
   padding: 0.3rem 0.75rem;
   border-radius: 999px;
   color: var(--fg);
@@ -186,6 +189,9 @@
 .chips-nav,
 .sort-toggle {
   display: flex;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
   gap: 0.25rem;
   padding: 0.2rem;
   border: 1px solid var(--line);

@@ -11,7 +11,10 @@ export type LedgerErrorCode =
   | "NOT_FOUND"
   | "ALREADY_REVERSED"
   | "CANNOT_REVERSE_REVERSAL"
-  | "IDEMPOTENCY_CONFLICT";
+  | "IDEMPOTENCY_CONFLICT"
+  | "SELF_APPROVAL"
+  | "VOUCHER_DECIDED"
+  | "NOT_MAKER";
 
 export class LedgerError extends Error {
   constructor(
@@ -24,7 +27,7 @@ export class LedgerError extends Error {
   }
 }
 
-/** SQLSTATEs raised by the invariants migration (drizzle/0001_*.sql). */
+/** SQLSTATEs raised by the invariants migrations (drizzle/0001_*.sql, 0011_*.sql). */
 const SQLSTATE_CODES: Record<string, LedgerErrorCode> = {
   SM001: "UNBALANCED",
   SM002: "APPEND_ONLY",
@@ -33,6 +36,7 @@ const SQLSTATE_CODES: Record<string, LedgerErrorCode> = {
   SM005: "AFTER_BUSINESS_DATE",
   SM006: "UNKNOWN_TENANT",
   SM007: "ACCOUNT_NOT_POSTABLE",
+  SM020: "VOUCHER_DECIDED",
 };
 
 interface PgErrorLike {
@@ -61,6 +65,9 @@ export function translateDbError(err: unknown): LedgerError | undefined {
   if (code) return new LedgerError(code, pgError.message ?? code, { cause: err });
   if (pgError.code === "23505" && pgError.constraint === "journal_entry_reverses_once") {
     return new LedgerError("ALREADY_REVERSED", "This entry has already been reversed", { cause: err });
+  }
+  if (pgError.code === "23514" && pgError.constraint === "voucher_checker_not_maker") {
+    return new LedgerError("SELF_APPROVAL", "A voucher must be approved by someone other than its maker", { cause: err });
   }
   return undefined;
 }
