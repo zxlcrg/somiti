@@ -26,7 +26,8 @@ export async function getReceipt(ctx: TenantTx, txnId: string): Promise<Receipt 
   if (!row) return null;
   const account = await getAccount(ctx, row.accountId);
   const txn = account?.transactions.find((x) => x.id === txnId);
-  if (!account || !txn) return null;
+  // Opening balances moved no money, so there is nothing to give the member a receipt for.
+  if (!account || !txn || txn.kind === "opening") return null;
   const [m] = await tx
     .select({
       id: member.id,

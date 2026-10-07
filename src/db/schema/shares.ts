@@ -4,7 +4,8 @@ import { journalEntry } from "./ledger";
 import { member } from "./members";
 import { appUser, tenant } from "./tenancy";
 
-export const shareTxnKindEnum = pgEnum("share_txn_kind", ["purchase"]);
+/** "opening" carries a holding over from the somiti's records before this system; it has no payment. */
+export const shareTxnKindEnum = pgEnum("share_txn_kind", ["purchase", "opening"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "bank", "mobile_wallet"]);
 
 /**
@@ -28,7 +29,8 @@ export const shareTransaction = pgTable(
     /** Price per share at the time, in paisa. */
     price: bigint("price", { mode: "bigint" }).notNull(),
     amount: bigint("amount", { mode: "bigint" }).notNull(),
-    paymentMethod: paymentMethodEnum("payment_method").notNull(),
+    /** Null only for an opening holding, which nobody paid in through the system. */
+    paymentMethod: paymentMethodEnum("payment_method"),
     /** Bank slip or bKash/Nagad transaction ID. */
     paymentRef: text("payment_ref"),
     journalEntryId: uuid("journal_entry_id").notNull(),
@@ -57,6 +59,7 @@ export const shareTransaction = pgTable(
     check("share_transaction_shares", sql`${t.shares} BETWEEN 1 AND 100000`),
     check("share_transaction_price", sql`${t.price} > 0`),
     check("share_transaction_amount", sql`${t.amount} = ${t.shares}::bigint * ${t.price}`),
+    check("share_transaction_opening_unpaid", sql`(${t.kind} = 'opening') = (${t.paymentMethod} IS NULL)`),
     check(
       "share_transaction_wallet_ref",
       sql`${t.paymentMethod} <> 'mobile_wallet' OR length(trim(${t.paymentRef})) > 0`,

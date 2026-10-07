@@ -79,13 +79,13 @@ export async function SharesPanel({
             {holding.transactions.map((x) => (
               <li key={x.id} className={x.reversed ? "reversed" : x.id === boughtId ? "fresh" : undefined}>
                 <span className="share-history-icon" aria-hidden="true">
-                  {METHOD_ICON[x.paymentMethod]}
+                  {x.paymentMethod ? METHOD_ICON[x.paymentMethod] : "📒"}
                 </span>
                 <div>
                   <strong>{t("count", { count: x.shares })}</strong>
                   <span className="muted">
-                    {formatDate(x.businessDate, locale)} · {t(`methods.${x.paymentMethod}`)}
-                    {x.paymentRef ? ` · ${x.paymentRef}` : ""} · {t("receipt", { no: num(x.entryNo) })}
+                    {formatDate(x.businessDate, locale)} · {x.paymentMethod ? t(`methods.${x.paymentMethod}`) : t("opening")}
+                    {x.paymentRef ? ` · ${x.paymentRef}` : ""} · {x.kind === "opening" ? t("openingEntry", { no: num(x.entryNo) }) : t("receipt", { no: num(x.entryNo) })}
                   </span>
                 </div>
                 <span className="share-history-amount">

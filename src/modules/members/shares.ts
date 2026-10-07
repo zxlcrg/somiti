@@ -29,11 +29,13 @@ export interface BuySharesInput {
 
 export interface ShareTxnView {
   id: string;
-  kind: "purchase";
+  /** "opening" is a holding brought over from the old books. */
+  kind: "purchase" | "opening";
   shares: number;
   price: bigint;
   amount: bigint;
-  paymentMethod: PaymentMethod;
+  /** NULL only for opening holdings, where no money changed hands. */
+  paymentMethod: PaymentMethod | null;
   paymentRef: string | null;
   businessDate: string;
   createdAt: Date;

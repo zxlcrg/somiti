@@ -8,6 +8,7 @@ import { formatDate, formatInteger } from "@/lib/format";
 import { primaryName, secondaryName } from "@/lib/names";
 import { formatBdPhone } from "@/lib/phone";
 import { canManageMembers, canViewMembers, listMembers, memberStats, type MemberStatus } from "@/modules/members";
+import { canImportOpening } from "@/modules/opening";
 import { requireUser } from "../auth";
 import { MemberAvatar } from "./member-avatar";
 import { SearchBox } from "./search-box";
@@ -20,11 +21,12 @@ export async function generateMetadata(): Promise<Metadata> {
 const PAGE_SIZE = 24;
 const STATUSES = ["active", "exited", "deceased"] as const;
 
-type Search = { q?: string; status?: string; sort?: string; page?: string };
+type Search = { q?: string; status?: string; sort?: string; page?: string; imported?: string; from?: string; to?: string };
 
 function href(current: Search, change: Partial<Search>): string {
   const next = new URLSearchParams();
-  const merged = { ...current, ...change };
+  // The import banner shows once; filters and pages don't carry it along.
+  const merged = { ...current, imported: undefined, from: undefined, to: undefined, ...change };
   for (const [k, v] of Object.entries(merged)) if (v) next.set(k, v);
   const query = next.toString();
   return query ? `/members?${query}` : "/members";
@@ -41,6 +43,8 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
   const status = STATUSES.includes(search.status as MemberStatus) ? (search.status as MemberStatus) : undefined;
   const sort = search.sort === "name" ? "name" : "number";
   const page = Math.max(1, Number.parseInt(search.page ?? "1", 10) || 1);
+  const imported = Number.parseInt(search.imported ?? "", 10) || 0;
+  const tOpening = await getTranslations("opening");
 
   const { members, total, stats } = await withTenant(getAppDb(), user.tenantId, async (ctx) => ({
     ...(await listMembers(ctx, { q: search.q, status, sort, locale, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE })),
@@ -64,12 +68,26 @@ export default async function MembersPage({ searchParams }: { searchParams: Prom
           <h1>{t("title")}</h1>
           <p className="muted">{t("subtitle", { somiti })}</p>
         </div>
-        {canManage && (
-          <Link href="/members/new" className="btn primary">
-            <span aria-hidden="true">＋</span> {t("add")}
-          </Link>
-        )}
+        <div className="head-actions">
+          {canImportOpening(user.roles) && (
+            <Link href="/members/import" className="btn ghost">
+              <span aria-hidden="true">📥</span> {tOpening("importLink")}
+            </Link>
+          )}
+          {canManage && (
+            <Link href="/members/new" className="btn primary">
+              <span aria-hidden="true">＋</span> {t("add")}
+            </Link>
+          )}
+        </div>
       </header>
+
+      {imported > 0 && (
+        <p className="celebrate" role="status">
+          <span aria-hidden="true">🎉</span>{" "}
+          {tOpening("imported", { count: imported, n: num(imported), from: num(Number(search.from) || 0), to: num(Number(search.to) || 0) })}
+        </p>
+      )}
 
       <section className="stat-row">
         {tiles.map((tile) => (
