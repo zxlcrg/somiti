@@ -156,9 +156,31 @@ A member's stake in the somiti, on the member's page and at
   president out of posting. One person may hold several roles (the demo
   admin is also the cashier).
 
-Exit comes next. Code: `src/modules/members/`, pages in `src/app/members/`,
-tests in `tests/members.test.ts`, `tests/nominees.test.ts`,
-`tests/photos.test.ts` and `tests/shares.test.ts`.
+### Exit
+
+A member leaving the somiti, from the member's page and
+`/members/<id>/exit`.
+
+- Exit is a settlement, so it takes two officers who manage members: one
+  enters the request (reason, how to pay), and a different one approves or
+  rejects it. Only the officer who asked can withdraw it. A badge on Members
+  shows requests waiting for you.
+- Approval pays back the share capital (source `member_exit`; a `refund`
+  row in `share_transaction`) and every savings balance, one entry per
+  account, which is also that account's last passbook line. It then closes
+  the accounts and marks the member `exited`. `member_exit_payout` links the
+  entries to the exit. Amounts are worked out at approval, so deposits made
+  after the request are paid out too.
+- A member with a savings withdrawal still waiting for a decision can't
+  leave. Loans arrive in M3; their "no unpaid loan or active guarantee" check
+  goes into `exitBlockers()`.
+- Requests are never deleted, and only the decision changes (SM020). Closed
+  savings accounts can't reopen (SM009).
+
+Death settlement to nominees comes next. Code: `src/modules/members/`, pages
+in `src/app/members/`, tests in `tests/members.test.ts`,
+`tests/nominees.test.ts`, `tests/photos.test.ts`, `tests/shares.test.ts` and
+`tests/exits.test.ts`.
 
 Tests need a Postgres superuser to create the `somiti_test` database
 (defaults to `postgres:postgres@localhost`; override with `TEST_ADMIN_URL`):

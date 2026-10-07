@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { getAppDb, withTenant } from "@/db/client";
 import { canApproveVouchers, canViewBooks, pendingForChecker } from "@/modules/ledger";
-import { canViewMembers } from "@/modules/members";
+import { canManageMembers, canViewMembers, exitsForChecker } from "@/modules/members";
 import { canApproveWithdrawals, withdrawalsForChecker } from "@/modules/savings";
 import { getCurrentUser } from "./auth";
 import { NavLink } from "./nav-link";
@@ -19,6 +19,7 @@ import "./books.css";
 import "./shares.css";
 import "./savings.css";
 import "./opening.css";
+import "./exit.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
@@ -33,6 +34,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const waiting =
     user && canApproveVouchers(user.roles)
       ? await withTenant(getAppDb(), user.tenantId, (ctx) => pendingForChecker(ctx, user.userId))
+      : 0;
+  // Member exits waiting for this officer, on the Members link.
+  const exits =
+    user && canManageMembers(user.roles)
+      ? await withTenant(getAppDb(), user.tenantId, (ctx) => exitsForChecker(ctx, user.userId))
       : 0;
   // Savings withdrawals waiting for this officer, on the Savings link.
   const withdrawals =
@@ -52,7 +58,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Link>
             {user && (canViewMembers(user.roles) || canViewBooks(user.roles)) && (
               <nav className="main-nav" aria-label={t("nav.label")}>
-                {canViewMembers(user.roles) && <NavLink href="/members">{t("nav.members")}</NavLink>}
+                {canViewMembers(user.roles) && (
+                  <NavLink href="/members">
+                    {t("nav.members")}
+                    {exits > 0 && (
+                      <span className="count-badge" aria-label={t("nav.exitsWaiting", { count: exits })}>
+                        {exits}
+                      </span>
+                    )}
+                  </NavLink>
+                )}
                 {canViewMembers(user.roles) && (
                   <NavLink href="/savings">
                     {t("nav.savings")}

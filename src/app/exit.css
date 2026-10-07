@@ -1,0 +1,219 @@
+/* Member exit: the profile panel and the request page. */
+
+.exit {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 1.4rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  scroll-margin-top: 5rem;
+}
+
+.exit.waiting {
+  border: 2px solid color-mix(in srgb, var(--accent-2) 55%, var(--line));
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--accent-2) 14%, transparent), transparent 50%),
+    var(--card);
+}
+
+.exit.done {
+  background:
+    repeating-linear-gradient(-45deg, transparent, transparent 14px, color-mix(in srgb, var(--muted) 5%, transparent) 14px, color-mix(in srgb, var(--muted) 5%, transparent) 28px),
+    var(--card);
+}
+
+.btn.ghost.danger-outline {
+  border: 1px solid color-mix(in srgb, #e5484d 50%, var(--line));
+  color: #d93a3f;
+}
+
+.btn.ghost.danger-outline:hover {
+  background: rgba(229, 72, 77, 0.08);
+}
+
+.celebrate.quiet {
+  background: color-mix(in srgb, var(--muted) 12%, var(--card));
+}
+
+.exit-pending > p {
+  margin: 0 0 0.75rem;
+}
+
+.exit-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.exit-facts div {
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--bg);
+}
+
+.exit-facts dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.exit-facts dd {
+  margin: 0.1rem 0 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.exit-facts .exit-total {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.exit-blockers {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.exit-blockers li {
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.75rem;
+  background: rgba(229, 72, 77, 0.1);
+  color: #d93a3f;
+  font-weight: 500;
+}
+
+.exit-blockers li::before {
+  content: "⚠ ";
+}
+
+.exit-decision {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.exit-decision .small {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.exit-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.exit-buttons .btn {
+  justify-content: center;
+}
+
+.exit-decision .reject-form textarea,
+.exit-form textarea {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  resize: vertical;
+  outline: 0;
+}
+
+.exit-decision .reject-form textarea:focus,
+.exit-form textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.exit-form .field.has-error textarea {
+  border-color: #e5484d;
+}
+
+.spinner.dark {
+  border-color: color-mix(in srgb, var(--fg) 25%, transparent);
+  border-top-color: var(--fg);
+}
+
+.exit-stats .small-strong {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.exit-history {
+  margin-top: 1rem;
+}
+
+.exit-history summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.exit-history ul {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+/* Request page */
+
+.settlement-lines {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settlement-lines li {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.2rem;
+  border-bottom: 1px dashed var(--line);
+  animation: rise 0.35s ease-out both;
+}
+
+.settlement-lines li:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.settlement-lines li:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.settlement-lines strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.exit-due strong {
+  color: var(--accent-2);
+}
+
+.exit-blocked {
+  border: 2px solid rgba(229, 72, 77, 0.45);
+}
+
+.exit-blocked .btn {
+  justify-self: start;
+}
+
+/* Shares history: an exit refund */
+
+.share-history li.refund {
+  border-style: dashed;
+}
+
+.share-history li.refund .share-history-amount {
+  color: #d93a3f;
+}

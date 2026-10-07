@@ -17,7 +17,8 @@
     "waiting": "{count} waiting for you",
     "savings": "Savings",
     "label": "Main",
-    "savingsWaiting": "{count} withdrawals waiting for you"
+    "savingsWaiting": "{count} withdrawals waiting for you",
+    "exitsWaiting": "{count, plural, one {# exit} other {# exits}} waiting for your approval"
   },
   "home": {
     "badge": "Foundation release",
@@ -437,7 +438,89 @@
         "server": "Something went wrong on our side. Nothing was posted. Please try again."
       },
       "opening": "Opening holding",
-      "openingEntry": "Opening entry #{no}"
+      "openingEntry": "Opening entry #{no}",
+      "refund": "Refunded on exit"
+    },
+    "exit": {
+      "title": "Leaving the somiti",
+      "intro": "When a member leaves, their share capital and savings are paid back and the membership ends. It takes a second officer's approval.",
+      "start": "Start an exit",
+      "pendingTitle": "Exit waiting for approval",
+      "pendingBody": "{who} asked on {date} for {name} to leave. Nothing has been paid out yet.",
+      "reason": "Reason",
+      "paidBy": "To be paid by",
+      "wouldPay": "Would pay out today",
+      "approve": "Approve and pay out {amount}",
+      "reject": "Reject",
+      "rejectNote": "Why it's rejected",
+      "rejectPlaceholder": "Tell the requesting officer what to fix",
+      "confirmReject": "Reject the exit",
+      "cancel": "Withdraw my request",
+      "keep": "Keep it",
+      "selfNote": "You entered this request, so another officer must approve or reject it.",
+      "exitedTitle": "{name} left the somiti",
+      "exitedBody": "Approved by {who} on {date}.",
+      "refunded": "Share capital refunded",
+      "paidOut": "Savings paid out",
+      "receipts": "Receipts {nos}",
+      "history": "Earlier requests",
+      "statuses": {
+        "pending": "Waiting",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "cancelled": "Withdrawn"
+      },
+      "notices": {
+        "requested": "Exit request sent for approval.",
+        "approved": "Exit approved: everything has been paid out.",
+        "rejected": "Exit request rejected.",
+        "cancelled": "Exit request withdrawn."
+      },
+      "blockers": {
+        "not_active": "This member is no longer active.",
+        "pending_withdrawal": "A savings withdrawal is still waiting for a decision. Approve or reject it first.",
+        "negative_balance": "A savings account is overdrawn. Sort it out before the member leaves."
+      },
+      "loansNote": "Loans arrive later; once they do, a member with an unpaid loan or an active guarantee can't leave.",
+      "form": {
+        "title": "Exit for {name}",
+        "subtitle": "Approval by a second officer pays all of this back and ends the membership. Amounts are worked out again at approval.",
+        "settlement": "Settlement",
+        "shares": "Share capital ({count, plural, one {# share} other {# shares}})",
+        "account": "{code} account #{no}",
+        "total": "Total to pay out",
+        "nothing": "Nothing to pay out: no shares or savings.",
+        "reason": "Why is the member leaving?",
+        "reasonPlaceholder": "e.g. moving away, own request, decision of the committee",
+        "paidBy": "Pay out by",
+        "ref": "Account or bKash/Nagad number",
+        "refWallet": "The bKash or Nagad number the money goes to.",
+        "refBank": "Optional: the bank account or cheque number.",
+        "submit": "Send for approval",
+        "sending": "Sending…",
+        "cancel": "Cancel",
+        "blocked": "This member can't leave yet"
+      },
+      "errors": {
+        "reason_required": "Write why the member is leaving.",
+        "reason_too_long": "Keep the reason under 500 characters.",
+        "invalid_method": "Choose how the money will be paid.",
+        "ref_required": "Enter the bKash or Nagad number.",
+        "ref_too_long": "That reference is too long.",
+        "already_pending": "An exit for this member is already waiting for approval.",
+        "not_active": "This member is no longer active.",
+        "pending_withdrawal": "A savings withdrawal is still waiting for a decision.",
+        "negative_balance": "A savings account is overdrawn.",
+        "not_found": "This member or request could not be found.",
+        "decided": "Someone has already decided this request.",
+        "self_decision": "You entered this request, so another officer must decide it.",
+        "not_maker": "Only the officer who entered the request can withdraw it.",
+        "note_required": "Write why you're rejecting it.",
+        "forbidden": "Your role can't handle member exits.",
+        "DAY_CLOSED": "Today's business day is already closed.",
+        "NO_OPEN_PERIOD": "There is no open fiscal year for today's date.",
+        "server": "Something went wrong on our side. Nothing was paid out. Please try again."
+      }
     }
   },
   "books": {
