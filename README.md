@@ -135,9 +135,30 @@ camera) or upload one, then drag and zoom to crop it.
   somiti only, with `nosniff` and a sandboxing CSP. The version is the
   start of the SHA-256, so a URL can be cached for good.
 
-Share purchase and exit come next. Code: `src/modules/members/`, pages in
-`src/app/members/`, tests in `tests/members.test.ts`, `tests/nominees.test.ts`
-and `tests/photos.test.ts`.
+### Shares
+
+A member's stake in the somiti, on the member's page and at
+`/members/<id>/shares/new`.
+
+- The share price is a somiti setting (`tenant.share_price`, ৳100 by
+  default until the bylaws say otherwise).
+- A purchase posts one entry through the ledger: Dr Cash in hand, Bank or
+  Mobile wallet, Cr Share capital on the member's line (source
+  `share_purchase`), so every ledger rule applies. Its voucher number is the
+  receipt number. bKash/Nagad payments need the transaction ID.
+- `share_transaction` records the count and price next to the entry. It is
+  append-only like the ledger (0001's `forbid_change`, no UPDATE/DELETE
+  grant). Holdings are the sum of these rows, leaving out any whose entry was
+  reversed in the ledger.
+- Each form carries an idempotency key, so a double click or a retry posts
+  once.
+- Taking money is the cashier's job; the architecture keeps admin and
+  president out of posting. One person may hold several roles (the demo
+  admin is also the cashier).
+
+Exit comes next. Code: `src/modules/members/`, pages in `src/app/members/`,
+tests in `tests/members.test.ts`, `tests/nominees.test.ts`,
+`tests/photos.test.ts` and `tests/shares.test.ts`.
 
 Tests need a Postgres superuser to create the `somiti_test` database
 (defaults to `postgres:postgres@localhost`; override with `TEST_ADMIN_URL`):
@@ -155,10 +176,10 @@ src/db/                      schema, withTenant, migration runner
 src/modules/ledger/          posting service, reversals, periods, trial balance, default chart
 src/modules/tenancy/         new somiti setup
 src/modules/auth/            SMS-code sign-in and sessions
-src/modules/members/         admission, KYC, search, nominees, photos
+src/modules/members/         admission, KYC, search, nominees, photos, shares
 src/modules/audit/           append-only audit log
 src/lib/                     money, rounding, digits, dates, formatting
-tests/                       ledger invariants, RLS isolation, sign-in, members, nominees, photos, money and i18n
+tests/                       ledger invariants, RLS isolation, sign-in, members, nominees, photos, shares, money and i18n
 ```
 
 ## Still to check with an accountant (M0)

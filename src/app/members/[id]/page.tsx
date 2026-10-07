@@ -10,23 +10,40 @@ import { toBanglaDigits } from "@/lib/digits";
 import { formatDate, formatInteger } from "@/lib/format";
 import { primaryName, secondaryName } from "@/lib/names";
 import { formatBdPhone } from "@/lib/phone";
-import { canManageMembers, canViewMembers, getMember, listNominees } from "@/modules/members";
+import {
+  canManageMembers,
+  canRecordPayments,
+  canViewMembers,
+  getMember,
+  listNominees,
+  shareHolding,
+  sharePrice,
+} from "@/modules/members";
 import { requireUser } from "../../auth";
 import { MemberAvatar, memberHue } from "../member-avatar";
 import { NomineesPanel } from "./nominees-panel";
 import { PhotoDialog } from "./photo/photo-dialog";
+import { SharesPanel } from "./shares-panel";
 
 async function load(id: string) {
   const user = await requireUser();
-  if (!canViewMembers(user.roles)) return { user, member: null, addedBy: null, nominees: [] };
+  const none = { user, member: null, addedBy: null, nominees: [], holding: null, price: 0n };
+  if (!canViewMembers(user.roles)) return none;
   return withTenant(getAppDb(), user.tenantId, async (ctx) => {
     const member = await getMember(ctx, id);
-    if (!member) return { user, member: null, addedBy: null, nominees: [] };
+    if (!member) return none;
     const [addedBy] = await ctx.tx
       .select({ nameEn: appUser.nameEn, nameBn: appUser.nameBn })
       .from(appUser)
       .where(and(eq(appUser.tenantId, ctx.tenantId), eq(appUser.id, member.createdBy)));
-    return { user, member, addedBy: addedBy ?? null, nominees: await listNominees(ctx, member.id) };
+    return {
+      user,
+      member,
+      addedBy: addedBy ?? null,
+      nominees: await listNominees(ctx, member.id),
+      holding: await shareHolding(ctx, member.id),
+      price: await sharePrice(ctx),
+    };
   });
 }
 
@@ -53,11 +70,11 @@ export default async function MemberPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ admitted?: string; nominees?: string }>;
+  searchParams: Promise<{ admitted?: string; nominees?: string; bought?: string }>;
 }) {
   const tDash = await getTranslations("dashboard");
   const t = await getTranslations("members");
-  const { user, member, addedBy, nominees } = await load((await params).id);
+  const { user, member, addedBy, nominees, holding, price } = await load((await params).id);
   if (!canViewMembers(user.roles)) return <p className="notice">{t("noAccess")}</p>;
   if (!member) notFound();
 
@@ -139,6 +156,18 @@ export default async function MemberPage({
           </div>
         ))}
       </dl>
+
+      {holding && (
+        <SharesPanel
+          holding={holding}
+          price={price}
+          memberId={member.id}
+          memberName={name}
+          locale={locale}
+          canBuy={canRecordPayments(user.roles) && member.status === "active"}
+          boughtId={search.bought}
+        />
+      )}
 
       <NomineesPanel
         nominees={nominees}

@@ -71,6 +71,20 @@
       "when": 1791056347856,
       "tag": "0009_member_photo_rls_and_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791057477533,
+      "tag": "0010_shares",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791057478349,
+      "tag": "0011_shares_append_only_rls_and_grants",
+      "breakpoints": true
     }
   ]
 }

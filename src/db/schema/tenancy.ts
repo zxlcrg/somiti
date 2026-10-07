@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   check,
   date,
@@ -45,11 +46,14 @@ export const tenant = pgTable(
     businessDate: date("business_date", { mode: "string" }).notNull(),
     /** Last closed business day. Nothing may post on or before it. */
     lockedThrough: date("locked_through", { mode: "string" }),
+    /** Price of one share, in paisa, as the bylaws set it. ৳100 until the somiti says otherwise. */
+    sharePrice: bigint("share_price", { mode: "bigint" }).notNull().default(sql`10000`),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     check("tenant_has_name", sql`${t.nameEn} IS NOT NULL OR ${t.nameBn} IS NOT NULL`),
     check("tenant_fiscal_month", sql`${t.fiscalYearStartMonth} BETWEEN 1 AND 12`),
+    check("tenant_share_price_positive", sql`${t.sharePrice} > 0`),
     check(
       "tenant_business_date_after_lock",
       sql`${t.lockedThrough} IS NULL OR ${t.businessDate} > ${t.lockedThrough}`,

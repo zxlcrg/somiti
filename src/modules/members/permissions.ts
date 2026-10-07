@@ -18,3 +18,12 @@ export function canManageMembers(roles: readonly string[]): boolean {
 export function canViewMembers(roles: readonly string[]): boolean {
   return roles.some((r) => STAFF.has(r));
 }
+
+/**
+ * Taking money from a member (share purchases now, deposits later) is the
+ * cashier's job. The architecture's role table keeps admin and president
+ * out of posting; one person may still hold the cashier role as well.
+ */
+export function canRecordPayments(roles: readonly string[]): boolean {
+  return roles.includes("cashier");
+}
