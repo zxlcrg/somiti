@@ -59,3 +59,4 @@ export {
   type HandoverResult,
   type HandoverView,
 } from "./collections";
+export { getReceipt, type Receipt } from "./receipts";

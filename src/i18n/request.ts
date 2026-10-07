@@ -6,11 +6,14 @@ import { defaultLocale, isLocale, LOCALE_COOKIE } from "./config";
  * Picks the UI language per request. For now that is the language cookie
  * or the somiti default; once sign-in lands it becomes app_user.locale,
  * falling back to tenant.default_locale.
+ *
+ * A page can still ask for another language explicitly, e.g. a receipt
+ * printed in the member's language: getTranslations({ locale, namespace }).
  */
-export default getRequestConfig(async () => {
+export default getRequestConfig(async ({ locale: asked }) => {
   const store = await cookies();
   const fromCookie = store.get(LOCALE_COOKIE)?.value;
-  const locale = isLocale(fromCookie) ? fromCookie : defaultLocale;
+  const locale = isLocale(asked) ? asked : isLocale(fromCookie) ? fromCookie : defaultLocale;
   return {
     locale,
     timeZone: "Asia/Dhaka",

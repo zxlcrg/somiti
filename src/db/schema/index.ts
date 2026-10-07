@@ -6,3 +6,4 @@ export * from "./members";
 export * from "./shares";
 export * from "./savings";
 export * from "./dayend";
+export * from "./messages";

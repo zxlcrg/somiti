@@ -1029,6 +1029,40 @@
       "income": "Fine income",
       "chip": "+{amount} late fine",
       "deposited": "Receipt #{no}: {amount} deposited and {fine} late fine collected. New balance {balance}."
+    },
+    "receipt": {
+      "title": "Receipt",
+      "deposit": "Savings deposit receipt",
+      "withdrawal": "Withdrawal payment slip",
+      "receiptNo": "Receipt #{no}",
+      "paymentNo": "Payment #{no}",
+      "date": "Date",
+      "member": "Member",
+      "memberNo": "Member #{no}",
+      "account": "Account",
+      "amount": "Amount",
+      "fine": "Late fine",
+      "total": "Total received",
+      "paidOut": "Paid out",
+      "method": "Paid by",
+      "ref": "Reference",
+      "takenBy": "Received by",
+      "paidByOfficer": "Paid by",
+      "balance": "Balance after",
+      "reversed": "Reversed: this entry no longer counts",
+      "signOfficer": "Officer's signature",
+      "signMember": "Member's signature",
+      "print": "Print",
+      "back": "Back to passbook",
+      "language": "Receipt language",
+      "sms": {
+        "queued": "SMS to {phone} is waiting to send",
+        "sent": "SMS sent to {phone}",
+        "failed": "SMS to {phone} could not be sent",
+        "none": "No SMS for this entry"
+      },
+      "footer": "Keep this receipt. Check your balance any time at the somiti office.",
+      "open": "Receipt"
     }
   }
 }
