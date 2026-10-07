@@ -22,6 +22,19 @@ export function addDays(date: IsoDate, days: number): IsoDate {
   return format(d);
 }
 
+/**
+ * The same day `months` months later. A day the month doesn't have becomes
+ * its last day: 31 January plus one month is 28 or 29 February.
+ */
+export function addMonths(date: IsoDate, months: number): IsoDate {
+  const d = parse(date);
+  const day = d.getUTCDate();
+  const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + months, 1));
+  const last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(day, last));
+  return format(target);
+}
+
 /** Today's date in Dhaka. */
 export function todayInDhaka(now: Date = new Date()): IsoDate {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Dhaka" }).format(now);

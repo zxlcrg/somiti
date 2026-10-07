@@ -1,0 +1,1105 @@
+/* ---------- Loans ---------- */
+
+.loans {
+  --flat: var(--accent-2);
+  --declining: var(--accent-3);
+  --danger: #c93a4f;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.loans .m-flat,
+.loans-panel .m-flat {
+  --mc: var(--flat, var(--accent-2));
+}
+
+.loans .m-declining,
+.loans-panel .m-declining {
+  --mc: var(--declining, var(--accent-3));
+}
+
+.loan-card {
+  min-width: 0;
+  padding: 1.15rem 1.3rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  animation: rise 0.35s ease-out both;
+}
+
+.loan-card h2 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+  font-size: 1.1rem;
+}
+
+.loan-card .label,
+.loans .label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.empty-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.empty-inline p {
+  margin: 0;
+}
+
+/* ---------- Status chips ---------- */
+
+.status-chip {
+  --sc: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sc) 15%, transparent);
+  color: color-mix(in srgb, var(--sc) 70%, var(--fg));
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.s-applied {
+  --sc: var(--accent-2);
+}
+.s-approved {
+  --sc: var(--accent-3);
+}
+.s-disbursed {
+  --sc: var(--accent);
+}
+.s-rejected {
+  --sc: #c93a4f;
+}
+.s-cancelled,
+.s-closed {
+  --sc: var(--muted);
+}
+
+.chip.method-flat {
+  background: color-mix(in srgb, var(--accent-2) 16%, transparent);
+}
+
+.chip.method-declining {
+  background: color-mix(in srgb, var(--accent-3) 16%, transparent);
+}
+
+/* ---------- Overview ---------- */
+
+.loan-callouts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.75rem;
+}
+
+.wd-callout.pay {
+  --wd: var(--accent);
+}
+
+.loan-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.loans-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.queues {
+  display: grid;
+  gap: 1rem;
+}
+
+.queue {
+  border-left: 4px solid var(--qc, var(--line));
+}
+
+.queue.q-decide {
+  --qc: var(--accent-2);
+}
+
+.queue.q-pay {
+  --qc: var(--accent);
+}
+
+.queue h2 .count-badge {
+  margin-left: auto;
+}
+
+.all-good {
+  margin: 0;
+}
+
+.loan-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.loan-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.8rem;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.loan-list a:hover,
+.loan-list a:focus-visible {
+  background: color-mix(in srgb, var(--qc, var(--accent)) 10%, var(--card));
+  transform: translateX(3px);
+}
+
+.loan-list .who {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+}
+
+.loan-list .who small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loan-list .amt {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Payout chart */
+
+.payout-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.payout-chart .axis {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.payout-chart text {
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.payout-chart .value {
+  fill: var(--fg);
+  font-weight: 700;
+}
+
+.payout-chart .hit {
+  fill: transparent;
+}
+
+.payout-chart .fill {
+  fill: color-mix(in srgb, var(--accent) 55%, var(--card));
+  transition: fill 0.15s ease;
+}
+
+.payout-chart .bar.now .fill {
+  fill: var(--accent);
+}
+
+.payout-chart .bar {
+  cursor: default;
+  outline: none;
+}
+
+.payout-chart .bar:hover .fill,
+.payout-chart .bar:focus-visible .fill {
+  fill: var(--accent-3);
+}
+
+.payout-chart .bar:hover .hit,
+.payout-chart .bar:focus-visible .hit {
+  fill: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.chart-note,
+.chart-empty {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+}
+
+/* Product cards */
+
+.loan-products {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1rem;
+}
+
+.loan-product {
+  display: grid;
+  gap: 0.45rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--mc) 30%, var(--line));
+  border-top: 4px solid var(--mc);
+  border-radius: 1.1rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mc) 9%, var(--card)), var(--card) 60%);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.loan-product:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow);
+}
+
+.loan-product.off {
+  opacity: 0.6;
+  filter: grayscale(0.6);
+}
+
+.loan-product header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.loan-product h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.loan-product .rate {
+  margin: 0;
+  color: var(--muted);
+}
+
+.loan-product .rate strong {
+  color: color-mix(in srgb, var(--mc) 65%, var(--fg));
+  font-size: 1.5rem;
+}
+
+.loan-product dl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin: 0.2rem 0 0;
+}
+
+.loan-product dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.loan-product dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.loan-product footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed var(--line);
+  font-size: 0.85rem;
+}
+
+.loan-product footer form {
+  margin: 0;
+}
+
+/* ---------- New product form ---------- */
+
+.loan-product-form,
+.apply-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.lpf-main,
+.lpf-side,
+.apply-main,
+.apply-side {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.lpf-side,
+.apply-side {
+  position: sticky;
+  top: 1rem;
+}
+
+.choice-group + .choice-group {
+  margin-top: 1rem;
+}
+
+.choice-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.choice {
+  --cc: var(--accent);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.15rem 0.65rem;
+  padding: 0.75rem 0.85rem;
+  border: 2px solid var(--line);
+  border-radius: 0.95rem;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.choice.c-flat {
+  --cc: var(--accent-2);
+}
+.choice.c-declining,
+.choice.c-monthly {
+  --cc: var(--accent-3);
+}
+
+.choice:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--cc) 55%, var(--line));
+}
+
+.choice.on {
+  border-color: var(--cc);
+  background: color-mix(in srgb, var(--cc) 10%, var(--card));
+}
+
+.choice-icon {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--cc) 18%, var(--card));
+  font-size: 1.1rem;
+}
+
+.choice small {
+  color: var(--muted);
+}
+
+.seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 6%, var(--card));
+}
+
+.seg button {
+  padding: 0.4rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.seg button:hover {
+  color: var(--fg);
+}
+
+.seg button.on {
+  background: var(--card);
+  color: var(--fg);
+  box-shadow: 0 1px 3px rgba(18, 32, 27, 0.18);
+}
+
+.seg button.on.approve {
+  background: var(--accent);
+  color: #fff;
+}
+
+.seg button.on.reject {
+  background: #c93a4f;
+  color: #fff;
+}
+
+.suffix-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.suffix-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.suffix-input input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.suffix-input input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.suffix-input > span {
+  padding: 0 0.75rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.code-input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  text-transform: uppercase;
+}
+
+.example-card,
+.terms-card {
+  --mc: var(--accent);
+  border-top: 4px solid var(--mc);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mc) 10%, var(--card)), var(--card) 55%);
+}
+
+.example-lead {
+  margin: 0 0 0.6rem;
+}
+
+.example-figure,
+.terms-figure {
+  display: grid;
+  gap: 0.1rem;
+  margin-bottom: 0.9rem;
+}
+
+.example-figure span,
+.terms-figure span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.example-figure strong,
+.terms-figure strong {
+  color: color-mix(in srgb, var(--mc) 60%, var(--fg));
+  font-size: 2rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.example-rows {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.example-rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.example-rows dt {
+  color: var(--muted);
+}
+
+.example-rows dd {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.example-rows .total {
+  padding-top: 0.4rem;
+  border-top: 1px dashed var(--line);
+}
+
+.example-rows .total dt,
+.example-rows .hand dt {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.example-rows .hand {
+  margin-top: 0.2rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+}
+
+/* ---------- Apply form ---------- */
+
+.product-picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.6rem;
+}
+
+.product-pick {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.75rem 0.9rem;
+  border: 2px solid var(--line);
+  border-left: 5px solid var(--mc);
+  border-radius: 0.95rem;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.product-pick:hover {
+  transform: translateY(-2px);
+}
+
+.product-pick.on {
+  border-color: var(--mc);
+  background: color-mix(in srgb, var(--mc) 11%, var(--card));
+}
+
+.product-pick small {
+  color: var(--muted);
+}
+
+.product-pick.busy {
+  opacity: 0.7;
+}
+
+.busy-note {
+  color: color-mix(in srgb, #c93a4f 75%, var(--fg)) !important;
+  font-weight: 700;
+}
+
+.money-input.big input {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.quick-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.chip-btn {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.chip-btn:hover {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--card));
+}
+
+.term-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.term-row input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--accent);
+}
+
+.term-row .term-input {
+  width: 4.5rem;
+  padding: 0.55rem 0.4rem;
+  border-radius: 0.7rem;
+  font-size: 1.05rem;
+  text-align: center;
+  font-weight: 700;
+}
+
+.form-grid .field.wide {
+  grid-column: 1 / -1;
+}
+
+.schedule-table td,
+.schedule-table th {
+  white-space: nowrap;
+}
+
+.schedule-table tbody tr {
+  transition: background 0.12s ease;
+}
+
+.schedule-table tbody tr:hover {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+.schedule-table tr.due td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent-2);
+}
+
+.schedule-table tfoot td {
+  border-top: 2px solid var(--line);
+  font-weight: 700;
+}
+
+.split-bar {
+  display: flex;
+  gap: 2px;
+  height: 0.7rem;
+  margin-bottom: 0.85rem;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.split-bar span {
+  transition: width 0.3s ease;
+}
+
+.split-bar .principal,
+.dot.principal {
+  background: var(--accent);
+}
+
+.split-bar .charge,
+.dot.charge {
+  background: var(--accent-2);
+}
+
+.dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+/* ---------- Loan page ---------- */
+
+.loan-hero {
+  --mc: var(--accent);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.3rem 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--sc) 35%, var(--line));
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 100% 0, color-mix(in srgb, var(--sc) 22%, transparent), transparent 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--mc) 10%, var(--card)), var(--card));
+  box-shadow: var(--shadow);
+}
+
+.loan-id {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+.loan-id h1 {
+  margin: 0.1rem 0;
+  font-size: 1.5rem;
+}
+
+.loan-id p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.loan-amount {
+  display: grid;
+  justify-items: end;
+  gap: 0.2rem;
+}
+
+.loan-amount strong {
+  font-size: 2rem;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.loan-amount > span:last-child {
+  color: var(--muted);
+}
+
+.loan-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.loan-steps li {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.1rem 0.6rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0.95rem;
+  background: var(--card);
+  color: var(--muted);
+}
+
+.loan-steps li small {
+  grid-column: 2;
+}
+
+.loan-steps .dot {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 2px dashed var(--line);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.loan-steps li.on {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  background: color-mix(in srgb, var(--accent) 7%, var(--card));
+  color: var(--fg);
+}
+
+.loan-steps li.on .dot {
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+}
+
+.loan-steps li.on.k-rejected {
+  border-color: color-mix(in srgb, #c93a4f 40%, var(--line));
+  background: color-mix(in srgb, #c93a4f 7%, var(--card));
+}
+
+.loan-steps li.on.k-rejected .dot {
+  background: #c93a4f;
+}
+
+.loan-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.loan-grid.solo {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.loan-grid.solo .loan-side {
+  max-width: 28rem;
+}
+
+.loan-main,
+.loan-side {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.terms-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.terms-list > div {
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--fg) 4%, var(--card));
+}
+
+.terms-list > div.wide {
+  grid-column: 1 / -1;
+}
+
+.terms-list dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.terms-list dd {
+  margin: 0.15rem 0 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.terms-list dd strong {
+  font-size: 1.25rem;
+}
+
+.step-card {
+  border-top: 4px solid var(--tc, var(--accent));
+}
+
+.step-card.decide {
+  --tc: var(--accent-2);
+}
+.step-card.pay {
+  --tc: var(--accent);
+}
+.step-card.cancel {
+  --tc: #c93a4f;
+}
+
+.step-card .seg {
+  margin-bottom: 0.9rem;
+}
+
+.step-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.step-form .field {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.step-form .field small {
+  color: var(--muted);
+}
+
+.step-card .method-tiles {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.step-card .entry-preview {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.9rem;
+}
+
+.step-card .entry-row {
+  grid-template-columns: auto 1fr auto;
+  gap: 0.5rem;
+}
+
+.step-card .entry-preview .account {
+  font-size: 0.85rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.cancel-link {
+  justify-self: start;
+}
+
+.notice.soft {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--accent-3) 9%, var(--card));
+}
+
+/* ---------- Member profile panel ---------- */
+
+.loan-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 0.75rem;
+}
+
+.loan-mini {
+  --mc: var(--accent);
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--sc, var(--mc));
+  border-radius: 0.95rem;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--sc, var(--mc)) 8%, var(--card)), var(--card) 60%);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.loan-mini:hover,
+.loan-mini:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.loan-mini-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.loan-mini > strong {
+  font-size: 1.35rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.loans-total {
+  color: color-mix(in srgb, var(--accent) 70%, var(--fg));
+}
+
+/* ---------- Phones ---------- */
+
+@media (max-width: 760px) {
+  .loans-grid,
+  .loan-grid,
+  .loan-product-form,
+  .apply-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lpf-side,
+  .apply-side {
+    position: static;
+  }
+
+  .loan-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .loan-hero {
+    padding: 1.1rem;
+  }
+
+  .loan-amount {
+    justify-items: start;
+  }
+
+  .loan-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .choice-tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .loan-card {
+    padding: 1rem;
+  }
+}
+
+/* ---------- Small touches ---------- */
+
+.page-head.apply-head {
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.money-input.big > span {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.loan-table a {
+  color: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.loan-table a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.loan-table tbody tr {
+  transition: background 0.12s ease;
+}
+
+.loan-table tbody tr:hover {
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
+/* The landing page's pulsing .dot is not wanted here. */
+.loan-steps .dot,
+.example-rows .dot {
+  animation: none;
+}
+
+.loan-steps li:not(.on) .dot {
+  background: transparent;
+}

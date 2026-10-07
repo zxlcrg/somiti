@@ -23,6 +23,7 @@ export const ACCOUNT_KEYS = [
   "loans_receivable",
   "interest_income",
   "fine_income",
+  "fee_income",
   "sms_expense",
 ] as const;
 export type AccountKey = (typeof ACCOUNT_KEYS)[number];

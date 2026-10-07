@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { getAppDb, withTenant } from "@/db/client";
 import { canApproveVouchers, canViewBooks, pendingForChecker } from "@/modules/ledger";
 import { canViewMembers } from "@/modules/members";
+import { canApproveLoans, canDisburseLoans, canViewLoans, loansWaitingFor } from "@/modules/loans";
 import { canApproveWithdrawals, withdrawalsForChecker } from "@/modules/savings";
 import { getCurrentUser } from "./auth";
 import { NavLink } from "./nav-link";
@@ -19,6 +20,7 @@ import "./books.css";
 import "./shares.css";
 import "./savings.css";
 import "./opening.css";
+import "./loans.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
@@ -38,6 +40,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const withdrawals =
     user && canApproveWithdrawals(user.roles)
       ? await withTenant(getAppDb(), user.tenantId, (ctx) => withdrawalsForChecker(ctx, user.userId))
+      : 0;
+  // Loans waiting for this officer to approve or pay out, on the Loans link.
+  const loansWaiting =
+    user && canViewLoans(user.roles)
+      ? await withTenant(getAppDb(), user.tenantId, (ctx) =>
+          loansWaitingFor(ctx, user.userId, { decide: canApproveLoans(user.roles), pay: canDisburseLoans(user.roles) }),
+        )
       : 0;
   return (
     <html lang={locale}>
@@ -59,6 +68,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     {withdrawals > 0 && (
                       <span className="count-badge" aria-label={t("nav.savingsWaiting", { count: withdrawals })}>
                         {withdrawals}
+                      </span>
+                    )}
+                  </NavLink>
+                )}
+                {canViewLoans(user.roles) && (
+                  <NavLink href="/loans">
+                    {t("nav.loans")}
+                    {loansWaiting > 0 && (
+                      <span className="count-badge" aria-label={t("nav.loansWaiting", { count: loansWaiting })}>
+                        {loansWaiting}
                       </span>
                     )}
                   </NavLink>
