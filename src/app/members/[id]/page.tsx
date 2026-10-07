@@ -19,15 +19,17 @@ import {
   shareHolding,
   sharePrice,
 } from "@/modules/members";
+import { canManageSavings, canTakeDeposits, listProducts, memberAccounts } from "@/modules/savings";
 import { requireUser } from "../../auth";
 import { MemberAvatar, memberHue } from "../member-avatar";
 import { NomineesPanel } from "./nominees-panel";
 import { PhotoDialog } from "./photo/photo-dialog";
+import { SavingsPanel } from "./savings-panel";
 import { SharesPanel } from "./shares-panel";
 
 async function load(id: string) {
   const user = await requireUser();
-  const none = { user, member: null, addedBy: null, nominees: [], holding: null, price: 0n };
+  const none = { user, member: null, addedBy: null, nominees: [], holding: null, price: 0n, accounts: [], hasProducts: false };
   if (!canViewMembers(user.roles)) return none;
   return withTenant(getAppDb(), user.tenantId, async (ctx) => {
     const member = await getMember(ctx, id);
@@ -43,6 +45,8 @@ async function load(id: string) {
       nominees: await listNominees(ctx, member.id),
       holding: await shareHolding(ctx, member.id),
       price: await sharePrice(ctx),
+      accounts: await memberAccounts(ctx, member.id),
+      hasProducts: (await listProducts(ctx, { activeOnly: true })).length > 0,
     };
   });
 }
@@ -61,7 +65,6 @@ function ageOn(birth: string, on: string): number {
 }
 
 const soonIcons = {
-  savings: "M4 7h16v12H4zM4 7l2-3h12l2 3M9 12h6",
   loans: "M3 12h18M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4",
 };
 
@@ -74,7 +77,7 @@ export default async function MemberPage({
 }) {
   const tDash = await getTranslations("dashboard");
   const t = await getTranslations("members");
-  const { user, member, addedBy, nominees, holding, price } = await load((await params).id);
+  const { user, member, addedBy, nominees, holding, price, accounts, hasProducts } = await load((await params).id);
   if (!canViewMembers(user.roles)) return <p className="notice">{t("noAccess")}</p>;
   if (!member) notFound();
 
@@ -157,6 +160,16 @@ export default async function MemberPage({
         ))}
       </dl>
 
+      <SavingsPanel
+        accounts={accounts}
+        memberId={member.id}
+        memberName={name}
+        locale={locale}
+        canOpen={canManageSavings(user.roles) && member.status === "active"}
+        canDeposit={canTakeDeposits(user.roles) && member.status === "active"}
+        hasProducts={hasProducts}
+      />
+
       {holding && (
         <SharesPanel
           holding={holding}
@@ -180,7 +193,7 @@ export default async function MemberPage({
 
       <h2 className="section-title">{t("profile.soonTitle")}</h2>
       <section className="features">
-        {(["savings", "loans"] as const).map((k) => (
+        {(["loans"] as const).map((k) => (
           <article className="feature soon" key={k}>
             <span className="pill">{tDash("soon")}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">

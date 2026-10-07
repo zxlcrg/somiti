@@ -6,6 +6,7 @@ import { getAppDb, withTenant } from "@/db/client";
 import { canApproveVouchers, canViewBooks, pendingForChecker } from "@/modules/ledger";
 import { canViewMembers } from "@/modules/members";
 import { getCurrentUser } from "./auth";
+import { NavLink } from "./nav-link";
 import { LanguageSwitcher } from "./language-switcher";
 import { signOutAction } from "./sign-in/actions";
 import "./globals.css";
@@ -15,6 +16,7 @@ import "./nominees.css";
 import "./photo.css";
 import "./books.css";
 import "./shares.css";
+import "./savings.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
@@ -41,22 +43,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               </span>
               <span className="brand-name">{t("app.name")}</span>
             </Link>
-            <nav className="topbar-actions">
-              {user && canViewMembers(user.roles) && (
-                <Link href="/members" className="nav-link">
-                  {t("nav.members")}
-                </Link>
-              )}
-              {user && canViewBooks(user.roles) && (
-                <Link href="/vouchers" className="nav-link">
-                  {t("nav.accounts")}
-                  {waiting > 0 && (
-                    <span className="count-badge" aria-label={t("nav.waiting", { count: waiting })}>
-                      {waiting}
-                    </span>
-                  )}
-                </Link>
-              )}
+            {user && (canViewMembers(user.roles) || canViewBooks(user.roles)) && (
+              <nav className="main-nav" aria-label={t("nav.label")}>
+                {canViewMembers(user.roles) && <NavLink href="/members">{t("nav.members")}</NavLink>}
+                {canViewMembers(user.roles) && <NavLink href="/savings">{t("nav.savings")}</NavLink>}
+                {canViewBooks(user.roles) && (
+                  <NavLink href="/vouchers" also={["/cash-book", "/trial-balance"]}>
+                    {t("nav.accounts")}
+                    {waiting > 0 && (
+                      <span className="count-badge" aria-label={t("nav.waiting", { count: waiting })}>
+                        {waiting}
+                      </span>
+                    )}
+                  </NavLink>
+                )}
+              </nav>
+            )}
+            <div className="topbar-actions">
               <LanguageSwitcher />
               {user ? (
                 <form action={signOutAction}>
@@ -79,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   {t("nav.signIn")}
                 </Link>
               )}
-            </nav>
+            </div>
           </header>
           <main>{children}</main>
         </NextIntlClientProvider>

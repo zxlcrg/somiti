@@ -32,6 +32,7 @@ export const entrySourceEnum = pgEnum("entry_source", [
   "opening_balance",
   "manual_voucher",
   "share_purchase",
+  "savings_deposit",
   "reversal",
   "system",
 ]);
