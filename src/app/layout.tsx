@@ -63,7 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   </NavLink>
                 )}
                 {canViewBooks(user.roles) && (
-                  <NavLink href="/vouchers" also={["/cash-book", "/trial-balance"]}>
+                  <NavLink href="/vouchers" also={["/cash-book", "/trial-balance", "/day-end"]}>
                     {t("nav.accounts")}
                     {waiting > 0 && (
                       <span className="count-badge" aria-label={t("nav.waiting", { count: waiting })}>
