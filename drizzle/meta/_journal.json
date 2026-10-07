@@ -169,6 +169,20 @@
       "when": 1791395478311,
       "tag": "0023_day_close_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791396642927,
+      "tag": "0024_sms_outbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791396644215,
+      "tag": "0025_sms_outbox_rls",
+      "breakpoints": true
     }
   ]
 }

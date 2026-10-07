@@ -75,7 +75,10 @@ export default async function PassbookPage({
           <span aria-hidden="true">🎉</span>{" "}
           {fresh.fine
             ? t("fines.deposited", { no: num(fresh.entryNo), amount: taka(fresh.amount), fine: taka(fresh.fine), balance: taka(a.balance) })
-            : t("passbook.deposited", { no: num(fresh.entryNo), amount: taka(fresh.amount), balance: taka(a.balance) })}
+            : t("passbook.deposited", { no: num(fresh.entryNo), amount: taka(fresh.amount), balance: taka(a.balance) })}{" "}
+          <Link href={`/savings/receipts/${fresh.id}`} className="btn ghost small">
+            🖨️ {t("receipt.open")}
+          </Link>
         </p>
       )}
 
@@ -170,7 +173,9 @@ export default async function PassbookPage({
                       <td>
                         {formatDate(x.businessDate, locale)}
                         <small className="muted">
-                          {x.kind === "withdrawal" ? t("withdrawals.payment", { no: num(x.entryNo) }) : `${t("passbook.receipt")} #${num(x.entryNo)}`}
+                          <Link href={`/savings/receipts/${x.id}`} className="receipt-link">
+                            {x.kind === "withdrawal" ? t("withdrawals.payment", { no: num(x.entryNo) }) : `${t("passbook.receipt")} #${num(x.entryNo)}`}
+                          </Link>
                         </small>
                       </td>
                       <td>

@@ -17,6 +17,7 @@ import {
   type WithdrawalError,
 } from "@/modules/savings";
 import { getCurrentUser } from "../../auth";
+import { flushSms } from "../../sms";
 
 /** Ledger refusals an officer can understand and act on. */
 const LEDGER_MESSAGES = new Set<LedgerErrorCode>(["DAY_CLOSED", "NO_OPEN_PERIOD", "IDEMPOTENCY_CONFLICT"]);
@@ -103,6 +104,7 @@ export async function decideWithdrawalAction(
     return { attempt, error: "server" };
   }
   if (!result.ok) return { attempt, error: result.error };
+  if (kind === "approve") await flushSms(user.tenantId);
   // The header counts withdrawals waiting for the viewer; refresh it along with the page.
   revalidatePath("/", "layout");
   const safe = returnTo.startsWith("/savings/") ? returnTo : "/savings/withdrawals";

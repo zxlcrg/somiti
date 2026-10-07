@@ -4,6 +4,7 @@ import { member, savingsAccount, savingsProduct, savingsTransaction, savingsWith
 import { parseTaka } from "@/lib/money";
 import { recordAudit } from "@/modules/audit/log";
 import { accountIdsByKey, LedgerError, postEntry } from "@/modules/ledger";
+import { queueMemberSms, withdrawalText } from "@/modules/messages";
 import { DEPOSIT_METHODS, getAccount, MAX_DEPOSIT, type DepositMethod } from "./accounts";
 
 /*
@@ -220,6 +221,16 @@ export async function approveWithdrawal(ctx: TenantTx, d: Decision): Promise<Dec
     entityId: w.id,
     after: { entryNo: posted.entry.entryNo, businessDate: posted.entry.businessDate, amount: w.amount.toString() },
     device: d.device,
+  });
+  await queueMemberSms(ctx, {
+    memberId: account.memberId,
+    kind: "withdrawal",
+    refId: posted.entry.id,
+    text: (locale, somiti) =>
+      withdrawalText(
+        { somiti, productCode: account.productCode, accountNo: account.accountNo, entryNo: posted.entry.entryNo, amount: w.amount, balance: view!.balance - w.amount },
+        locale,
+      ),
   });
   return { ok: true, entryNo: posted.entry.entryNo };
 }

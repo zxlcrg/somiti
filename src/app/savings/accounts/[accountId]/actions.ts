@@ -6,6 +6,7 @@ import { getAppDb, withTenant } from "@/db/client";
 import { LedgerError, type LedgerErrorCode } from "@/modules/ledger";
 import { deposit, depositChannel, type DepositError } from "@/modules/savings";
 import { getCurrentUser } from "../../../auth";
+import { flushSms } from "../../../sms";
 
 /** Ledger refusals the cashier can understand and act on. */
 const LEDGER_MESSAGES = new Set<LedgerErrorCode>(["DAY_CLOSED", "NO_OPEN_PERIOD", "AFTER_BUSINESS_DATE", "IDEMPOTENCY_CONFLICT"]);
@@ -44,5 +45,6 @@ export async function depositAction(accountId: string, prev: DepositState, form:
     return { errors: { form: "server" }, attempt };
   }
   if (!result.ok) return { errors: result.errors, attempt };
+  if (!result.replayed) await flushSms(user.tenantId);
   redirect(`/savings/accounts/${accountId}?deposited=${result.deposit.id}`);
 }

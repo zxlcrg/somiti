@@ -4,6 +4,7 @@ import { idempotencyKey, member, savingsAccount, savingsFine, savingsProduct, sa
 import { parseTaka } from "@/lib/money";
 import { recordAudit } from "@/modules/audit/log";
 import { accountIdsByKey, postEntry } from "@/modules/ledger";
+import { depositText, queueMemberSms } from "@/modules/messages";
 import { dueStatus, lateFineFor, type DueStatus, type SavingsFrequency } from "./schedule";
 
 export const DEPOSIT_METHODS = ["cash", "bank", "mobile_wallet"] as const;
@@ -397,7 +398,18 @@ export async function deposit(
     },
     device: actor.device,
   });
-  return { ok: true, deposit: (await find(posted.entry.id))!, replayed: false };
+  const done = (await find(posted.entry.id))!;
+  await queueMemberSms(ctx, {
+    memberId: account.memberId,
+    kind: "deposit",
+    refId: posted.entry.id,
+    text: (locale, somiti) =>
+      depositText(
+        { somiti, productCode: account.productCode, accountNo: account.accountNo, entryNo: posted.entry.entryNo, amount: amount!, balance: done.balanceAfter, fine },
+        locale,
+      ),
+  });
+  return { ok: true, deposit: done, replayed: false };
 }
 
 // ---------- Overview ----------
