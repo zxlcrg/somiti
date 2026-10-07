@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { appUser, auditLog, loan, loanInstallment, userRole } from "../src/db/schema";
 import { addMonths } from "../src/lib/dates";
 import { getEntry, trialBalance } from "../src/modules/ledger";
-import { admitMember } from "../src/modules/members";
+import { admitMember, exitBlockers } from "../src/modules/members";
 import {
   applyForLoan,
   approveLoan,
@@ -208,6 +208,9 @@ describe("loan applications", () => {
     // Paid once only, and the schedule can't be edited.
     expect(await s.t.run((ctx) => disburseLoan(ctx, { loanId, method: "cash", userId: s.t.adminUserId }))).toEqual({ ok: false, error: "wrong_status" });
     await expect(s.t.run(({ tx }) => tx.update(loanInstallment).set({ interest: 0n }))).rejects.toThrow();
+
+    // A running loan keeps the member from exiting.
+    expect(await s.t.run((ctx) => exitBlockers(ctx, s.memberId))).toEqual(["open_loan"]);
 
     const stats = await s.t.run((ctx) => loanStats(ctx));
     expect(stats).toMatchObject({ live: 1, outstandingPrincipal: 20_000_00n });

@@ -8,3 +8,4 @@ export * from "./savings";
 export * from "./dayend";
 export * from "./messages";
 export * from "./loans";
+export * from "./exits";

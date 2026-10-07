@@ -77,9 +77,12 @@ export async function SharesPanel({
           <h3 className="shares-history-title">{t("history")}</h3>
           <ol className="share-history">
             {holding.transactions.map((x) => (
-              <li key={x.id} className={x.reversed ? "reversed" : x.id === boughtId ? "fresh" : undefined}>
+              <li
+                key={x.id}
+                className={x.reversed ? "reversed" : x.kind === "refund" ? "refund" : x.id === boughtId ? "fresh" : undefined}
+              >
                 <span className="share-history-icon" aria-hidden="true">
-                  {x.paymentMethod ? METHOD_ICON[x.paymentMethod] : "📒"}
+                  {x.kind === "refund" ? "⇥" : x.paymentMethod ? METHOD_ICON[x.paymentMethod] : "📒"}
                 </span>
                 <div>
                   <strong>{t("count", { count: x.shares })}</strong>
@@ -90,7 +93,8 @@ export async function SharesPanel({
                 </div>
                 <span className="share-history-amount">
                   {x.reversed && <span className="chip">{t("reversed")}</span>}
-                  {taka(x.amount)}
+                  {x.kind === "refund" && <span className="chip">{t("refund")}</span>}
+                  {x.kind === "refund" ? `−${taka(x.amount)}` : taka(x.amount)}
                 </span>
               </li>
             ))}

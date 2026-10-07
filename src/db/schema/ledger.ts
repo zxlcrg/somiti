@@ -35,6 +35,7 @@ export const entrySourceEnum = pgEnum("entry_source", [
   "savings_deposit",
   "savings_withdrawal",
   "collector_handover",
+  "member_exit",
   "day_close",
   "loan_disbursement",
   "reversal",

@@ -14,8 +14,11 @@ import {
   canManageMembers,
   canRecordPayments,
   canViewMembers,
+  exitBlockers,
+  exitSettlement,
   getMember,
   listNominees,
+  memberExits,
   shareHolding,
   sharePrice,
 } from "@/modules/members";
@@ -24,6 +27,7 @@ import { canManageSavings, canTakeDeposits, listProducts, memberAccounts } from 
 import { requireUser } from "../../auth";
 import { MemberAvatar, memberHue } from "../member-avatar";
 import { LoansPanel } from "./loans-panel";
+import { ExitPanel, exitNotice } from "./exit-panel";
 import { NomineesPanel } from "./nominees-panel";
 import { PhotoDialog } from "./photo/photo-dialog";
 import { SavingsPanel } from "./savings-panel";
@@ -31,7 +35,20 @@ import { SharesPanel } from "./shares-panel";
 
 async function load(id: string) {
   const user = await requireUser();
-  const none = { user, member: null, addedBy: null, nominees: [], holding: null, price: 0n, accounts: [], hasProducts: false, loans: [] as LoanView[] };
+  const none = {
+    user,
+    member: null,
+    addedBy: null,
+    nominees: [],
+    holding: null,
+    price: 0n,
+    accounts: [],
+    hasProducts: false,
+    exits: [],
+    settlement: null,
+    blockers: [],
+    loans: [] as LoanView[],
+  };
   if (!canViewMembers(user.roles)) return none;
   return withTenant(getAppDb(), user.tenantId, async (ctx) => {
     const member = await getMember(ctx, id);
@@ -50,6 +67,9 @@ async function load(id: string) {
       accounts: await memberAccounts(ctx, member.id),
       hasProducts: (await listProducts(ctx, { activeOnly: true })).length > 0,
       loans: canViewLoans(user.roles) ? await listLoans(ctx, { memberId: member.id }) : [],
+      exits: await memberExits(ctx, member.id),
+      settlement: await exitSettlement(ctx, member.id),
+      blockers: await exitBlockers(ctx, member.id),
     };
   });
 }
@@ -72,10 +92,12 @@ export default async function MemberPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ admitted?: string; nominees?: string; bought?: string }>;
+  searchParams: Promise<{ admitted?: string; nominees?: string; bought?: string; exit?: string }>;
 }) {
   const t = await getTranslations("members");
-  const { user, member, addedBy, nominees, holding, price, accounts, hasProducts, loans } = await load((await params).id);
+  const { user, member, addedBy, nominees, holding, price, accounts, hasProducts, exits, settlement, blockers, loans } = await load(
+    (await params).id,
+  );
   if (!canViewMembers(user.roles)) return <p className="notice">{t("noAccess")}</p>;
   if (!member) notFound();
 
@@ -198,6 +220,22 @@ export default async function MemberPage({
         canEdit={canManageMembers(user.roles) && member.status === "active"}
         notice={nomineeNotice}
       />
+
+      {settlement && (
+        <ExitPanel
+          memberId={member.id}
+          memberName={name}
+          memberStatus={member.status}
+          exits={exits}
+          settlement={settlement}
+          blockers={blockers}
+          locale={locale}
+          canManage={canManageMembers(user.roles)}
+          userId={user.userId}
+          notice={exitNotice(search.exit)}
+        />
+      )}
+
     </div>
   );
 }

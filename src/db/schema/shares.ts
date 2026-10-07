@@ -4,8 +4,11 @@ import { journalEntry } from "./ledger";
 import { member } from "./members";
 import { appUser, tenant } from "./tenancy";
 
-/** "opening" carries a holding over from the somiti's records before this system; it has no payment. */
-export const shareTxnKindEnum = pgEnum("share_txn_kind", ["purchase", "opening"]);
+/**
+ * "opening" carries a holding over from the somiti's records before this system; it has no payment.
+ * "refund" pays a member's share capital back when they leave (members/exits.ts); it counts against the holding.
+ */
+export const shareTxnKindEnum = pgEnum("share_txn_kind", ["purchase", "opening", "refund"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["cash", "bank", "mobile_wallet"]);
 
 /**
@@ -14,7 +17,7 @@ export const paymentMethodEnum = pgEnum("payment_method", ["cash", "bank", "mobi
  * ledger doesn't hold: how many shares, at what price. Holdings are the
  * sum of these rows, leaving out any whose entry was reversed.
  *
- * Append-only, like the ledger itself. Exit refunds will add a second kind.
+ * Append-only, like the ledger itself.
  */
 export const shareTransaction = pgTable(
   "share_transaction",
@@ -58,7 +61,9 @@ export const shareTransaction = pgTable(
     index("share_transaction_member").on(t.tenantId, t.memberId),
     check("share_transaction_shares", sql`${t.shares} BETWEEN 1 AND 100000`),
     check("share_transaction_price", sql`${t.price} > 0`),
-    check("share_transaction_amount", sql`${t.amount} = ${t.shares}::bigint * ${t.price}`),
+    // A refund repays the capital actually paid in, which needn't be shares x today's price.
+    // Compared as text: a new enum value can't be used in the migration that adds it.
+    check("share_transaction_amount", sql`${t.kind}::text = 'refund' OR ${t.amount} = ${t.shares}::bigint * ${t.price}`),
     check("share_transaction_opening_unpaid", sql`(${t.kind} = 'opening') = (${t.paymentMethod} IS NULL)`),
     check(
       "share_transaction_wallet_ref",
