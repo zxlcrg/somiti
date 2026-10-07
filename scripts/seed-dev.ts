@@ -8,7 +8,7 @@ import { formatAmount } from "../src/lib/format";
 import { appUser, userRole } from "../src/db/schema";
 import { accountIdsByKey, approveVoucher, postEntry, submitVoucher, trialBalance } from "../src/modules/ledger";
 import { admitMember, buyShares } from "../src/modules/members";
-import { createProduct, deposit, openAccount } from "../src/modules/savings";
+import { createProduct, deposit, openAccount, requestWithdrawal } from "../src/modules/savings";
 import { createTenant } from "../src/modules/tenancy/create-tenant";
 
 const url = process.env.DATABASE_URL;
@@ -139,9 +139,18 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
         { userId: code === "DS" ? collector!.id : somiti.adminUserId, channel: code === "DS" ? "collector" : "office", device: "seed" },
       );
       if (!done.ok) throw new Error(`seed deposit: ${JSON.stringify(done.errors)}`);
+      // One withdrawal waiting for the secretary to approve.
+      if (i === 1 && code === "GS") {
+        const asked = await requestWithdrawal(
+          ctx,
+          { accountId: opened.accountId, amount: "500", method: "cash", reason: "Medical bill", submitKey: `seed-withdrawal-${opened.accountId}` },
+          { userId: somiti.adminUserId, device: "seed" },
+        );
+        if (!asked.ok) throw new Error(`seed withdrawal: ${JSON.stringify(asked.errors)}`);
+      }
     }
   }
-  console.log(`Admitted ${sampleMembers.length} sample members, each with some shares and savings.`);
+  console.log(`Admitted ${sampleMembers.length} sample members, each with some shares and savings (one withdrawal waiting).`);
 
   const tb = await trialBalance(ctx, today);
   const col = (p: bigint) => formatAmount(p, "en").padStart(14);

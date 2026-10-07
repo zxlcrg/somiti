@@ -1,4 +1,4 @@
-export { canManageSavings, canTakeDeposits, depositChannel } from "./permissions";
+export { canApproveWithdrawals, canManageSavings, canRequestWithdrawals, canTakeDeposits, depositChannel } from "./permissions";
 export { dueStatus, periodsDue, type DueStatus, type SavingsFrequency } from "./schedule";
 export {
   checkProductForm,
@@ -30,3 +30,20 @@ export {
   type SavingsOverview,
   type SavingsTxnView,
 } from "./accounts";
+export {
+  approveWithdrawal,
+  cancelWithdrawal,
+  getWithdrawal,
+  listWithdrawals,
+  MAX_REASON,
+  rejectWithdrawal,
+  requestWithdrawal,
+  withdrawalsForChecker,
+  type DecisionError,
+  type DecisionResult,
+  type WithdrawalError,
+  type WithdrawalInput,
+  type WithdrawalRequestResult,
+  type WithdrawalStatus,
+  type WithdrawalView,
+} from "./withdrawals";

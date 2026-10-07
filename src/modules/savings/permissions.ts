@@ -25,3 +25,15 @@ export function depositChannel(roles: readonly string[]): "office" | "collector"
   if (roles.includes("field_collector")) return "collector";
   return null;
 }
+
+/** Withdrawals follow the voucher rule: officers who handle money enter them... */
+const WITHDRAWAL_MAKERS = new Set(["admin", "president", "secretary", "cashier"]);
+
+export function canRequestWithdrawals(roles: readonly string[]): boolean {
+  return roles.some((r) => WITHDRAWAL_MAKERS.has(r));
+}
+
+/** ...and a different officer who manages the somiti approves them. */
+export function canApproveWithdrawals(roles: readonly string[]): boolean {
+  return canManageSavings(roles);
+}

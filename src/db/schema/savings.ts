@@ -15,7 +15,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
-import { journalEntry } from "./ledger";
+import { journalEntry, voucherStatusEnum } from "./ledger";
 import { member } from "./members";
 import { paymentMethodEnum } from "./shares";
 import { appUser, tenant } from "./tenancy";
@@ -23,7 +23,7 @@ import { appUser, tenant } from "./tenancy";
 /** How often a product expects a deposit; "flexible" has no schedule. */
 export const savingsFrequencyEnum = pgEnum("savings_frequency", ["flexible", "daily", "weekly", "monthly"]);
 export const savingsAccountStatusEnum = pgEnum("savings_account_status", ["active", "closed"]);
-export const savingsTxnKindEnum = pgEnum("savings_txn_kind", ["deposit"]);
+export const savingsTxnKindEnum = pgEnum("savings_txn_kind", ["deposit", "withdrawal"]);
 /** Where deposited money first lands: as paid at the office, or in a field collector's hands. */
 export const depositChannelEnum = pgEnum("deposit_channel", ["office", "collector"]);
 
@@ -120,7 +120,7 @@ export const savingsAccount = pgTable(
 );
 
 /**
- * Money in (withdrawals arrive later as a second kind). Each row is one
+ * Money in (deposits) and out (approved withdrawals). Each row is one
  * journal entry; a reversed entry stops counting. Append-only.
  */
 export const savingsTransaction = pgTable(
@@ -168,5 +168,89 @@ export const savingsTransaction = pgTable(
     ),
     // A field collector takes cash; bank and wallet payments reach the somiti directly.
     check("savings_transaction_collector_cash", sql`${t.channel} = 'office' OR ${t.paymentMethod} = 'cash'`),
+  ],
+);
+
+/**
+ * A withdrawal waiting for a second officer (maker-checker, like a manual
+ * voucher). Nothing is paid or posted until a different user approves it;
+ * approval posts Dr Member savings, Cr cash, bank or wallet and records the
+ * entry here and as a savings_transaction. A decision is final.
+ */
+export const savingsWithdrawal = pgTable(
+  "savings_withdrawal",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    accountId: uuid("account_id").notNull(),
+    amount: bigint("amount", { mode: "bigint" }).notNull(),
+    paymentMethod: paymentMethodEnum("payment_method").notNull(),
+    /** Bank cheque or bKash/Nagad number the money goes to. */
+    paymentRef: text("payment_ref"),
+    /** Why the member is taking money out, as they said it. */
+    reason: text("reason"),
+    status: voucherStatusEnum("status").notNull().default("pending"),
+    requestedBy: uuid("requested_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Client-generated, so a double-clicked submit makes one request. */
+    submitKey: text("submit_key"),
+    decidedBy: uuid("decided_by"),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    /** Why it was rejected (required) or cancelled. */
+    decisionNote: text("decision_note"),
+    /** The journal entry an approval posted. */
+    entryId: uuid("entry_id"),
+  },
+  (t) => [
+    unique("savings_withdrawal_tenant_id").on(t.tenantId, t.id),
+    unique("savings_withdrawal_submit_key").on(t.tenantId, t.submitKey),
+    unique("savings_withdrawal_entry").on(t.tenantId, t.entryId),
+    index("savings_withdrawal_status").on(t.tenantId, t.status, t.createdAt),
+    index("savings_withdrawal_account").on(t.tenantId, t.accountId, t.createdAt),
+    foreignKey({
+      name: "savings_withdrawal_account_fk",
+      columns: [t.tenantId, t.accountId],
+      foreignColumns: [savingsAccount.tenantId, savingsAccount.id],
+    }),
+    foreignKey({
+      name: "savings_withdrawal_requested_by_fk",
+      columns: [t.tenantId, t.requestedBy],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    foreignKey({
+      name: "savings_withdrawal_decided_by_fk",
+      columns: [t.tenantId, t.decidedBy],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    foreignKey({
+      name: "savings_withdrawal_entry_fk",
+      columns: [t.tenantId, t.entryId],
+      foreignColumns: [journalEntry.tenantId, journalEntry.id],
+    }),
+    check("savings_withdrawal_amount", sql`${t.amount} > 0`),
+    check(
+      "savings_withdrawal_wallet_ref",
+      sql`${t.paymentMethod} <> 'mobile_wallet' OR length(trim(${t.paymentRef})) > 0`,
+    ),
+    check(
+      "savings_withdrawal_decision_complete",
+      sql`(${t.status} = 'pending') = (${t.decidedBy} IS NULL) AND (${t.decidedBy} IS NULL) = (${t.decidedAt} IS NULL)`,
+    ),
+    check("savings_withdrawal_approved_has_entry", sql`(${t.status} = 'approved') = (${t.entryId} IS NOT NULL)`),
+    check(
+      "savings_withdrawal_rejected_has_note",
+      sql`${t.status} <> 'rejected' OR length(trim(coalesce(${t.decisionNote}, ''))) > 0`,
+    ),
+    // Maker-checker: a different user, not just a different role.
+    check(
+      "savings_withdrawal_checker_not_maker",
+      sql`${t.status} NOT IN ('approved', 'rejected') OR ${t.decidedBy} <> ${t.requestedBy}`,
+    ),
+    check(
+      "savings_withdrawal_cancelled_by_maker",
+      sql`${t.status} <> 'cancelled' OR ${t.decidedBy} = ${t.requestedBy}`,
+    ),
   ],
 );

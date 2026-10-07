@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { getAppDb, withTenant } from "@/db/client";
 import { canApproveVouchers, canViewBooks, pendingForChecker } from "@/modules/ledger";
 import { canViewMembers } from "@/modules/members";
+import { canApproveWithdrawals, withdrawalsForChecker } from "@/modules/savings";
 import { getCurrentUser } from "./auth";
 import { NavLink } from "./nav-link";
 import { LanguageSwitcher } from "./language-switcher";
@@ -32,6 +33,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     user && canApproveVouchers(user.roles)
       ? await withTenant(getAppDb(), user.tenantId, (ctx) => pendingForChecker(ctx, user.userId))
       : 0;
+  // Savings withdrawals waiting for this officer, on the Savings link.
+  const withdrawals =
+    user && canApproveWithdrawals(user.roles)
+      ? await withTenant(getAppDb(), user.tenantId, (ctx) => withdrawalsForChecker(ctx, user.userId))
+      : 0;
   return (
     <html lang={locale}>
       <body>
@@ -46,7 +52,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {user && (canViewMembers(user.roles) || canViewBooks(user.roles)) && (
               <nav className="main-nav" aria-label={t("nav.label")}>
                 {canViewMembers(user.roles) && <NavLink href="/members">{t("nav.members")}</NavLink>}
-                {canViewMembers(user.roles) && <NavLink href="/savings">{t("nav.savings")}</NavLink>}
+                {canViewMembers(user.roles) && (
+                  <NavLink href="/savings">
+                    {t("nav.savings")}
+                    {withdrawals > 0 && (
+                      <span className="count-badge" aria-label={t("nav.savingsWaiting", { count: withdrawals })}>
+                        {withdrawals}
+                      </span>
+                    )}
+                  </NavLink>
+                )}
                 {canViewBooks(user.roles) && (
                   <NavLink href="/vouchers" also={["/cash-book", "/trial-balance"]}>
                     {t("nav.accounts")}
