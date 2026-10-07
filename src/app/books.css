@@ -1177,3 +1177,396 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* ---------- Day end ---------- */
+
+.day-end-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+}
+
+.checklist-card,
+.count-card,
+.tally-card {
+  padding: 1.15rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 1.3rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.checklist-card h2,
+.count-card h2 {
+  margin: 0 0 0.8rem;
+  font-size: 1.1rem;
+}
+
+.checklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checklist li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.5rem 0.85rem 0.5rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.checklist li.ok {
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+}
+
+.checklist li.warn {
+  background: color-mix(in srgb, var(--accent-2) 18%, var(--card));
+}
+
+.checklist a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+
+.check-icon {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  background: var(--accent);
+}
+
+.warn .check-icon {
+  background: var(--accent-2);
+  color: #3a2a00;
+}
+
+.count-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.denom-head,
+.denoms li {
+  display: grid;
+  grid-template-columns: 5.2rem minmax(0, 1fr) minmax(5.5rem, auto);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.denom-head {
+  padding: 0 0.4rem 0.4rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.denom-head span:last-child,
+.denoms .sub {
+  text-align: right;
+}
+
+.denoms {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.denoms li {
+  padding: 0.3rem 0.4rem;
+  border-radius: 0.8rem;
+  transition: background 0.2s;
+}
+
+.denoms li:hover,
+.denoms li:focus-within {
+  background: color-mix(in srgb, var(--accent-3) 8%, var(--card));
+}
+
+.denoms li.has .sub {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.denoms .sub {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.note-chip {
+  --nc: #5b8c6a;
+  display: grid;
+  place-items: center;
+  height: 2.1rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--nc) 55%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--nc) 26%, var(--card)), color-mix(in srgb, var(--nc) 10%, var(--card)));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.note-chip.n1000 { --nc: #8b5cf6; }
+.note-chip.n500 { --nc: #0b9b6c; }
+.note-chip.n200 { --nc: #1fb6c9; }
+.note-chip.n100 { --nc: #2563eb; }
+.note-chip.n50 { --nc: #f26b3a; }
+.note-chip.n20 { --nc: #f2a900; }
+.note-chip.n10 { --nc: #e5484d; }
+.note-chip.n5,
+.note-chip.n2,
+.note-chip.n1 {
+  --nc: #8a9590;
+  border-radius: 999px;
+}
+
+.denom-stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 0.7rem;
+  overflow: hidden;
+  background: var(--card);
+}
+
+.denom-stepper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--glow-1);
+}
+
+.denom-stepper button {
+  flex: none;
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 0;
+  background: color-mix(in srgb, var(--line) 45%, var(--card));
+  color: var(--fg);
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.denom-stepper button:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--card));
+}
+
+.denom-stepper input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  text-align: center;
+  font: inherit;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.denom-stepper input:focus {
+  outline: none;
+}
+
+.tally-card {
+  position: sticky;
+  top: 5rem;
+  display: grid;
+  gap: 0.8rem;
+  border-width: 2px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.tally-card.match {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  box-shadow: 0 16px 40px -20px var(--glow-1);
+}
+
+.tally-card.short:has(.tally-verdict.short) {
+  border-color: color-mix(in srgb, #e5484d 55%, var(--line));
+}
+
+.tally-card.over:has(.tally-verdict.over) {
+  border-color: color-mix(in srgb, var(--accent-2) 60%, var(--line));
+}
+
+.tally-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.tally-row strong {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.tally-row.big strong {
+  font-size: 1.8rem;
+}
+
+.tally-verdict {
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.8rem;
+  font-weight: 800;
+}
+
+.tally-verdict.match,
+.tally-chip.match {
+  background: color-mix(in srgb, var(--accent) 15%, var(--card));
+  color: color-mix(in srgb, var(--accent) 70%, var(--fg));
+}
+
+.tally-verdict.short,
+.tally-chip.short {
+  background: color-mix(in srgb, #e5484d 13%, var(--card));
+  color: color-mix(in srgb, #e5484d 75%, var(--fg));
+}
+
+.tally-verdict.over,
+.tally-chip.over {
+  background: color-mix(in srgb, var(--accent-2) 18%, var(--card));
+  color: color-mix(in srgb, var(--accent-2) 50%, var(--fg));
+}
+
+.tally-card textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  resize: vertical;
+}
+
+.confirm-close {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, #e5484d 9%, var(--card));
+  border: 1px solid color-mix(in srgb, #e5484d 35%, var(--line));
+  animation: rise 0.2s ease both;
+}
+
+.confirm-close p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.close-history {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.close-history li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.3rem 1rem;
+  align-items: center;
+  padding: 0.85rem 1.1rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 1rem;
+  background: var(--card);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.close-history li:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.close-history li.short {
+  border-left-color: #e5484d;
+}
+
+.close-history li.over {
+  border-left-color: var(--accent-2);
+}
+
+.close-history li.fresh {
+  box-shadow: 0 0 0 3px var(--glow-1);
+}
+
+.close-date,
+.close-amount {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.close-amount {
+  justify-items: end;
+}
+
+.tally-chip {
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.close-note {
+  grid-column: 1 / -1;
+  color: var(--muted);
+}
+
+@media (max-width: 860px) {
+  .count-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .tally-card {
+    position: static;
+  }
+}
+
+@media (max-width: 420px) {
+  .denom-head,
+  .denoms li {
+    grid-template-columns: 4.2rem minmax(0, 1fr) minmax(4.6rem, auto);
+    gap: 0.5rem;
+  }
+
+  .count-card,
+  .tally-card,
+  .checklist-card {
+    padding: 1rem;
+  }
+}
+
+.tally-verdict.waiting {
+  background: color-mix(in srgb, var(--line) 50%, var(--card));
+  color: var(--muted);
+}

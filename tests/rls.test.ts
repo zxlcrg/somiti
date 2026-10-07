@@ -1,7 +1,8 @@
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
-import { appUser, otpChallenge, savingsFine, userRole, userSession } from "../src/db/schema";
+import { appUser, otpChallenge, savingsFine, tenant, userRole, userSession } from "../src/db/schema";
+import { closeDay } from "../src/modules/dayend";
 import { admitMember, buyShares, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
 import { createProduct, deposit as depositSavings, openAccount, receiveHandover, requestWithdrawal } from "../src/modules/savings";
@@ -100,6 +101,9 @@ beforeAll(async () => {
         { userId: t.adminUserId },
       );
       if (!handed.ok) throw new Error("seed handover");
+      const [day] = await ctx.tx.select({ d: tenant.businessDate }).from(tenant).where(eq(tenant.id, t.tenantId));
+      const closed = await closeDay(ctx, { date: day!.d, pieces: {}, note: "Seed close" }, { userId: t.adminUserId });
+      if (!closed.ok) throw new Error("seed day close");
     });
   }
 });

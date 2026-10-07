@@ -155,6 +155,20 @@
       "when": 1791394512417,
       "tag": "0021_savings_fines_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791395477233,
+      "tag": "0022_day_close",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791395478311,
+      "tag": "0023_day_close_rls",
+      "breakpoints": true
     }
   ]
 }
