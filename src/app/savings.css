@@ -1196,6 +1196,146 @@
   }
 }
 
+/* ---------- Collector handovers ---------- */
+
+.stat-row.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.savings .section-title {
+  margin: 2rem 0 0.9rem;
+}
+
+.collector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+
+.collector-card {
+  --cc: var(--accent);
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--cc) 30%, var(--line));
+  border-top: 4px solid var(--cc);
+  border-radius: 1.2rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--cc) 8%, var(--card)), var(--card) 55%);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.collector-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.collector-card.holding {
+  --cc: var(--accent-2);
+}
+
+.collector-card.owed {
+  --cc: var(--wd);
+}
+
+.collector-card.me {
+  outline: 2px solid color-mix(in srgb, var(--cc) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.collector-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.collector-head > div {
+  display: grid;
+  min-width: 0;
+}
+
+.collector-avatar {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  flex: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cc), color-mix(in srgb, var(--cc) 50%, var(--accent-3)));
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.collector-held {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.6rem;
+}
+
+.collector-held span:first-child {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.collector-held strong {
+  font-size: 1.7rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.collector-line {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.handover-form {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.9rem;
+  border: 1px dashed color-mix(in srgb, var(--accent) 45%, var(--line));
+  border-radius: 1rem;
+  background: var(--card);
+  animation: rise 0.3s ease-out;
+}
+
+.handover-form .field input:not(.money-input input) {
+  width: 100%;
+}
+
+.short-note {
+  color: var(--accent-2);
+  font-weight: 600;
+}
+
+.handover-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.handover-actions .btn.ghost {
+  border: 1px solid var(--line);
+}
+
+.handover-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.8rem;
+}
+
+.handover-list li.fresh {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+.handover-list li.reversed .dep-amount {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
 /* ---------- Narrow screens ---------- */
 
 @media (max-width: 900px) {
@@ -1274,6 +1414,10 @@
 
   .savings .stat-row .stat-tile:first-child {
     grid-column: 1 / -1;
+  }
+
+  .savings .stat-row.two .stat-tile:first-child {
+    grid-column: auto;
   }
 
   .form-grid {

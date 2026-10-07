@@ -254,3 +254,48 @@ export const savingsWithdrawal = pgTable(
     ),
   ],
 );
+
+/**
+ * Cash a field collector hands over at the office. The cashier counts it
+ * and records it, which posts Dr Cash in hand, Cr Cash with collector. A
+ * collector can hand over part of what they hold; the rest stays theirs to
+ * bring in. Append-only.
+ */
+export const collectorHandover = pgTable(
+  "collector_handover",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    collectorId: uuid("collector_id").notNull(),
+    amount: bigint("amount", { mode: "bigint" }).notNull(),
+    receivedBy: uuid("received_by").notNull(),
+    journalEntryId: uuid("journal_entry_id").notNull(),
+    businessDate: date("business_date", { mode: "string" }).notNull(),
+    note: text("note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("collector_handover_entry").on(t.tenantId, t.journalEntryId),
+    foreignKey({
+      name: "collector_handover_collector_fk",
+      columns: [t.tenantId, t.collectorId],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    foreignKey({
+      name: "collector_handover_received_by_fk",
+      columns: [t.tenantId, t.receivedBy],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    foreignKey({
+      name: "collector_handover_entry_fk",
+      columns: [t.tenantId, t.journalEntryId],
+      foreignColumns: [journalEntry.tenantId, journalEntry.id],
+    }),
+    index("collector_handover_collector").on(t.tenantId, t.collectorId, t.createdAt),
+    check("collector_handover_amount", sql`${t.amount} > 0`),
+    // Two people: the collector hands over, someone else counts and receives.
+    check("collector_handover_two_people", sql`${t.receivedBy} <> ${t.collectorId}`),
+  ],
+);

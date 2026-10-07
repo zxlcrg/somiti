@@ -1,10 +1,10 @@
 import { sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
-import { otpChallenge, userSession } from "../src/db/schema";
+import { appUser, otpChallenge, userRole, userSession } from "../src/db/schema";
 import { admitMember, buyShares, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
-import { createProduct, deposit as depositSavings, openAccount, requestWithdrawal } from "../src/modules/savings";
+import { createProduct, deposit as depositSavings, openAccount, receiveHandover, requestWithdrawal } from "../src/modules/savings";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
 /**
@@ -74,6 +74,23 @@ beforeAll(async () => {
         { userId: t.adminUserId },
       );
       if (!asked.ok) throw new Error("seed withdrawal");
+      const [collector] = await ctx.tx
+        .insert(appUser)
+        .values({ tenantId: t.tenantId, nameEn: "Collector", phone: `+8801${Math.floor(Math.random() * 1e9)}` })
+        .returning({ id: appUser.id });
+      await ctx.tx.insert(userRole).values({ tenantId: t.tenantId, userId: collector!.id, role: "field_collector" });
+      const collected = await depositSavings(
+        ctx,
+        { accountId: account.accountId, amount: "30", method: "cash", idempotencyKey: `seed-round-${t.tenantId}` },
+        { userId: collector!.id, channel: "collector" },
+      );
+      if (!collected.ok) throw new Error("seed collector deposit");
+      const handed = await receiveHandover(
+        ctx,
+        { collectorId: collector!.id, amount: "30", idempotencyKey: `seed-handover-${t.tenantId}` },
+        { userId: t.adminUserId },
+      );
+      if (!handed.ok) throw new Error("seed handover");
     });
   }
 });

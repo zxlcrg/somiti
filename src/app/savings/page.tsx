@@ -77,6 +77,9 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
           <p className="muted">{t("subtitle")}</p>
         </div>
         <div className="head-actions">
+          <Link href="/savings/collections" className="btn ghost">
+            <span aria-hidden="true">🚶</span> {t("collections.title")}
+          </Link>
           <Link href="/savings/withdrawals" className="btn ghost">
             <span aria-hidden="true">⬆️</span> {t("withdrawals.title")}
             {waiting.length > 0 && <span className="count-badge">{num(waiting.length)}</span>}
