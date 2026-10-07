@@ -1,10 +1,11 @@
 export { canApproveWithdrawals, canManageSavings, canRequestWithdrawals, canTakeDeposits, depositChannel } from "./permissions";
-export { dueStatus, periodsDue, type DueStatus, type SavingsFrequency } from "./schedule";
+export { dueStatus, lateFineFor, periodsDue, type DueStatus, type SavingsFrequency } from "./schedule";
 export {
   checkProductForm,
   createProduct,
   listProducts,
   SAVINGS_FREQUENCIES,
+  setLateFine,
   setProductActive,
   type ProductErrorCode,
   type ProductErrors,

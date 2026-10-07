@@ -47,6 +47,8 @@ export const savingsProduct = pgTable(
     installment: bigint("installment", { mode: "bigint" }),
     /** Lowest deposit accepted at once, in paisa. */
     minDeposit: bigint("min_deposit", { mode: "bigint" }).notNull().default(sql`100`),
+    /** Fine per installment paid after its period, in paisa; null means no fines. */
+    lateFine: bigint("late_fine", { mode: "bigint" }),
     active: boolean("active").notNull().default(true),
     createdBy: uuid("created_by").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -66,6 +68,10 @@ export const savingsProduct = pgTable(
       sql`(${t.frequency} = 'flexible' AND ${t.installment} IS NULL) OR (${t.frequency} <> 'flexible' AND ${t.installment} > 0)`,
     ),
     check("savings_product_min_deposit", sql`${t.minDeposit} > 0`),
+    check(
+      "savings_product_late_fine",
+      sql`${t.lateFine} IS NULL OR (${t.lateFine} > 0 AND ${t.frequency} <> 'flexible')`,
+    ),
   ],
 );
 
@@ -297,5 +303,49 @@ export const collectorHandover = pgTable(
     check("collector_handover_amount", sql`${t.amount} > 0`),
     // Two people: the collector hands over, someone else counts and receives.
     check("collector_handover_two_people", sql`${t.receivedBy} <> ${t.collectorId}`),
+  ],
+);
+
+/**
+ * A late fine collected with a deposit: one per entry, booked to Fine
+ * income on the member's line in the same journal entry as the deposit.
+ * Fines are counted when collected, not owed in advance. Append-only.
+ */
+export const savingsFine = pgTable(
+  "savings_fine",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    accountId: uuid("account_id").notNull(),
+    amount: bigint("amount", { mode: "bigint" }).notNull(),
+    /** How many late installments the deposit paid, which the fine is for. */
+    installments: integer("installments").notNull(),
+    journalEntryId: uuid("journal_entry_id").notNull(),
+    businessDate: date("business_date", { mode: "string" }).notNull(),
+    createdBy: uuid("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("savings_fine_entry").on(t.tenantId, t.journalEntryId),
+    foreignKey({
+      name: "savings_fine_account_fk",
+      columns: [t.tenantId, t.accountId],
+      foreignColumns: [savingsAccount.tenantId, savingsAccount.id],
+    }),
+    foreignKey({
+      name: "savings_fine_entry_fk",
+      columns: [t.tenantId, t.journalEntryId],
+      foreignColumns: [journalEntry.tenantId, journalEntry.id],
+    }),
+    foreignKey({
+      name: "savings_fine_created_by_fk",
+      columns: [t.tenantId, t.createdBy],
+      foreignColumns: [appUser.tenantId, appUser.id],
+    }),
+    index("savings_fine_date").on(t.tenantId, t.businessDate),
+    check("savings_fine_amount", sql`${t.amount} > 0`),
+    check("savings_fine_installments", sql`${t.installments} > 0`),
   ],
 );

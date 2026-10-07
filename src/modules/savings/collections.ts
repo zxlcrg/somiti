@@ -10,7 +10,8 @@ import { accountIdsByKey, branchForUser, postEntry } from "@/modules/ledger";
  * The cash is theirs to bring in: at the office a cashier counts it and
  * records the handover, which moves it to Cash in hand. What a collector
  * still holds is their round's deposits less what they have handed over,
- * counting only entries that were not reversed.
+ * counting only entries that were not reversed. Late fines taken with a
+ * deposit are cash in the collector's bag too.
  */
 
 export function canReceiveHandovers(roles: readonly string[]): boolean {
@@ -22,11 +23,16 @@ const notReversed = (alias: string) =>
     `not exists (select 1 from journal_entry r where r.tenant_id = ${alias}.tenant_id and r.reverses_id = ${alias}.journal_entry_id)`,
   );
 
+/** A deposit row's cash: the deposit plus any late fine taken with it. */
+const withFine = sql.raw(
+  `t.amount + coalesce((select f.amount from savings_fine f where f.tenant_id = t.tenant_id and f.journal_entry_id = t.journal_entry_id), 0)`,
+);
+
 /** Cash a collector holds right now, in paisa. */
 async function heldBy(ctx: TenantTx, collectorId: string): Promise<bigint> {
   const res = await ctx.tx.execute<{ held: string }>(sql`
     select
-      (select coalesce(sum(t.amount), 0) from savings_transaction t
+      (select coalesce(sum(${withFine}), 0) from savings_transaction t
         where t.tenant_id = ${ctx.tenantId} and t.created_by = ${collectorId}
           and t.channel = 'collector' and t.kind = 'deposit' and ${notReversed("t")})
       -
@@ -42,7 +48,7 @@ export interface CollectorStatus {
   nameBn: string | null;
   phone: string;
   held: bigint;
-  /** Deposits taken on today's business date. */
+  /** Deposits taken on today's business date, with any late fines. */
   todayCount: number;
   todayAmount: bigint;
   lastHandover: { amount: bigint; at: Date } | null;
@@ -65,7 +71,7 @@ export async function collectorBoard(ctx: TenantTx): Promise<CollectorStatus[]> 
     last_at: Date | null;
   }>(sql`
     select u.id, u.name_en, u.name_bn, u.phone,
-      (select coalesce(sum(t.amount), 0) from savings_transaction t
+      (select coalesce(sum(${withFine}), 0) from savings_transaction t
         where t.tenant_id = u.tenant_id and t.created_by = u.id
           and t.channel = 'collector' and t.kind = 'deposit' and ${notReversed("t")}) as collected,
       (select coalesce(sum(h.amount), 0) from collector_handover h
@@ -73,7 +79,7 @@ export async function collectorBoard(ctx: TenantTx): Promise<CollectorStatus[]> 
       (select count(*)::int from savings_transaction t
         where t.tenant_id = u.tenant_id and t.created_by = u.id and t.channel = 'collector'
           and t.kind = 'deposit' and t.business_date = ${day!.d} and ${notReversed("t")}) as today_count,
-      (select coalesce(sum(t.amount), 0) from savings_transaction t
+      (select coalesce(sum(${withFine}), 0) from savings_transaction t
         where t.tenant_id = u.tenant_id and t.created_by = u.id and t.channel = 'collector'
           and t.kind = 'deposit' and t.business_date = ${day!.d} and ${notReversed("t")}) as today_amount,
       last.amount as last_amount, last.created_at as last_at

@@ -141,6 +141,20 @@
       "when": 1791392717597,
       "tag": "0019_collector_handover_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1791394511072,
+      "tag": "0020_savings_fines",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1791394512417,
+      "tag": "0021_savings_fines_rls",
+      "breakpoints": true
     }
   ]
 }

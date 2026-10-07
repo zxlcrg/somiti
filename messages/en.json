@@ -941,6 +941,32 @@
         "IDEMPOTENCY_CONFLICT": "This form was already used. Reload the page to start again.",
         "server": "Something went wrong on our side. Nothing was posted. Please try again."
       }
+    },
+    "fines": {
+      "perInstallment": "Late fine {amount} per late installment",
+      "none": "No late fine",
+      "formLabel": "Late fine per installment",
+      "formHint": "Optional. Charged for each installment paid after its day, week or month is over.",
+      "change": "Change fine",
+      "editLabel": "Late fine for {code}",
+      "editHint": "Leave empty for no fine. It applies to deposits from now on.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "errors": {
+        "invalid_amount": "Enter an amount above ৳0, or leave it empty.",
+        "too_large": "That's too large for a fine.",
+        "flexible": "Flexible products have no installments, so no late fines.",
+        "not_found": "This product no longer exists.",
+        "forbidden": "Only managers can change fines.",
+        "server": "Something went wrong. Please try again."
+      },
+      "onDeposit": "{count, plural, one {# late installment} other {# late installments}} × {each}",
+      "title": "Late fine",
+      "waive": "Waive the fine this time",
+      "waivedNote": "Only the deposit is taken. The audit log records that you waived the fine.",
+      "income": "Fine income",
+      "chip": "+{amount} late fine",
+      "deposited": "Receipt #{no}: {amount} deposited and {fine} late fine collected. New balance {balance}."
     }
   }
 }

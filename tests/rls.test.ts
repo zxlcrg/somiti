@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
-import { appUser, otpChallenge, userRole, userSession } from "../src/db/schema";
+import { appUser, otpChallenge, savingsFine, userRole, userSession } from "../src/db/schema";
 import { admitMember, buyShares, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
 import { createProduct, deposit as depositSavings, openAccount, receiveHandover, requestWithdrawal } from "../src/modules/savings";
@@ -68,6 +68,15 @@ beforeAll(async () => {
         { userId: t.adminUserId, channel: "office" },
       );
       if (!paid.ok) throw new Error("seed deposit");
+      await ctx.tx.insert(savingsFine).values({
+        tenantId: t.tenantId,
+        accountId: account.accountId,
+        amount: 5_00n,
+        installments: 1,
+        journalEntryId: paid.deposit.journalEntryId,
+        businessDate: paid.deposit.businessDate,
+        createdBy: t.adminUserId,
+      });
       const asked = await requestWithdrawal(
         ctx,
         { accountId: account.accountId, amount: "20", method: "cash", submitKey: `seed-withdrawal-${t.tenantId}` },

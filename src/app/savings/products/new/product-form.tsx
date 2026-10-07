@@ -25,6 +25,7 @@ export function ProductForm() {
   const [installment, setInstallment] = useState("");
   const [nameBn, setNameBn] = useState("");
   const [minDeposit, setMinDeposit] = useState("");
+  const [lateFine, setLateFine] = useState("");
   const [edited, setEdited] = useState<Set<string>>(new Set());
   const [seen, setSeen] = useState(state);
   if (seen !== state) {
@@ -37,6 +38,7 @@ export function ProductForm() {
     e[f] && !edited.has(f) ? t(`productErrors.${e[f]}` as "productErrors.required") : undefined;
 
   const amount = frequency === "flexible" ? null : parseTaka(installment);
+  const fine = frequency === "flexible" ? null : parseTaka(lateFine);
   const taka = (p: bigint) => formatTaka(p, locale);
 
   return (
@@ -144,6 +146,28 @@ export function ProductForm() {
               {err("installment") && <small className="field-error">{err("installment")}</small>}
             </div>
           )}
+          {frequency !== "flexible" && (
+            <div className={`field${err("lateFine") ? " has-error" : ""}`}>
+              <label htmlFor="lateFine">{t("fines.formLabel")}</label>
+              <span className="money-input">
+                <span aria-hidden="true">৳</span>
+                <input
+                  id="lateFine"
+                  name="lateFine"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={lateFine}
+                  onChange={(ev) => {
+                    setLateFine(ev.target.value);
+                    touch("lateFine");
+                  }}
+                  aria-invalid={err("lateFine") ? true : undefined}
+                  placeholder="5"
+                />
+              </span>
+              {err("lateFine") ? <small className="field-error">{err("lateFine")}</small> : <small>{t("fines.formHint")}</small>}
+            </div>
+          )}
           <div className={`field${err("minDeposit") ? " has-error" : ""}`}>
             <label htmlFor="minDeposit">{t("productForm.minDeposit")}</label>
             <span className="money-input">
@@ -179,6 +203,11 @@ export function ProductForm() {
           <h3>{nameEn.trim() || t("productForm.title")}</h3>
           <p className="product-rule">{t(`every.${frequency}`, { amount: amount ? taka(amount) : "৳…" })}</p>
           {amount && amount > 0n && <p className="muted per-year">{t("productForm.perYear", { amount: taka(amount * BigInt(PER_YEAR[frequency])) })}</p>}
+          {fine && fine > 0n && (
+            <p className="fine-rule">
+              <span aria-hidden="true">⏰</span> {t("fines.perInstallment", { amount: taka(fine) })}
+            </p>
+          )}
         </article>
         {e.form && (
           <p className="form-error" role="alert" key={state.attempt}>

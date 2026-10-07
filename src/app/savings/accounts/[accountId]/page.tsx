@@ -73,7 +73,9 @@ export default async function PassbookPage({
       {fresh && (
         <p className="celebrate" role="status">
           <span aria-hidden="true">🎉</span>{" "}
-          {t("passbook.deposited", { no: num(fresh.entryNo), amount: taka(fresh.amount), balance: taka(a.balance) })}
+          {fresh.fine
+            ? t("fines.deposited", { no: num(fresh.entryNo), amount: taka(fresh.amount), fine: taka(fresh.fine), balance: taka(a.balance) })
+            : t("passbook.deposited", { no: num(fresh.entryNo), amount: taka(fresh.amount), balance: taka(a.balance) })}
         </p>
       )}
 
@@ -187,6 +189,7 @@ export default async function PassbookPage({
                       <td className={`num ${x.kind === "withdrawal" ? "wdr" : "dep"}`}>
                         {x.kind === "withdrawal" ? "−" : "+"}
                         {taka(x.amount)}
+                        {x.fine && <small className="fine-chip">{t("fines.chip", { amount: taka(x.fine) })}</small>}
                       </td>
                       <td className="num">{taka(x.balanceAfter)}</td>
                     </tr>
@@ -209,6 +212,9 @@ export default async function PassbookPage({
                   behind={(behind > 0n ? behind : 0n).toString()}
                   balance={a.balance.toString()}
                   minDeposit={a.minDeposit.toString()}
+                  lateFine={a.lateFine?.toString() ?? null}
+                  overdue={(a.due?.overdue ?? 0n).toString()}
+                  paid={a.deposited.toString()}
                 />
               );
               const withdrawForm = canWithdraw && (
