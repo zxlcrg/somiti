@@ -127,6 +127,20 @@
       "when": 1791391156306,
       "tag": "0017_savings_withdrawals_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791392716426,
+      "tag": "0018_collector_handover",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1791392717597,
+      "tag": "0019_collector_handover_rls",
+      "breakpoints": true
     }
   ]
 }
