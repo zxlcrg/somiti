@@ -7,7 +7,7 @@ import { todayInDhaka } from "../src/lib/dates";
 import { formatAmount } from "../src/lib/format";
 import { appUser, userRole } from "../src/db/schema";
 import { accountIdsByKey, approveVoucher, postEntry, submitVoucher, trialBalance } from "../src/modules/ledger";
-import { admitMember } from "../src/modules/members";
+import { admitMember, buyShares } from "../src/modules/members";
 import { createTenant } from "../src/modules/tenancy/create-tenant";
 
 const url = process.env.DATABASE_URL;
@@ -90,11 +90,19 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
     { nameEn: "Jamal Uddin", guardianNameEn: "Kamal Uddin", phone: "01511000005", address: "Ward 3, Savar" },
     { nameEn: "Fatema Akter", nameBn: "ফাতেমা আক্তার", phone: "01311000006" },
   ] as const;
-  for (const m of sampleMembers) {
+  // The demo admin also works the cash desk, so the demo can take payments.
+  await ctx.tx.insert(userRole).values({ tenantId: somiti.tenantId, userId: somiti.adminUserId, role: "cashier" });
+  for (const [i, m] of sampleMembers.entries()) {
     const admitted = await admitMember(ctx, m, { userId: somiti.adminUserId, device: "seed" });
     if (!admitted.ok) throw new Error(`seed member: ${JSON.stringify(admitted.errors)}`);
+    const bought = await buyShares(
+      ctx,
+      { memberId: admitted.member.id, shares: [5, 10, 3, 20, 5, 8][i]!, method: "cash", idempotencyKey: `seed-shares-${admitted.member.id}` },
+      { userId: somiti.adminUserId, device: "seed" },
+    );
+    if (!bought.ok) throw new Error(`seed shares: ${JSON.stringify(bought.errors)}`);
   }
-  console.log(`Admitted ${sampleMembers.length} sample members.`);
+  console.log(`Admitted ${sampleMembers.length} sample members, each with some shares.`);
 
   const tb = await trialBalance(ctx, today);
   const col = (p: bigint) => formatAmount(p, "en").padStart(14);

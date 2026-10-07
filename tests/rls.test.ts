@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
 import { otpChallenge, userSession } from "../src/db/schema";
-import { admitMember, saveNominees, setMemberPhoto } from "../src/modules/members";
+import { admitMember, buyShares, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
@@ -42,6 +42,11 @@ beforeAll(async () => {
       await setMemberPhoto(ctx, admitted.member.id, new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]), {
         userId: t.adminUserId,
       });
+      await buyShares(
+        ctx,
+        { memberId: admitted.member.id, shares: 1, method: "cash", idempotencyKey: `seed-shares-${t.tenantId}` },
+        { userId: t.adminUserId },
+      );
       const v = await submitVoucher(ctx, {
         branchId: t.branchId,
         createdBy: t.adminUserId,

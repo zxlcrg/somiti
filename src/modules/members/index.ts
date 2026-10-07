@@ -1,5 +1,5 @@
 export { normalizeNid } from "./nid";
-export { canManageMembers, canViewMembers } from "./permissions";
+export { canManageMembers, canRecordPayments, canViewMembers } from "./permissions";
 export {
   admitMember,
   getMember,
@@ -37,3 +37,17 @@ export {
   type PhotoType,
   type SetPhotoResult,
 } from "./photos";
+export {
+  buyShares,
+  MAX_SHARES_PER_PURCHASE,
+  parseShareCount,
+  PAYMENT_METHODS,
+  shareHolding,
+  sharePrice,
+  type BuySharesError,
+  type BuySharesInput,
+  type BuySharesResult,
+  type PaymentMethod,
+  type ShareHolding,
+  type ShareTxnView,
+} from "./shares";

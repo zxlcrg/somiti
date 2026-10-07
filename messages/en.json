@@ -372,6 +372,67 @@
         "forbidden": "Your role can't change member photos.",
         "server": "Something went wrong on our side. Please try again."
       }
+    },
+    "shares": {
+      "title": "Shares",
+      "subtitle": "{name}'s stake in the somiti.",
+      "held": "Shares held",
+      "value": "Share capital",
+      "price": "{price} per share",
+      "buy": "Buy shares",
+      "none": "No shares yet",
+      "noneBody": "Shares are the member's stake in the somiti. Each costs {price}.",
+      "history": "History",
+      "receipt": "Receipt #{no}",
+      "count": "{count, plural, one {# share} other {# shares}}",
+      "reversed": "Reversed",
+      "bought": "Receipt #{no}: {count, plural, one {# share} other {# shares}} bought for {amount}.",
+      "methods": {
+        "cash": "Cash",
+        "bank": "Bank",
+        "mobile_wallet": "bKash / Nagad"
+      },
+      "accounts": {
+        "cash": "Cash in hand",
+        "bank": "Bank",
+        "mobile_wallet": "Mobile wallet",
+        "share_capital": "Share capital"
+      },
+      "form": {
+        "title": "Buy shares for {name}",
+        "subtitle": "Each share costs {price}. The money is posted to the ledger as soon as you confirm.",
+        "howMany": "Number of shares",
+        "less": "One fewer",
+        "more": "One more",
+        "quick": "Quick pick",
+        "amount": "Amount to receive",
+        "paidBy": "Paid by",
+        "ref": "Transaction ID",
+        "refWallet": "The bKash or Nagad transaction ID from the member's phone.",
+        "refBank": "Optional: the bank slip number.",
+        "preview": "Ledger entry",
+        "debit": "Debit",
+        "credit": "Credit",
+        "balanced": "Balanced",
+        "after": "After this, {name} holds {count, plural, one {# share} other {# shares}} ({amount}).",
+        "confirm": "Receive {amount}",
+        "posting": "Posting…",
+        "cancel": "Cancel"
+      },
+      "errors": {
+        "invalid_shares": "Enter between 1 and 10,000 shares.",
+        "invalid_method": "Choose how the member paid.",
+        "ref_required": "Enter the bKash or Nagad transaction ID.",
+        "ref_too_long": "That reference is too long.",
+        "member_inactive": "Only active members can buy shares.",
+        "not_found": "This member could not be found.",
+        "forbidden": "Only a cashier can take payments.",
+        "DAY_CLOSED": "Today's business day is already closed.",
+        "NO_OPEN_PERIOD": "There is no open fiscal year for today's date.",
+        "AFTER_BUSINESS_DATE": "The date is after today's business date.",
+        "IDEMPOTENCY_CONFLICT": "This form was already used. Reload the page to start again.",
+        "server": "Something went wrong on our side. Nothing was posted. Please try again."
+      }
     }
   },
   "books": {

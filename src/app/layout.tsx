@@ -14,6 +14,7 @@ import "./members.css";
 import "./nominees.css";
 import "./photo.css";
 import "./books.css";
+import "./shares.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");

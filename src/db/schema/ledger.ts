@@ -31,6 +31,7 @@ export const accountTypeEnum = pgEnum("account_type", [
 export const entrySourceEnum = pgEnum("entry_source", [
   "opening_balance",
   "manual_voucher",
+  "share_purchase",
   "reversal",
   "system",
 ]);
