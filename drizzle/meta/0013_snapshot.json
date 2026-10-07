@@ -1,6 +1,6 @@
 {
-  "id": "93b66000-5889-4dd6-854d-e802abdfa094",
-  "prevId": "e212fe45-0c02-4e63-b2d5-d639b8ad427c",
+  "id": "23cdf9ba-ed07-4f02-923a-005ed349aafb",
+  "prevId": "5eca8764-d94d-4341-bb1f-05989f63daad",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -348,6 +348,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "share_price": {
+          "name": "share_price",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "10000"
+        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -377,6 +384,10 @@
         "tenant_fiscal_month": {
           "name": "tenant_fiscal_month",
           "value": "\"tenant\".\"fiscal_year_start_month\" BETWEEN 1 AND 12"
+        },
+        "tenant_share_price_positive": {
+          "name": "tenant_share_price_positive",
+          "value": "\"tenant\".\"share_price\" > 0"
         },
         "tenant_business_date_after_lock": {
           "name": "tenant_business_date_after_lock",
@@ -2497,6 +2508,208 @@
         }
       },
       "isRLSEnabled": false
+    },
+    "public.share_transaction": {
+      "name": "share_transaction",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member_id": {
+          "name": "member_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "share_txn_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shares": {
+          "name": "shares",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price": {
+          "name": "price",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "payment_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_ref": {
+          "name": "payment_ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "journal_entry_id": {
+          "name": "journal_entry_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "business_date": {
+          "name": "business_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "share_transaction_member": {
+          "name": "share_transaction_member",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "share_transaction_tenant_id_tenant_id_fk": {
+          "name": "share_transaction_tenant_id_tenant_id_fk",
+          "tableFrom": "share_transaction",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "tableTo": "tenant",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "share_transaction_member_fk": {
+          "name": "share_transaction_member_fk",
+          "tableFrom": "share_transaction",
+          "columnsFrom": [
+            "tenant_id",
+            "member_id"
+          ],
+          "tableTo": "member",
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "share_transaction_entry_fk": {
+          "name": "share_transaction_entry_fk",
+          "tableFrom": "share_transaction",
+          "columnsFrom": [
+            "tenant_id",
+            "journal_entry_id"
+          ],
+          "tableTo": "journal_entry",
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        },
+        "share_transaction_created_by_fk": {
+          "name": "share_transaction_created_by_fk",
+          "tableFrom": "share_transaction",
+          "columnsFrom": [
+            "tenant_id",
+            "created_by"
+          ],
+          "tableTo": "app_user",
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "share_transaction_entry": {
+          "name": "share_transaction_entry",
+          "columns": [
+            "tenant_id",
+            "journal_entry_id"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "share_transaction_shares": {
+          "name": "share_transaction_shares",
+          "value": "\"share_transaction\".\"shares\" BETWEEN 1 AND 100000"
+        },
+        "share_transaction_price": {
+          "name": "share_transaction_price",
+          "value": "\"share_transaction\".\"price\" > 0"
+        },
+        "share_transaction_amount": {
+          "name": "share_transaction_amount",
+          "value": "\"share_transaction\".\"amount\" = \"share_transaction\".\"shares\"::bigint * \"share_transaction\".\"price\""
+        },
+        "share_transaction_wallet_ref": {
+          "name": "share_transaction_wallet_ref",
+          "value": "\"share_transaction\".\"payment_method\" <> 'mobile_wallet' OR length(trim(\"share_transaction\".\"payment_ref\")) > 0"
+        }
+      },
+      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -2537,6 +2750,7 @@
       "values": [
         "opening_balance",
         "manual_voucher",
+        "share_purchase",
         "reversal",
         "system"
       ]
@@ -2588,6 +2802,22 @@
         "brother",
         "sister",
         "other"
+      ]
+    },
+    "public.payment_method": {
+      "name": "payment_method",
+      "schema": "public",
+      "values": [
+        "cash",
+        "bank",
+        "mobile_wallet"
+      ]
+    },
+    "public.share_txn_kind": {
+      "name": "share_txn_kind",
+      "schema": "public",
+      "values": [
+        "purchase"
       ]
     }
   },

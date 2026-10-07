@@ -1,5 +1,5 @@
 {
-  "id": "a48addb6-6594-45c0-9ef3-84eb2ff305aa",
+  "id": "e212fe45-0c02-4e63-b2d5-d639b8ad427c",
   "prevId": "909a0d06-4ca2-4d58-a293-f99cc5b8f395",
   "version": "7",
   "dialect": "postgresql",
@@ -348,13 +348,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "share_price": {
-          "name": "share_price",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "10000"
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -384,10 +377,6 @@
         "tenant_fiscal_month": {
           "name": "tenant_fiscal_month",
           "value": "\"tenant\".\"fiscal_year_start_month\" BETWEEN 1 AND 12"
-        },
-        "tenant_share_price_positive": {
-          "name": "tenant_share_price_positive",
-          "value": "\"tenant\".\"share_price\" > 0"
         },
         "tenant_business_date_after_lock": {
           "name": "tenant_business_date_after_lock",
@@ -1145,6 +1134,375 @@
         "ledger_account_has_name": {
           "name": "ledger_account_has_name",
           "value": "\"ledger_account\".\"name_en\" IS NOT NULL OR \"ledger_account\".\"name_bn\" IS NOT NULL"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.voucher": {
+      "name": "voucher",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "branch_id": {
+          "name": "branch_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "narration": {
+          "name": "narration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total": {
+          "name": "total",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "voucher_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "created_txid": {
+          "name": "created_txid",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "txid_current()"
+        },
+        "submit_key": {
+          "name": "submit_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_by": {
+          "name": "decided_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decided_at": {
+          "name": "decided_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decision_note": {
+          "name": "decision_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "entry_id": {
+          "name": "entry_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "voucher_tenant_status_created": {
+          "name": "voucher_tenant_status_created",
+          "columns": [
+            {
+              "expression": "tenant_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "voucher_tenant_id_tenant_id_fk": {
+          "name": "voucher_tenant_id_tenant_id_fk",
+          "tableFrom": "voucher",
+          "tableTo": "tenant",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "voucher_branch_fk": {
+          "name": "voucher_branch_fk",
+          "tableFrom": "voucher",
+          "tableTo": "branch",
+          "columnsFrom": [
+            "tenant_id",
+            "branch_id"
+          ],
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "voucher_created_by_fk": {
+          "name": "voucher_created_by_fk",
+          "tableFrom": "voucher",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "tenant_id",
+            "created_by"
+          ],
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "voucher_decided_by_fk": {
+          "name": "voucher_decided_by_fk",
+          "tableFrom": "voucher",
+          "tableTo": "app_user",
+          "columnsFrom": [
+            "tenant_id",
+            "decided_by"
+          ],
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "voucher_entry_fk": {
+          "name": "voucher_entry_fk",
+          "tableFrom": "voucher",
+          "tableTo": "journal_entry",
+          "columnsFrom": [
+            "tenant_id",
+            "entry_id"
+          ],
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "voucher_tenant_id_id": {
+          "name": "voucher_tenant_id_id",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tenant_id",
+            "id"
+          ]
+        },
+        "voucher_tenant_submit_key": {
+          "name": "voucher_tenant_submit_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tenant_id",
+            "submit_key"
+          ]
+        },
+        "voucher_tenant_entry": {
+          "name": "voucher_tenant_entry",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tenant_id",
+            "entry_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "voucher_total_positive": {
+          "name": "voucher_total_positive",
+          "value": "\"voucher\".\"total\" > 0"
+        },
+        "voucher_decision_complete": {
+          "name": "voucher_decision_complete",
+          "value": "(\"voucher\".\"status\" = 'pending') = (\"voucher\".\"decided_by\" IS NULL) AND (\"voucher\".\"decided_by\" IS NULL) = (\"voucher\".\"decided_at\" IS NULL)"
+        },
+        "voucher_approved_has_entry": {
+          "name": "voucher_approved_has_entry",
+          "value": "(\"voucher\".\"status\" = 'approved') = (\"voucher\".\"entry_id\" IS NOT NULL)"
+        },
+        "voucher_rejected_has_note": {
+          "name": "voucher_rejected_has_note",
+          "value": "\"voucher\".\"status\" <> 'rejected' OR length(trim(coalesce(\"voucher\".\"decision_note\", ''))) > 0"
+        },
+        "voucher_checker_not_maker": {
+          "name": "voucher_checker_not_maker",
+          "value": "\"voucher\".\"status\" NOT IN ('approved', 'rejected') OR \"voucher\".\"decided_by\" <> \"voucher\".\"created_by\""
+        },
+        "voucher_cancelled_by_maker": {
+          "name": "voucher_cancelled_by_maker",
+          "value": "\"voucher\".\"status\" <> 'cancelled' OR \"voucher\".\"decided_by\" = \"voucher\".\"created_by\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.voucher_line": {
+      "name": "voucher_line",
+      "schema": "",
+      "columns": {
+        "tenant_id": {
+          "name": "tenant_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "voucher_id": {
+          "name": "voucher_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "line_no": {
+          "name": "line_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "debit": {
+          "name": "debit",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "credit": {
+          "name": "credit",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "memo": {
+          "name": "memo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "voucher_line_tenant_id_tenant_id_fk": {
+          "name": "voucher_line_tenant_id_tenant_id_fk",
+          "tableFrom": "voucher_line",
+          "tableTo": "tenant",
+          "columnsFrom": [
+            "tenant_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "voucher_line_voucher_fk": {
+          "name": "voucher_line_voucher_fk",
+          "tableFrom": "voucher_line",
+          "tableTo": "voucher",
+          "columnsFrom": [
+            "tenant_id",
+            "voucher_id"
+          ],
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "voucher_line_account_fk": {
+          "name": "voucher_line_account_fk",
+          "tableFrom": "voucher_line",
+          "tableTo": "ledger_account",
+          "columnsFrom": [
+            "tenant_id",
+            "account_id"
+          ],
+          "columnsTo": [
+            "tenant_id",
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "voucher_line_tenant_id_voucher_id_line_no_pk": {
+          "name": "voucher_line_tenant_id_voucher_id_line_no_pk",
+          "columns": [
+            "tenant_id",
+            "voucher_id",
+            "line_no"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "voucher_line_one_side": {
+          "name": "voucher_line_one_side",
+          "value": "\"voucher_line\".\"debit\" >= 0 AND \"voucher_line\".\"credit\" >= 0 AND (\"voucher_line\".\"debit\" > 0) <> (\"voucher_line\".\"credit\" > 0)"
         }
       },
       "isRLSEnabled": false
@@ -2139,208 +2497,6 @@
         }
       },
       "isRLSEnabled": false
-    },
-    "public.share_transaction": {
-      "name": "share_transaction",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "tenant_id": {
-          "name": "tenant_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "member_id": {
-          "name": "member_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "kind": {
-          "name": "kind",
-          "type": "share_txn_kind",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "shares": {
-          "name": "shares",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "price": {
-          "name": "price",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "amount": {
-          "name": "amount",
-          "type": "bigint",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "payment_method": {
-          "name": "payment_method",
-          "type": "payment_method",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "payment_ref": {
-          "name": "payment_ref",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "journal_entry_id": {
-          "name": "journal_entry_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "business_date": {
-          "name": "business_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "share_transaction_member": {
-          "name": "share_transaction_member",
-          "columns": [
-            {
-              "expression": "tenant_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "member_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "share_transaction_tenant_id_tenant_id_fk": {
-          "name": "share_transaction_tenant_id_tenant_id_fk",
-          "tableFrom": "share_transaction",
-          "tableTo": "tenant",
-          "columnsFrom": [
-            "tenant_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "share_transaction_member_fk": {
-          "name": "share_transaction_member_fk",
-          "tableFrom": "share_transaction",
-          "tableTo": "member",
-          "columnsFrom": [
-            "tenant_id",
-            "member_id"
-          ],
-          "columnsTo": [
-            "tenant_id",
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "share_transaction_entry_fk": {
-          "name": "share_transaction_entry_fk",
-          "tableFrom": "share_transaction",
-          "tableTo": "journal_entry",
-          "columnsFrom": [
-            "tenant_id",
-            "journal_entry_id"
-          ],
-          "columnsTo": [
-            "tenant_id",
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "share_transaction_created_by_fk": {
-          "name": "share_transaction_created_by_fk",
-          "tableFrom": "share_transaction",
-          "tableTo": "app_user",
-          "columnsFrom": [
-            "tenant_id",
-            "created_by"
-          ],
-          "columnsTo": [
-            "tenant_id",
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "share_transaction_entry": {
-          "name": "share_transaction_entry",
-          "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "journal_entry_id"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "share_transaction_shares": {
-          "name": "share_transaction_shares",
-          "value": "\"share_transaction\".\"shares\" BETWEEN 1 AND 100000"
-        },
-        "share_transaction_price": {
-          "name": "share_transaction_price",
-          "value": "\"share_transaction\".\"price\" > 0"
-        },
-        "share_transaction_amount": {
-          "name": "share_transaction_amount",
-          "value": "\"share_transaction\".\"amount\" = \"share_transaction\".\"shares\"::bigint * \"share_transaction\".\"price\""
-        },
-        "share_transaction_wallet_ref": {
-          "name": "share_transaction_wallet_ref",
-          "value": "\"share_transaction\".\"payment_method\" <> 'mobile_wallet' OR length(trim(\"share_transaction\".\"payment_ref\")) > 0"
-        }
-      },
-      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -2381,7 +2537,6 @@
       "values": [
         "opening_balance",
         "manual_voucher",
-        "share_purchase",
         "reversal",
         "system"
       ]
@@ -2392,6 +2547,16 @@
       "values": [
         "open",
         "closed"
+      ]
+    },
+    "public.voucher_status": {
+      "name": "voucher_status",
+      "schema": "public",
+      "values": [
+        "pending",
+        "approved",
+        "rejected",
+        "cancelled"
       ]
     },
     "public.guardian_relation": {
@@ -2423,22 +2588,6 @@
         "brother",
         "sister",
         "other"
-      ]
-    },
-    "public.payment_method": {
-      "name": "payment_method",
-      "schema": "public",
-      "values": [
-        "cash",
-        "bank",
-        "mobile_wallet"
-      ]
-    },
-    "public.share_txn_kind": {
-      "name": "share_txn_kind",
-      "schema": "public",
-      "values": [
-        "purchase"
       ]
     }
   },

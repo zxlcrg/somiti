@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { toBanglaDigits } from "@/lib/digits";
 import { formatBdPhone } from "@/lib/phone";
+import { canViewBooks } from "@/modules/ledger";
 import { canViewMembers } from "@/modules/members";
 import { requireUser } from "../auth";
 import { signOutAction } from "../sign-in/actions";
@@ -69,7 +70,8 @@ export default async function DashboardPage() {
       <h2 className="section-title">{t("dashboard.comingTitle")}</h2>
       <section className="features">
         {tiles.map((tile) => {
-          const live = tile.key === "members" && canViewMembers(user.roles);
+          const href = { members: "/members", vouchers: "/vouchers", trialBalance: "/trial-balance" }[tile.key];
+          const live = tile.key === "members" ? canViewMembers(user.roles) : canViewBooks(user.roles);
           const body = (
             <>
               <span className={`pill${live ? " live" : ""}`}>{live ? t("dashboard.tiles.membersOpen") : t("dashboard.soon")}</span>
@@ -81,7 +83,7 @@ export default async function DashboardPage() {
             </>
           );
           return live ? (
-            <Link href="/members" className="feature soon live" key={tile.key}>
+            <Link href={href} className="feature soon live" key={tile.key}>
               {body}
             </Link>
           ) : (

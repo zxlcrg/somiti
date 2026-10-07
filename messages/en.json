@@ -12,7 +12,9 @@
     "signIn": "Sign in",
     "signOut": "Sign out",
     "dashboard": "Dashboard",
-    "members": "Members"
+    "members": "Members",
+    "accounts": "Accounts",
+    "waiting": "{count} waiting for you"
   },
   "home": {
     "badge": "Foundation release",
@@ -89,7 +91,10 @@
       "NOT_FOUND": "The entry could not be found.",
       "ALREADY_REVERSED": "This entry has already been reversed.",
       "CANNOT_REVERSE_REVERSAL": "A reversal cannot be reversed. Post a new entry instead.",
-      "IDEMPOTENCY_CONFLICT": "This request was already sent with different details."
+      "IDEMPOTENCY_CONFLICT": "This request was already sent with different details.",
+      "SELF_APPROVAL": "You made this voucher, so another officer must approve or reject it.",
+      "VOUCHER_DECIDED": "This voucher has already been decided.",
+      "NOT_MAKER": "Only the person who made this voucher can cancel it."
     }
   },
   "auth": {
@@ -135,7 +140,7 @@
     "somiti": "Somiti",
     "phone": "Mobile",
     "roles": "Your roles",
-    "comingTitle": "Coming next",
+    "comingTitle": "Your workspace",
     "soon": "Soon",
     "tiles": {
       "members": "Members",
@@ -428,6 +433,169 @@
         "IDEMPOTENCY_CONFLICT": "This form was already used. Reload the page to start again.",
         "server": "Something went wrong on our side. Nothing was posted. Please try again."
       }
+    }
+  },
+  "books": {
+    "noAccess": "Your role can't open the books. Ask an admin if you need access.",
+    "previous": "← Previous",
+    "next": "Next →",
+    "tabs": {
+      "label": "Books",
+      "vouchers": "Vouchers",
+      "cashBook": "Cash book",
+      "trialBalance": "Trial balance"
+    },
+    "vouchers": {
+      "title": "Vouchers",
+      "subtitle": "Every manual entry is checked by a second officer before it reaches the books.",
+      "new": "New voucher",
+      "stats": {
+        "pending": "Waiting for approval",
+        "approved": "Approved this month",
+        "rejected": "Rejected"
+      },
+      "waitingForYou": "Vouchers waiting for your approval: {count}",
+      "filterLabel": "Show vouchers",
+      "filters": {
+        "all": "All"
+      },
+      "status": {
+        "pending": "Waiting",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "cancelled": "Withdrawn"
+      },
+      "empty": {
+        "filtered": "No vouchers here",
+        "title": "No vouchers yet",
+        "body": "Rent, salaries, bank deposits and other entries are recorded as vouchers."
+      },
+      "madeBy": "By {name} · {when}",
+      "entry": "Entry {no}",
+      "needsYou": "Needs you",
+      "showing": "Showing {from}–{to} of {total}"
+    },
+    "form": {
+      "title": "New voucher",
+      "back": "Vouchers",
+      "subtitle": "Write what happened, then the accounts. A secretary, president or admin approves it before it is posted.",
+      "subtitleChecker": "Write what happened, then the accounts. Another officer approves it before it is posted; you can't approve your own.",
+      "narration": "What is this for?",
+      "narrationPlaceholder": "e.g. Office rent for October, paid in cash",
+      "account": "Account",
+      "debit": "Debit",
+      "credit": "Credit",
+      "lineAccount": "Account for line {n}",
+      "chooseAccount": "Choose an account…",
+      "lineDebit": "Debit for line {n}",
+      "lineCredit": "Credit for line {n}",
+      "fillDifference": "Fill in the difference",
+      "removeLine": "Remove line",
+      "lineMemo": "Note for line {n}",
+      "memoPlaceholder": "Note (optional)",
+      "addLine": "Add line",
+      "totalDebit": "Total debit",
+      "totalCredit": "Total credit",
+      "balanced": "Balanced",
+      "enterAmounts": "Enter the amounts",
+      "difference": "Off by {amount}",
+      "checkerNote": "Nothing is posted until a different officer approves it.",
+      "cancel": "Cancel",
+      "submit": "Send for approval",
+      "submitting": "Sending…",
+      "errors": {
+        "account": "Choose an account.",
+        "amount": "Enter an amount like 1,500 or 1500.50.",
+        "both_sides": "A line is either a debit or a credit, not both.",
+        "no_amount": "Enter a debit or a credit.",
+        "memo": "Keep the note under 500 characters.",
+        "server": "Something went wrong. Please try again.",
+        "forbidden": "Your role can't make vouchers.",
+        "too_few_lines": "A voucher needs at least two lines.",
+        "too_many_lines": "A voucher can have at most 50 lines.",
+        "unbalanced": "Debits and credits must be equal.",
+        "one_account": "Use at least two different accounts.",
+        "narration_required": "Write what this voucher is for.",
+        "narration_too_long": "Keep this under 1,000 characters."
+      }
+    },
+    "detail": {
+      "title": "Voucher",
+      "madeBanner": "✓ Sent for approval. Another officer will check it.",
+      "approvedBanner": "🎉 Approved and posted to the books as entry {no}.",
+      "rejectedBanner": "Rejected. Nothing was posted.",
+      "cancelledBanner": "Withdrawn. Nothing was posted.",
+      "entryNo": "Entry",
+      "lines": "Accounts",
+      "total": "Total",
+      "made": "Made by {name}",
+      "waiting": "Waiting for approval",
+      "waitingWho": "A secretary, president or admin other than the maker",
+      "decided": {
+        "approved": "Approved by {name}",
+        "rejected": "Rejected by {name}",
+        "cancelled": "Withdrawn by {name}"
+      },
+      "cannotDecide": "A secretary, president or admin will approve this.",
+      "checkerTitle": "Your decision",
+      "checkerBody": "Check the accounts and the amount, {amount}. Approving posts it to the books today.",
+      "approve": "Approve and post",
+      "working": "Working…",
+      "reject": "Reject",
+      "rejectReason": "Why are you rejecting it?",
+      "rejectPlaceholder": "e.g. Wrong account; should be bank, not cash",
+      "confirmReject": "Reject voucher",
+      "back": "Back",
+      "makerTitle": "You made this voucher",
+      "makerBody": "Another officer has to approve it. You can withdraw it while it is waiting.",
+      "withdraw": "Withdraw voucher",
+      "withdrawReason": "Reason (optional)",
+      "confirmWithdraw": "Withdraw",
+      "errors": {
+        "forbidden": "Your role can't approve vouchers.",
+        "server": "Something went wrong. Please try again.",
+        "note_required": "Write a reason for rejecting it."
+      }
+    },
+    "cashBook": {
+      "title": "Cash book",
+      "forDay": "For {date}",
+      "forRange": "{from} to {to}",
+      "accountLabel": "Account",
+      "rangeLabel": "Period",
+      "presets": {
+        "today": "Today",
+        "month": "This month",
+        "year": "This year"
+      },
+      "from": "From",
+      "to": "To",
+      "show": "Show",
+      "opening": "Opening balance",
+      "receipts": "Received",
+      "payments": "Paid out",
+      "closing": "Closing balance",
+      "sparkLabel": "Balance through the period",
+      "empty": "No money in or out in this period",
+      "emptyBody": "The balance stayed at {amount}.",
+      "date": "Date",
+      "entry": "Entry",
+      "particulars": "Particulars",
+      "receipt": "Receipt",
+      "payment": "Payment",
+      "balance": "Balance",
+      "broughtForward": "Balance brought forward",
+      "fromAccounts": "from",
+      "toAccounts": "to",
+      "reversal": "Reversal",
+      "carriedForward": "Totals and closing balance"
+    },
+    "trialBalance": {
+      "asOfLabel": "As of",
+      "empty": "Nothing posted yet",
+      "emptyBody": "Approved vouchers and deposits appear here.",
+      "balanced": "Debits equal credits. The books balance.",
+      "notBalanced": "Debits and credits differ. Tell the admin."
     }
   }
 }
