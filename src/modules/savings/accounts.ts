@@ -1,10 +1,10 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import type { TenantTx } from "@/db/client";
-import { member, savingsAccount, savingsProduct, savingsTransaction, tenant } from "@/db/schema";
+import { idempotencyKey, member, savingsAccount, savingsFine, savingsProduct, savingsTransaction, tenant } from "@/db/schema";
 import { parseTaka } from "@/lib/money";
 import { recordAudit } from "@/modules/audit/log";
 import { accountIdsByKey, postEntry } from "@/modules/ledger";
-import { dueStatus, type DueStatus, type SavingsFrequency } from "./schedule";
+import { dueStatus, lateFineFor, type DueStatus, type SavingsFrequency } from "./schedule";
 
 export const DEPOSIT_METHODS = ["cash", "bank", "mobile_wallet"] as const;
 export type DepositMethod = (typeof DEPOSIT_METHODS)[number];
@@ -109,6 +109,8 @@ export interface SavingsTxnView {
   /** Voucher number of the entry, printed as the receipt or payment number. */
   entryNo: bigint;
   reversed: boolean;
+  /** Late fine collected along with this deposit, kept out of the balance. */
+  fine: bigint | null;
   /** Running balance after this row, counting only rows that still count. */
   balanceAfter: bigint;
   takenBy: { nameEn: string | null; nameBn: string | null };
@@ -125,6 +127,8 @@ export interface SavingsAccountView {
   frequency: SavingsFrequency;
   installment: bigint | null;
   minDeposit: bigint;
+  /** The product's fine per late installment, if any. */
+  lateFine: bigint | null;
   openedOn: string;
   status: "active" | "closed";
   balance: bigint;
@@ -153,6 +157,7 @@ async function accountRows(ctx: TenantTx, where: ReturnType<typeof and>): Promis
       frequency: savingsProduct.frequency,
       installment: savingsAccount.installment,
       minDeposit: savingsProduct.minDeposit,
+      lateFine: savingsProduct.lateFine,
       openedOn: savingsAccount.openedOn,
       status: savingsAccount.status,
       balance: sql<string>`(
@@ -217,6 +222,10 @@ export async function getAccount(
         select 1 from journal_entry r
          where r.tenant_id = "savings_transaction"."tenant_id" and r.reverses_id = "savings_transaction"."journal_entry_id"
       )`,
+      fine: sql<string | null>`(
+        select f.amount from savings_fine f
+         where f.tenant_id = "savings_transaction"."tenant_id" and f.journal_entry_id = "savings_transaction"."journal_entry_id"
+      )`.mapWith((v: string | number) => BigInt(v)),
       takenByEn: sql<string | null>`(select u.name_en from app_user u where u.tenant_id = "savings_transaction"."tenant_id" and u.id = "savings_transaction"."created_by")`,
       takenByBn: sql<string | null>`(select u.name_bn from app_user u where u.tenant_id = "savings_transaction"."tenant_id" and u.id = "savings_transaction"."created_by")`,
     })
@@ -242,6 +251,8 @@ export interface DepositInput {
   paymentRef?: string;
   /** Generated once per form, so a double submit or a retry posts once. */
   idempotencyKey: string;
+  /** Skip the late fine this time; the audit log keeps who waived it. */
+  waiveFine?: boolean;
 }
 
 export type DepositError =
@@ -263,7 +274,9 @@ export type DepositResult =
 /**
  * Takes a deposit into a savings account: posts Dr cash in hand, bank or
  * wallet (or Cash with collector for a collector's round), Cr Member
- * savings on the member's line. Ledger rules (open day, open fiscal year)
+ * savings on the member's line. When the deposit pays overdue
+ * installments of a product with a late fine, the fine is collected on top
+ * in the same entry (Cr Fine income) unless waived. Ledger rules (open day, open fiscal year)
  * apply as for any posting and surface as LedgerError.
  */
 export async function deposit(
@@ -304,29 +317,47 @@ export async function deposit(
   if (account.memberStatus !== "active") return { ok: false, errors: { form: "member_inactive" } };
   if (amount! < account.minDeposit) return { ok: false, errors: { amount: "below_minimum" } };
 
+  const find = async (entryId: string) => {
+    const view = await getAccount(ctx, input.accountId);
+    return view?.transactions.find((x) => x.journalEntryId === entryId);
+  };
+  // Deposits to one account take turns, so two can't both pay (and be fined for) the same installment.
+  await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`savings_withdrawal:${tenantId}:${input.accountId}`}))`);
+  // A form that already went through returns its deposit before the fine is
+  // worked out again: the first deposit has since changed what is overdue.
+  const [prior] = await tx
+    .select({ entryId: savingsTransaction.journalEntryId })
+    .from(savingsTransaction)
+    .innerJoin(idempotencyKey, and(eq(idempotencyKey.tenantId, savingsTransaction.tenantId), eq(idempotencyKey.resultId, savingsTransaction.journalEntryId)))
+    .where(and(eq(savingsTransaction.tenantId, tenantId), eq(savingsTransaction.accountId, input.accountId), eq(idempotencyKey.key, input.idempotencyKey)));
+  if (prior) {
+    const earlier = await find(prior.entryId);
+    if (earlier) return { ok: true, deposit: earlier, replayed: true };
+  }
+
+  const view = (await accountRows(ctx, and(eq(savingsAccount.tenantId, tenantId), eq(savingsAccount.id, input.accountId))))[0]!;
+  const late = lateFineFor(view, amount!);
+  // Only the office can waive; a collector on a round collects what is due.
+  const waived = input.waiveFine === true && actor.channel === "office" && late.fine > 0n;
+  const fine = waived ? 0n : late.fine;
+
   const debitKey = actor.channel === "collector" ? "cash_with_collector" : ACCOUNT_FOR[method!];
-  const accounts = await accountIdsByKey(ctx, [debitKey, "member_savings"] as const);
+  const accounts = await accountIdsByKey(ctx, [debitKey, "member_savings", "fine_income"] as const);
   const posted = await postEntry(ctx, {
     branchId: account.branchId,
     source: "savings_deposit",
-    narration: `Savings deposit: ${account.productCode} account #${account.accountNo}, member #${account.memberNo}${paymentRef ? `, ref ${paymentRef}` : ""}`,
+    narration:
+      `Savings deposit: ${account.productCode} account #${account.accountNo}, member #${account.memberNo}${paymentRef ? `, ref ${paymentRef}` : ""}` +
+      (fine > 0n ? `, late fine for ${late.installments} installment(s)` : ""),
     createdBy: actor.userId,
     idempotencyKey: input.idempotencyKey,
     device: actor.device,
     lines: [
-      { accountId: accounts[debitKey], debit: amount! },
+      { accountId: accounts[debitKey], debit: amount! + fine },
       { accountId: accounts.member_savings, credit: amount!, memberId: account.memberId },
+      ...(fine > 0n ? [{ accountId: accounts.fine_income, credit: fine, memberId: account.memberId }] : []),
     ],
   });
-
-  const find = async () => {
-    const view = await getAccount(ctx, input.accountId);
-    return view?.transactions.find((x) => x.journalEntryId === posted.entry.id);
-  };
-  if (posted.replayed) {
-    const earlier = await find();
-    if (earlier) return { ok: true, deposit: earlier, replayed: true };
-  }
 
   await tx.insert(savingsTransaction).values({
     tenantId,
@@ -340,15 +371,33 @@ export async function deposit(
     businessDate: posted.entry.businessDate,
     createdBy: actor.userId,
   });
+  if (fine > 0n) {
+    await tx.insert(savingsFine).values({
+      tenantId,
+      accountId: input.accountId,
+      amount: fine,
+      installments: late.installments,
+      journalEntryId: posted.entry.id,
+      businessDate: posted.entry.businessDate,
+      createdBy: actor.userId,
+    });
+  }
   await recordAudit(ctx, {
     actorUserId: actor.userId,
     action: "savings.deposit",
     entityType: "savings_account",
     entityId: input.accountId,
-    after: { amount: amount!.toString(), channel: actor.channel, paymentMethod: method, paymentRef, entryNo: posted.entry.entryNo },
+    after: {
+      amount: amount!.toString(),
+      channel: actor.channel,
+      paymentMethod: method,
+      paymentRef,
+      entryNo: posted.entry.entryNo,
+      ...(late.fine > 0n ? { lateInstallments: late.installments, fine: fine.toString(), fineWaived: waived } : {}),
+    },
     device: actor.device,
   });
-  return { ok: true, deposit: (await find())!, replayed: false };
+  return { ok: true, deposit: (await find(posted.entry.id))!, replayed: false };
 }
 
 // ---------- Overview ----------

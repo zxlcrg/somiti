@@ -17,6 +17,8 @@ export interface ProductForm {
   /** Typed taka; Bangla digits are fine. Ignored for flexible products. */
   installment?: string;
   minDeposit?: string;
+  /** Typed taka per late installment; blank for none. Not for flexible products. */
+  lateFine?: string;
 }
 
 export type ProductErrorCode =
@@ -28,7 +30,7 @@ export type ProductErrorCode =
   | "invalid_amount"
   | "too_large";
 
-export type ProductErrors = Partial<Record<"code" | "nameEn" | "nameBn" | "frequency" | "installment" | "minDeposit", ProductErrorCode>>;
+export type ProductErrors = Partial<Record<"code" | "nameEn" | "nameBn" | "frequency" | "installment" | "minDeposit" | "lateFine", ProductErrorCode>>;
 
 export interface SavingsProductView {
   id: string;
@@ -38,6 +40,8 @@ export interface SavingsProductView {
   frequency: SavingsFrequency;
   installment: bigint | null;
   minDeposit: bigint;
+  /** Fine per late installment; null when the product has none. */
+  lateFine: bigint | null;
   active: boolean;
   openAccounts: number;
   /** Sum of the open accounts' deposits that still count. */
@@ -54,7 +58,7 @@ function money(input: string | undefined): bigint | null | "invalid" | "too_larg
 
 /** Checks a new product's form; returns the clean values or the errors by field. */
 export function checkProductForm(form: ProductForm):
-  | { ok: true; value: { code: string; nameEn: string; nameBn: string | null; frequency: SavingsFrequency; installment: bigint | null; minDeposit: bigint } }
+  | { ok: true; value: { code: string; nameEn: string; nameBn: string | null; frequency: SavingsFrequency; installment: bigint | null; minDeposit: bigint; lateFine: bigint | null } }
   | { ok: false; errors: ProductErrors } {
   const errors: ProductErrors = {};
   const code = form.code.trim().toUpperCase();
@@ -85,8 +89,16 @@ export function checkProductForm(form: ProductForm):
   else if (min === "too_large") errors.minDeposit = "too_large";
   else if (min !== null) minDeposit = min;
 
+  let lateFine: bigint | null = null;
+  if (frequency && frequency !== "flexible") {
+    const fine = money(form.lateFine);
+    if (fine === "invalid") errors.lateFine = "invalid_amount";
+    else if (fine === "too_large") errors.lateFine = "too_large";
+    else lateFine = fine;
+  }
+
   if (Object.keys(errors).length) return { ok: false, errors };
-  return { ok: true, value: { code, nameEn, nameBn, frequency: frequency!, installment, minDeposit } };
+  return { ok: true, value: { code, nameEn, nameBn, frequency: frequency!, installment, minDeposit, lateFine } };
 }
 
 export async function createProduct(
@@ -108,7 +120,12 @@ export async function createProduct(
     action: "savings.product.create",
     entityType: "savings_product",
     entityId: row.id,
-    after: { ...checked.value, installment: checked.value.installment?.toString() ?? null, minDeposit: checked.value.minDeposit.toString() },
+    after: {
+      ...checked.value,
+      installment: checked.value.installment?.toString() ?? null,
+      minDeposit: checked.value.minDeposit.toString(),
+      lateFine: checked.value.lateFine?.toString() ?? null,
+    },
     device: actor.device,
   });
   return { ok: true, id: row.id };
@@ -139,6 +156,38 @@ export async function setProductActive(
   return true;
 }
 
+/** Sets or clears a scheduled product's fine per late installment; it applies to deposits from now on. */
+export async function setLateFine(
+  ctx: TenantTx,
+  productId: string,
+  input: string,
+  actor: { userId: string; device?: string },
+): Promise<{ ok: true } | { ok: false; error: "invalid_amount" | "too_large" | "flexible" | "not_found" }> {
+  const fine = money(input);
+  if (fine === "invalid" || fine === "too_large") return { ok: false, error: fine === "invalid" ? "invalid_amount" : "too_large" };
+  const { tx, tenantId } = ctx;
+  const [product] = await tx
+    .select({ frequency: savingsProduct.frequency, lateFine: savingsProduct.lateFine })
+    .from(savingsProduct)
+    .where(and(eq(savingsProduct.tenantId, tenantId), eq(savingsProduct.id, productId)));
+  if (!product) return { ok: false, error: "not_found" };
+  if (product.frequency === "flexible") return { ok: false, error: "flexible" };
+  await tx
+    .update(savingsProduct)
+    .set({ lateFine: fine })
+    .where(and(eq(savingsProduct.tenantId, tenantId), eq(savingsProduct.id, productId)));
+  await recordAudit(ctx, {
+    actorUserId: actor.userId,
+    action: "savings.product.late_fine",
+    entityType: "savings_product",
+    entityId: productId,
+    before: { lateFine: product.lateFine?.toString() ?? null },
+    after: { lateFine: fine?.toString() ?? null },
+    device: actor.device,
+  });
+  return { ok: true };
+}
+
 export async function listProducts({ tx, tenantId }: TenantTx, opts: { activeOnly?: boolean } = {}): Promise<SavingsProductView[]> {
   const rows = await tx
     .select({
@@ -149,13 +198,14 @@ export async function listProducts({ tx, tenantId }: TenantTx, opts: { activeOnl
       frequency: savingsProduct.frequency,
       installment: savingsProduct.installment,
       minDeposit: savingsProduct.minDeposit,
+      lateFine: savingsProduct.lateFine,
       active: savingsProduct.active,
       openAccounts: sql<number>`(
         select count(*)::int from savings_account a
          where a.tenant_id = "savings_product"."tenant_id" and a.product_id = "savings_product"."id" and a.status = 'active'
       )`,
       balance: sql<string>`(
-        select coalesce(sum(t.amount), 0) from savings_transaction t
+        select coalesce(sum(case when t.kind = 'withdrawal' then -t.amount else t.amount end), 0) from savings_transaction t
           join savings_account a on a.tenant_id = t.tenant_id and a.id = t.account_id
          where t.tenant_id = "savings_product"."tenant_id" and a.product_id = "savings_product"."id"
            and not exists (select 1 from journal_entry r where r.tenant_id = t.tenant_id and r.reverses_id = t.journal_entry_id)

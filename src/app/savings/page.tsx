@@ -10,6 +10,7 @@ import { canManageSavings, listProducts, listWithdrawals, recentDeposits, saving
 import { requireUser } from "../auth";
 import { pageLocale } from "../books";
 import { setProductActiveAction } from "./actions";
+import { LateFineEditor } from "./late-fine-editor";
 import { FREQ_ICON } from "./ui";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -182,6 +183,13 @@ export default async function SavingsPage({ searchParams }: { searchParams: Prom
               </header>
               <h3>{primaryName(p, locale)}</h3>
               <p className="product-rule">{t(`every.${p.frequency}`, { amount: p.installment ? taka(p.installment) : "" })}</p>
+              {p.frequency !== "flexible" && (
+                <div className={`fine-line${p.lateFine ? "" : " none"}`}>
+                  <span aria-hidden="true">⏰</span>
+                  <span>{p.lateFine ? t("fines.perInstallment", { amount: taka(p.lateFine) }) : t("fines.none")}</span>
+                  {manage && <LateFineEditor key={p.lateFine?.toString() ?? "none"} productId={p.id} code={p.code} lateFine={p.lateFine?.toString() ?? null} />}
+                </div>
+              )}
               <dl>
                 <div>
                   <dt>{t("panel.balance")}</dt>

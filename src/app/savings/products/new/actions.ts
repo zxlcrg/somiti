@@ -31,6 +31,7 @@ export async function createProductAction(prev: ProductFormState, form: FormData
           frequency: field("frequency"),
           installment: field("installment"),
           minDeposit: field("minDeposit"),
+          lateFine: field("lateFine"),
         },
         { userId: user.userId, device },
       ),

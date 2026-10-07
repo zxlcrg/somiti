@@ -1448,3 +1448,123 @@
     flex-wrap: wrap;
   }
 }
+
+/* ---------- Late fines ---------- */
+
+.fine-line {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.2rem 0.45rem;
+  margin: 0.15rem 0 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--accent-2) 14%, var(--card));
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.fine-line.none {
+  background: color-mix(in srgb, var(--line) 50%, var(--card));
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.fine-line > .link {
+  grid-column: 2;
+  justify-self: start;
+  font-size: 0.82rem;
+}
+
+.fine-editor {
+  display: grid;
+  gap: 0.4rem;
+  grid-column: 1 / -1;
+  margin-top: 0.3rem;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.fine-editor label {
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.fine-editor .money-input input {
+  width: 100%;
+}
+
+.fine-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.fine-rule {
+  margin: 0.4rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--accent-2) 55%, var(--fg));
+}
+
+.fine-box {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 45%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--accent-2) 12%, var(--card));
+  animation: rise 0.25s ease both;
+}
+
+.fine-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.fine-head > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+}
+
+.fine-head small {
+  color: var(--muted);
+}
+
+.fine-amount {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.fine-box.waived .fine-amount {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.fine-box .waive {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.fine-box .waive input {
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--accent);
+}
+
+.passbook-table .fine-chip {
+  display: block;
+  margin-top: 0.15rem;
+  color: color-mix(in srgb, var(--accent-2) 60%, var(--fg));
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.passbook-table tr.reversed .fine-chip {
+  text-decoration: line-through;
+  color: var(--muted);
+}

@@ -29,6 +29,8 @@ export interface DueStatus {
   paid: bigint;
   /** Positive: behind by this much. Zero: up to date. Negative: paid ahead. */
   behind: bigint;
+  /** Unpaid from periods already over (the current one isn't late yet). */
+  overdue: bigint;
 }
 
 export function dueStatus(
@@ -41,5 +43,24 @@ export function dueStatus(
   if (frequency === "flexible" || !installment) return null;
   const periods = periodsDue(frequency, openedOn, asOf);
   const expected = BigInt(periods) * installment;
-  return { periods, expected, paid, behind: expected - paid };
+  const over = BigInt(Math.max(periods - 1, 0)) * installment - paid;
+  return { periods, expected, paid, behind: expected - paid, overdue: over > 0n ? over : 0n };
+}
+
+/**
+ * The late fine on a deposit: the product's fine for each overdue
+ * installment the deposit starts paying. An installment already part-paid
+ * was fined then, so finishing it costs nothing more. Money beyond what is
+ * overdue goes to the current period and draws no fine.
+ */
+export function lateFineFor(
+  rule: { installment: bigint | null; lateFine: bigint | null; due: Pick<DueStatus, "paid" | "overdue"> | null },
+  amount: bigint,
+): { installments: number; fine: bigint } {
+  const { installment, lateFine, due } = rule;
+  if (!installment || !lateFine || !due || due.overdue <= 0n || amount <= 0n) return { installments: 0, fine: 0n };
+  const late = amount < due.overdue ? amount : due.overdue;
+  const started = (paid: bigint) => (paid + installment - 1n) / installment;
+  const k = started(due.paid + late) - started(due.paid);
+  return { installments: Number(k), fine: k * lateFine };
 }

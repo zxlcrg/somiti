@@ -6,6 +6,7 @@ import { defaultLocale, isLocale } from "@/i18n/config";
 import { toBanglaDigits } from "@/lib/digits";
 import { formatTaka } from "@/lib/format";
 import { parseTaka, toTakaDecimal } from "@/lib/money";
+import { lateFineFor } from "@/modules/savings/schedule";
 import { METHOD_ICON } from "../../ui";
 import { depositAction, type DepositState } from "./actions";
 
@@ -20,6 +21,9 @@ export function DepositForm({
   behind,
   balance,
   minDeposit,
+  lateFine,
+  overdue,
+  paid,
 }: {
   accountId: string;
   memberName: string;
@@ -29,6 +33,10 @@ export function DepositForm({
   behind: string;
   balance: string;
   minDeposit: string;
+  /** Fine per late installment, overdue amount and everything deposited so far (paisa strings). */
+  lateFine: string | null;
+  overdue: string;
+  paid: string;
 }) {
   const t = useTranslations("savings");
   const raw = useLocale();
@@ -45,6 +53,7 @@ export function DepositForm({
   const [amount, setAmount] = useState(() => (due > 0n ? asInput(due) : each ? asInput(each) : ""));
   const [method, setMethod] = useState<Method>("cash");
   const [ref, setRef] = useState("");
+  const [waive, setWaive] = useState(false);
   const [edited, setEdited] = useState<Set<string>>(new Set());
   const [seen, setSeen] = useState(state);
   if (seen !== state) {
@@ -58,6 +67,12 @@ export function DepositForm({
     e[f] && !edited.has(f) ? t(`depositErrors.${e[f]}` as "depositErrors.server", { amount: taka(BigInt(minDeposit)) }) : undefined;
 
   const paisa = parseTaka(amount) ?? 0n;
+  const late = lateFineFor(
+    { installment: each, lateFine: lateFine ? BigInt(lateFine) : null, due: { overdue: BigInt(overdue), paid: BigInt(paid) } },
+    paisa,
+  );
+  // Collectors can't waive; the server ignores it from them too.
+  const fine = waive && channel === "office" ? 0n : late.fine;
   const quick: { label: string; value: bigint }[] = [];
   if (due > 0n) quick.push({ label: t("depositForm.clearDue"), value: due });
   if (each) for (const n of [1, 2, 5, 10]) quick.push({ label: t("depositForm.installments", { count: n }), value: each * BigInt(n) });
@@ -166,12 +181,32 @@ export function DepositForm({
         </>
       )}
 
+      {late.fine > 0n && (
+        <div className={`fine-box${fine === 0n ? " waived" : ""}`} aria-live="polite">
+          <div className="fine-head">
+            <span aria-hidden="true">⏰</span>
+            <span>
+              <strong>{t("fines.title")}</strong>
+              <small>{t("fines.onDeposit", { count: late.installments, each: taka(BigInt(lateFine!)) })}</small>
+            </span>
+            <strong className="fine-amount">{taka(late.fine)}</strong>
+          </div>
+          {channel === "office" && (
+            <label className="waive">
+              <input type="checkbox" name="waiveFine" checked={waive} onChange={(ev) => setWaive(ev.target.checked)} />
+              {t("fines.waive")}
+            </label>
+          )}
+          {fine === 0n && <small className="muted">{t("fines.waivedNote")}</small>}
+        </div>
+      )}
+
       <div className="entry-preview mini">
         <span className="label">{t("depositForm.preview")}</span>
         <div className="entry-row">
           <span className="side dr">{t("depositForm.debit")}</span>
           <span className="account">{debit}</span>
-          <strong>{taka(paisa)}</strong>
+          <strong>{taka(paisa + fine)}</strong>
         </div>
         <div className="entry-row">
           <span className="side cr">{t("depositForm.credit")}</span>
@@ -180,6 +215,13 @@ export function DepositForm({
           </span>
           <strong>{taka(paisa)}</strong>
         </div>
+        {fine > 0n && (
+          <div className="entry-row">
+            <span className="side cr">{t("depositForm.credit")}</span>
+            <span className="account">{t("fines.income")}</span>
+            <strong>{taka(fine)}</strong>
+          </div>
+        )}
         <p className="muted after-note" key={paisa.toString()}>
           {t("depositForm.after", { amount: taka(BigInt(balance) + paisa) })}
         </p>
@@ -196,7 +238,7 @@ export function DepositForm({
             <span className="spinner" aria-hidden="true" /> {t("depositForm.posting")}
           </>
         ) : (
-          t("depositForm.confirm", { amount: taka(paisa) })
+          t("depositForm.confirm", { amount: taka(paisa + fine) })
         )}
       </button>
     </form>

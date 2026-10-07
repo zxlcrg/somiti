@@ -30,6 +30,7 @@ export async function depositAction(accountId: string, prev: DepositState, form:
     method: String(form.get("method") ?? ""),
     paymentRef: String(form.get("paymentRef") ?? ""),
     idempotencyKey: String(form.get("idempotencyKey") ?? ""),
+    waiveFine: form.get("waiveFine") === "on",
   };
   if (input.idempotencyKey.length < 8) return { errors: { form: "server" }, attempt };
 

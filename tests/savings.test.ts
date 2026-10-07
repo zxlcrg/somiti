@@ -80,7 +80,7 @@ describe("schedules", () => {
   });
 
   it("says how far behind or ahead an account is", () => {
-    expect(dueStatus("daily", 20_00n, "2026-10-01", "2026-10-05", 60_00n)).toEqual({ periods: 5, expected: 100_00n, paid: 60_00n, behind: 40_00n });
+    expect(dueStatus("daily", 20_00n, "2026-10-01", "2026-10-05", 60_00n)).toEqual({ periods: 5, expected: 100_00n, paid: 60_00n, behind: 40_00n, overdue: 20_00n });
     expect(dueStatus("monthly", 500_00n, "2026-10-01", "2026-10-05", 1000_00n)?.behind).toBe(-500_00n);
     expect(dueStatus("flexible", null, "2026-10-01", "2026-10-05", 0n)).toBeNull();
   });

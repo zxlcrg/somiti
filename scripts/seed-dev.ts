@@ -5,7 +5,8 @@
 import { createDb, resolveTenantSlug, withTenant } from "../src/db/client";
 import { todayInDhaka } from "../src/lib/dates";
 import { formatAmount } from "../src/lib/format";
-import { appUser, userRole } from "../src/db/schema";
+import { eq } from "drizzle-orm";
+import { appUser, tenant, userRole } from "../src/db/schema";
 import { accountIdsByKey, approveVoucher, postEntry, submitVoucher, trialBalance } from "../src/modules/ledger";
 import { admitMember, buyShares } from "../src/modules/members";
 import { createProduct, deposit, openAccount, requestWithdrawal } from "../src/modules/savings";
@@ -16,6 +17,11 @@ if (!url) throw new Error("DATABASE_URL is not set");
 const { db, pool } = createDb(url);
 
 const today = todayInDhaka();
+// The demo starts five days back (not before 1 July, when the fiscal year
+// turns) so one daily account can be opened then and show late fines.
+const fyStart = `${Number(today.slice(0, 4)) - (Number(today.slice(5, 7)) < 7 ? 1 : 0)}-07-01`;
+const fiveBack = new Date(Date.parse(today) - 5 * 86_400_000).toISOString().slice(0, 10);
+const start = fiveBack > fyStart ? fiveBack : fyStart;
 // "demo" is easy to type on the sign-in page; later runs get a unique code.
 const slug = (await resolveTenantSlug(db, "demo")) ? `demo-${Date.now()}` : "demo";
 const adminPhone = "+8801700000000";
@@ -23,7 +29,7 @@ const somiti = await createTenant(db, {
   slug,
   nameEn: "Demo Somiti",
   nameBn: "ডেমো সমিতি",
-  businessDate: today,
+  businessDate: start,
   admin: { nameEn: "Demo Admin", nameBn: "ডেমো অ্যাডমিন", phone: adminPhone },
 });
 
@@ -96,9 +102,9 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
   // Savings products as a typical somiti runs them, and a field collector for daily rounds.
   const products: Record<string, string> = {};
   for (const p of [
-    { code: "DS", nameEn: "Daily savings", nameBn: "দৈনিক সঞ্চয়", frequency: "daily", installment: "20" },
-    { code: "WS", nameEn: "Weekly savings", nameBn: "সাপ্তাহিক সঞ্চয়", frequency: "weekly", installment: "100" },
-    { code: "DPS", nameEn: "Monthly DPS", nameBn: "মাসিক ডিপিএস", frequency: "monthly", installment: "500" },
+    { code: "DS", nameEn: "Daily savings", nameBn: "দৈনিক সঞ্চয়", frequency: "daily", installment: "20", lateFine: "2" },
+    { code: "WS", nameEn: "Weekly savings", nameBn: "সাপ্তাহিক সঞ্চয়", frequency: "weekly", installment: "100", lateFine: "10" },
+    { code: "DPS", nameEn: "Monthly DPS", nameBn: "মাসিক ডিপিএস", frequency: "monthly", installment: "500", lateFine: "50" },
     { code: "GS", nameEn: "General savings", nameBn: "সাধারণ সঞ্চয়", frequency: "flexible" },
   ]) {
     const made = await createProduct(ctx, p, { userId: somiti.adminUserId, device: "seed" });
@@ -120,9 +126,19 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
     [["WS", ""]],
   ];
 
-  for (const [i, m] of sampleMembers.entries()) {
+  const admittedIds: string[] = [];
+  for (const m of sampleMembers) {
     const admitted = await admitMember(ctx, m, { userId: somiti.adminUserId, device: "seed" });
     if (!admitted.ok) throw new Error(`seed member: ${JSON.stringify(admitted.errors)}`);
+    admittedIds.push(admitted.member.id);
+  }
+  // Ayesha's daily account is opened on the first day and nothing is paid yet, so it shows late fines.
+  const late = await openAccount(ctx, { memberId: admittedIds[2]!, productId: products.DS! }, { userId: somiti.adminUserId, device: "seed" });
+  if (!late.ok) throw new Error(`seed account: ${JSON.stringify(late.errors)}`);
+  await ctx.tx.update(tenant).set({ businessDate: today }).where(eq(tenant.id, ctx.tenantId));
+
+  for (const [i, memberId] of admittedIds.entries()) {
+    const admitted = { member: { id: memberId } };
     const bought = await buyShares(
       ctx,
       { memberId: admitted.member.id, shares: [5, 10, 3, 20, 5, 8][i]!, method: "cash", idempotencyKey: `seed-shares-${admitted.member.id}` },
@@ -130,6 +146,7 @@ await withTenant(db, somiti.tenantId, async (ctx) => {
     );
     if (!bought.ok) throw new Error(`seed shares: ${JSON.stringify(bought.errors)}`);
     for (const [code, paid] of savingsPlan[i]!) {
+      if (i === 2 && code === "DS") continue;
       const opened = await openAccount(ctx, { memberId: admitted.member.id, productId: products[code]! }, { userId: somiti.adminUserId, device: "seed" });
       if (!opened.ok) throw new Error(`seed account: ${JSON.stringify(opened.errors)}`);
       if (!paid) continue;
