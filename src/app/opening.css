@@ -1,0 +1,386 @@
+/* ---------- Opening-balance import ---------- */
+
+.opening-flow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.opening-step > div {
+  min-width: 0;
+}
+
+.opening-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.opening-step {
+  display: flex;
+  gap: 0.85rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.opening-step:hover {
+  transform: translateY(-2px);
+  border-color: var(--tone);
+}
+
+.opening-steps .s1 {
+  --tone: var(--accent);
+}
+.opening-steps .s2 {
+  --tone: var(--accent-3);
+}
+.opening-steps .s3 {
+  --tone: var(--accent-2);
+}
+
+.step-no {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  background: var(--tone);
+  color: #fff;
+  font-weight: 800;
+}
+
+.opening-steps h2 {
+  margin: 0.1rem 0 0.25rem;
+  font-size: 1rem;
+}
+
+.opening-steps p {
+  margin: 0 0 0.6rem;
+  font-size: 0.88rem;
+}
+
+.column-guide {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  padding: 0.75rem 1.1rem;
+}
+
+.column-guide summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.column-guide[open] summary {
+  margin-bottom: 0.6rem;
+}
+
+.column-guide code,
+.opening-problems code {
+  padding: 0.05rem 0.35rem;
+  border-radius: 0.35rem;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  font-size: 0.85em;
+}
+
+/* The file input covers the whole zone, so a dropped file lands on it natively. */
+.drop-zone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.6rem 1.4rem;
+  border: 2px dashed color-mix(in srgb, var(--accent) 55%, var(--line));
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 0% 0%, var(--glow-1), transparent 45%),
+    radial-gradient(circle at 100% 100%, var(--glow-3), transparent 45%),
+    var(--card);
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.drop-zone:hover,
+.drop-zone:focus-within {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.drop-zone.has-file {
+  border-style: solid;
+}
+
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.drop-zone.busy input[type="file"] {
+  pointer-events: none;
+}
+
+.drop-icon {
+  display: grid;
+  place-items: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  flex: none;
+  border-radius: 1rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  font-size: 1.6rem;
+}
+
+.drop-zone label {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.opening-tiles {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
+.opening-tiles .stat-tile strong {
+  font-size: 1.55rem;
+}
+
+.tone-good {
+  --tone: var(--accent);
+}
+
+.tone-bad {
+  --tone: #e5484d;
+}
+
+.opening-card {
+  padding: 1.1rem 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.opening-card h2,
+.opening-problems h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.product-bars {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product-bars li {
+  display: grid;
+  grid-template-columns: minmax(9rem, 14rem) 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 0.6rem;
+  transition: background 0.15s ease;
+}
+
+.product-bars li:hover {
+  background: color-mix(in srgb, var(--bar) 10%, transparent);
+}
+
+.product-bars .p1 {
+  --bar: #0b9b6c;
+}
+.product-bars .p2 {
+  --bar: #1f8fd1;
+}
+.product-bars .p3 {
+  --bar: #e08a00;
+}
+.product-bars .p4 {
+  --bar: #8b5cf6;
+}
+.product-bars .p5 {
+  --bar: #d9467a;
+}
+.product-bars .p6 {
+  --bar: #5c7c2c;
+}
+
+.bar-label {
+  display: grid;
+  line-height: 1.3;
+}
+
+.bar-label strong {
+  color: var(--bar);
+}
+
+.bar-track {
+  height: 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 70%, transparent);
+  overflow: hidden;
+}
+
+.product-bars .bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--bar);
+  transition: width 0.5s ease;
+}
+
+.bar-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.opening-problems {
+  padding: 1rem 1.25rem;
+  border: 1px solid color-mix(in srgb, #e5484d 45%, var(--line));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, #e5484d 7%, var(--card));
+}
+
+.opening-problems ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  max-height: 22rem;
+  overflow-y: auto;
+}
+
+.opening-problems p {
+  margin: -0.4rem 0 0.6rem;
+}
+
+.line-no {
+  font-weight: 700;
+}
+
+.opening-warning {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.9rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--accent-2) 55%, var(--line));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent-2) 10%, var(--card));
+}
+
+.opening-warning p {
+  margin: 0;
+}
+
+.opening-table td small {
+  display: block;
+}
+
+.opening-table tr.known td {
+  background: color-mix(in srgb, var(--accent-2) 8%, transparent);
+}
+
+.opening-table td.bad {
+  color: #e5484d;
+}
+
+.chip.warn {
+  display: inline-block;
+  margin-left: 0.4rem;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--accent-2) 20%, transparent);
+}
+
+.opening-confirm {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 44rem;
+}
+
+.opening-confirm h2,
+.opening-confirm > p {
+  margin: 0;
+}
+
+.cash-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.opening-sum {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.opening-sum div {
+  display: grid;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--line) 45%, transparent);
+}
+
+.opening-sum span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.opening-sum strong {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.opening-sum .pos {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.opening-sum .neg {
+  background: color-mix(in srgb, var(--accent-2) 18%, transparent);
+}
+
+.opening-tag {
+  color: var(--accent);
+}
+
+@media (max-width: 760px) {
+  .opening-steps,
+  .opening-tiles,
+  .cash-fields,
+  .opening-sum {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .opening-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .product-bars li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .product-bars .bar-track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}

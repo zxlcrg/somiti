@@ -23,7 +23,8 @@ import { appUser, tenant } from "./tenancy";
 /** How often a product expects a deposit; "flexible" has no schedule. */
 export const savingsFrequencyEnum = pgEnum("savings_frequency", ["flexible", "daily", "weekly", "monthly"]);
 export const savingsAccountStatusEnum = pgEnum("savings_account_status", ["active", "closed"]);
-export const savingsTxnKindEnum = pgEnum("savings_txn_kind", ["deposit", "withdrawal"]);
+/** "opening" carries a balance over from the somiti's records before this system. */
+export const savingsTxnKindEnum = pgEnum("savings_txn_kind", ["deposit", "withdrawal", "opening"]);
 /** Where deposited money first lands: as paid at the office, or in a field collector's hands. */
 export const depositChannelEnum = pgEnum("deposit_channel", ["office", "collector"]);
 
@@ -140,7 +141,8 @@ export const savingsTransaction = pgTable(
     kind: savingsTxnKindEnum("kind").notNull(),
     amount: bigint("amount", { mode: "bigint" }).notNull(),
     channel: depositChannelEnum("channel").notNull(),
-    paymentMethod: paymentMethodEnum("payment_method").notNull(),
+    /** Null only for an opening balance, which nobody paid in through the system. */
+    paymentMethod: paymentMethodEnum("payment_method"),
     /** Bank slip or bKash/Nagad transaction ID. */
     paymentRef: text("payment_ref"),
     journalEntryId: uuid("journal_entry_id").notNull(),
@@ -174,6 +176,7 @@ export const savingsTransaction = pgTable(
     ),
     // A field collector takes cash; bank and wallet payments reach the somiti directly.
     check("savings_transaction_collector_cash", sql`${t.channel} = 'office' OR ${t.paymentMethod} = 'cash'`),
+    check("savings_transaction_opening_unpaid", sql`(${t.kind} = 'opening') = (${t.paymentMethod} IS NULL)`),
   ],
 );
 

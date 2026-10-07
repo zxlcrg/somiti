@@ -98,11 +98,13 @@ export async function openAccount(
 
 export interface SavingsTxnView {
   id: string;
-  kind: "deposit" | "withdrawal";
+  /** "opening" is a balance brought over from the old books when the somiti started using the app. */
+  kind: "deposit" | "withdrawal" | "opening";
   /** Always positive; `kind` says which way it went. */
   amount: bigint;
   channel: DepositChannel;
-  paymentMethod: DepositMethod;
+  /** NULL only for opening balances, where no money changed hands. */
+  paymentMethod: DepositMethod | null;
   paymentRef: string | null;
   businessDate: string;
   createdAt: Date;
@@ -140,7 +142,7 @@ export interface SavingsAccountView {
   due: DueStatus | null;
 }
 
-/** Deposits add, withdrawals take away. */
+/** Deposits and opening balances add, withdrawals take away. */
 const signed = sql`case when t.kind = 'withdrawal' then -t.amount else t.amount end`;
 const counts = sql`not exists (select 1 from journal_entry r where r.tenant_id = t.tenant_id and r.reverses_id = t.journal_entry_id)`;
 

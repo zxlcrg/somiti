@@ -173,21 +173,35 @@ export default async function PassbookPage({
                       <td>
                         {formatDate(x.businessDate, locale)}
                         <small className="muted">
-                          <Link href={`/savings/receipts/${x.id}`} className="receipt-link">
-                            {x.kind === "withdrawal" ? t("withdrawals.payment", { no: num(x.entryNo) }) : `${t("passbook.receipt")} #${num(x.entryNo)}`}
-                          </Link>
+                          {x.kind === "opening" ? (
+                            `${t("opening.voucher")} #${num(x.entryNo)}`
+                          ) : (
+                            <Link href={`/savings/receipts/${x.id}`} className="receipt-link">
+                              {x.kind === "withdrawal" ? t("withdrawals.payment", { no: num(x.entryNo) }) : `${t("passbook.receipt")} #${num(x.entryNo)}`}
+                            </Link>
+                          )}
                         </small>
                       </td>
                       <td>
-                        <span aria-hidden="true">{x.channel === "collector" ? "🚶" : METHOD_ICON[x.paymentMethod]}</span>{" "}
-                        {x.kind === "withdrawal" && <strong className="wd-tag">{t("passbookExtra.withdrawal")} · </strong>}
-                        {x.channel === "collector" ? t("passbook.collector") : t(`methods.${x.paymentMethod}`)}
+                        {x.kind === "opening" || !x.paymentMethod ? (
+                          <>
+                            <span aria-hidden="true">📒</span> <strong className="opening-tag">{t("opening.row")}</strong>
+                          </>
+                        ) : (
+                          <>
+                            <span aria-hidden="true">{x.channel === "collector" ? "🚶" : METHOD_ICON[x.paymentMethod]}</span>{" "}
+                            {x.kind === "withdrawal" && <strong className="wd-tag">{t("passbookExtra.withdrawal")} · </strong>}
+                            {x.channel === "collector" ? t("passbook.collector") : t(`methods.${x.paymentMethod}`)}
+                          </>
+                        )}
                         {x.paymentRef ? ` · ${x.paymentRef}` : ""}
                         {x.reversed && <span className="chip">{t("passbook.reversed")}</span>}
                         <small className="muted">
                           {x.kind === "withdrawal"
                             ? t("passbookExtra.paidOutBy", { name: primaryName(x.takenBy, locale) })
-                            : t("passbook.takenBy", { name: primaryName(x.takenBy, locale) })}{" "}
+                            : x.kind === "opening"
+                              ? t("opening.importedBy", { name: primaryName(x.takenBy, locale) })
+                              : t("passbook.takenBy", { name: primaryName(x.takenBy, locale) })}{" "}
                           · {formatDateTime(x.createdAt, locale)}
                         </small>
                       </td>

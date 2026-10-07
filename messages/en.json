@@ -435,7 +435,9 @@
         "AFTER_BUSINESS_DATE": "The date is after today's business date.",
         "IDEMPOTENCY_CONFLICT": "This form was already used. Reload the page to start again.",
         "server": "Something went wrong on our side. Nothing was posted. Please try again."
-      }
+      },
+      "opening": "Opening holding",
+      "openingEntry": "Opening entry #{no}"
     }
   },
   "books": {
@@ -1063,6 +1065,126 @@
       },
       "footer": "Keep this receipt. Check your balance any time at the somiti office.",
       "open": "Receipt"
+    },
+    "opening": {
+      "voucher": "Opening entry",
+      "row": "Opening balance",
+      "importedBy": "Brought in by {name}"
     }
+  },
+  "opening": {
+    "title": "Bring in your old books",
+    "subtitle": "Start every member with the shares and savings they already have, in one go.",
+    "backToMembers": "Members",
+    "noAccess": "Only the admin can bring in opening balances.",
+    "steps": {
+      "download": "Download the sheet",
+      "downloadBody": "It opens in Excel, with a column for each of your {count, plural, one {# savings product} other {# savings products}}.",
+      "fill": "Fill in one row per member",
+      "fillBody": "Name, mobile number, shares held and each savings balance as it stands in your register today.",
+      "upload": "Upload and check",
+      "uploadBody": "Save as CSV and upload it. You see every total and problem first; nothing is posted until you confirm."
+    },
+    "template": "Download template",
+    "guide": {
+      "title": "What goes in each column",
+      "column": "Column",
+      "what": "What to put",
+      "example": "Example",
+      "name_en": "Name in English. One of the two names is enough.",
+      "name_enExample": "Ayesha Begum",
+      "name_bn": "Name in Bangla.",
+      "name_bnExample": "আয়েশা বেগম",
+      "phone": "Mobile number. A missing leading 0 is fine.",
+      "phoneExample": "01711-000001",
+      "admission_date": "When they joined, day first. Blank means today.",
+      "admission_dateExample": "15/03/2019",
+      "shares": "Shares held, at {price} each. Blank means none.",
+      "sharesExample": "5",
+      "product": "Balance in {name}. Blank opens no account; 0 opens an empty one.",
+      "productExample": "1,250"
+    },
+    "drop": "Choose the filled-in CSV file, or drop it here",
+    "dropHint": "In Excel: File › Save As › CSV UTF-8. Up to 2,000 members.",
+    "dropAgain": "Fixed something? Choose the file again to re-check.",
+    "checking": "Checking the sheet…",
+    "uploadErrors": {
+      "forbidden": "Only the admin can do this.",
+      "no_file": "Choose a file first.",
+      "too_big": "That file is over 1 MB. Split it into two sheets.",
+      "not_csv": "That isn't a CSV file. In Excel, use Save As › CSV UTF-8.",
+      "server": "Something went wrong reading the file. Try again."
+    },
+    "headerProblems": "The sheet's columns need fixing before it can be read",
+    "headerErrors": {
+      "empty_file": "The sheet has no members in it.",
+      "too_many_rows": "The sheet has more than {max} members. Split it into smaller sheets.",
+      "missing_column": "A “{column}” column is missing. Start from the downloaded template.",
+      "unknown_column": "“{column}” isn't a column we know. Use the template's headings, or remove the column.",
+      "inactive_product": "{column} is switched off, so it can't take balances. Switch it on under Savings, or remove the column.",
+      "duplicate_column": "“{column}” appears twice."
+    },
+    "summary": "What the sheet holds",
+    "tiles": {
+      "members": "Members",
+      "shares": "{count, plural, one {{n} share} other {{n} shares}}",
+      "savings": "Savings balances",
+      "problems": "Problems"
+    },
+    "byProduct": "Savings by product",
+    "accounts": "{count, plural, one {{n} account} other {{n} accounts}}",
+    "rowProblems": "{count, plural, one {{n} problem to fix} other {{n} problems to fix}}",
+    "rowProblemsBody": "Fix these in Excel, save, and choose the file again. Nothing is posted while any remain.",
+    "line": "Row {n}",
+    "rowErrors": {
+      "name_required": "needs a name in English or Bangla.",
+      "invalid_phone": "isn't a Bangladesh mobile number.",
+      "invalid_date": "isn't a date we can read. Write it like 15/03/2019.",
+      "admission_after_business_date": "is after today's business date.",
+      "too_long": "is too long.",
+      "invalid_shares": "should be a whole number of shares.",
+      "invalid_amount": "should be an amount in taka, like 1250 or 1,250.50.",
+      "amount_too_large": "is far too large. Check for an extra digit.",
+      "nothing_to_import": "has no members under the headings."
+    },
+    "alreadyMembers": "{count, plural, one {{n} row has a mobile number} other {{n} rows have mobile numbers}} already on your member list (marked below). If this sheet was imported before, importing again adds those members twice.",
+    "rowsTitle": "Members to add",
+    "cols": {
+      "line": "Row",
+      "member": "Member",
+      "phone": "Mobile",
+      "shares": "Shares"
+    },
+    "known": "Same mobile as #{no}",
+    "since": "since {date}",
+    "moreRows": "and {n} more rows, all checked.",
+    "cashTitle": "Cash and bank",
+    "cashBody": "What the somiti holds at the start of {date}. Leave blank if it's nothing.",
+    "cash": "Cash in hand (৳)",
+    "bank": "Bank balance (৳)",
+    "sum": {
+      "in": "Cash and bank",
+      "owed": "Owed to members",
+      "equity": "Opening balance equity"
+    },
+    "equityNote": "The difference goes to Opening balance equity (3900). Your accountant moves it to reserves or surplus later.",
+    "import": "Import {count, plural, one {{n} member} other {{n} members}}",
+    "confirmTitle": "Add {count, plural, one {{n} member} other {{n} members}} with these balances?",
+    "confirmBody": "They get member numbers and accounts, and the balances are posted to the books for {date}. This can't be undone in one step.",
+    "back": "Back",
+    "confirm": "Yes, import",
+    "importing": "Importing…",
+    "importErrors": {
+      "has_errors": "The sheet changed or has problems. Choose the file again.",
+      "invalid_cash": "Cash in hand should be an amount in taka.",
+      "invalid_bank": "Bank balance should be an amount in taka.",
+      "already_used": "This check was already used for a different import. Choose the file again.",
+      "forbidden": "Only the admin can do this.",
+      "server": "Something went wrong. Nothing was imported; try again.",
+      "DAY_CLOSED": "Today's business day is closed. Nothing was imported.",
+      "NO_OPEN_PERIOD": "No open fiscal year covers today. Nothing was imported."
+    },
+    "imported": "{count, plural, one {{n} member was} other {{n} members were}} brought in with their balances (numbers {from}–{to}).",
+    "importLink": "Import from old books"
   }
 }

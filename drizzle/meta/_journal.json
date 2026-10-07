@@ -183,6 +183,20 @@
       "when": 1791396644215,
       "tag": "0025_sms_outbox_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791397419586,
+      "tag": "0026_opening_balances",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791397482363,
+      "tag": "0027_opening_balances_backfill",
+      "breakpoints": true
     }
   ]
 }

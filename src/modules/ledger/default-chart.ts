@@ -34,6 +34,7 @@ export const DEFAULT_CHART: readonly ChartAccount[] = [
   { code: "3100", nameEn: "Share capital", nameBn: "শেয়ার মূলধন", type: "equity", parent: "3000", systemKey: "share_capital" },
   { code: "3200", nameEn: "Reserve fund", nameBn: "সংরক্ষিত তহবিল", type: "equity", parent: "3000", systemKey: "reserve_fund" },
   { code: "3300", nameEn: "Current-year surplus", nameBn: "চলতি বছরের উদ্বৃত্ত", type: "equity", parent: "3000", systemKey: "current_year_surplus" },
+  { code: "3900", nameEn: "Opening balance equity", nameBn: "প্রারম্ভিক ব্যালান্স সমন্বয়", type: "equity", parent: "3000", systemKey: "opening_balance_equity" },
 
   { code: "4000", nameEn: "Income", nameBn: "আয়", type: "income", header: true },
   { code: "4100", nameEn: "Service charge / interest income", nameBn: "সার্ভিস চার্জ / সুদ আয়", type: "income", parent: "4000", systemKey: "interest_income" },
