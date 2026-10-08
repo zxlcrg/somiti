@@ -14,7 +14,7 @@ export const MAX_SMS_ATTEMPTS = 5;
  */
 export async function queueMemberSms(
   ctx: TenantTx,
-  input: { memberId: string; kind: "deposit" | "withdrawal"; refId: string; text: (locale: Locale, somiti: string) => string },
+  input: { memberId: string; kind: "deposit" | "withdrawal" | "loan_repayment"; refId: string; text: (locale: Locale, somiti: string) => string },
 ): Promise<void> {
   const { tx, tenantId } = ctx;
   const [row] = await tx

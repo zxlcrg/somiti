@@ -1,15 +1,16 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { TenantTx } from "@/db/client";
-import { appUser, loan, loanInstallment, loanProduct, member, tenant } from "@/db/schema";
+import { appUser, loan, loanInstallment, loanProduct, loanRepaymentLine, member, tenant } from "@/db/schema";
 import { toLatinDigits } from "@/lib/digits";
 import { applyBasisPoints, parseTaka } from "@/lib/money";
 import { recordAudit } from "@/modules/audit/log";
 import { accountIdsByKey, LedgerError, postEntry } from "@/modules/ledger";
 import { photoVersion } from "@/modules/members/photos";
 import { parseSheetDate } from "@/modules/opening/parse";
+import type { Allocation, InstallmentState } from "./allocate";
 import type { ChargeLabel } from "./products";
-import { buildSchedule, summarize, type LoanFrequency, type LoanMethod, type ScheduleSummary, type ScheduledInstallment } from "./schedule";
+import { buildSchedule, summarize, type LoanFrequency, type LoanMethod, type ScheduleSummary } from "./schedule";
 
 /*
  * A loan takes three steps and at least two people (architecture doc,
@@ -167,6 +168,7 @@ export async function applyForLoan(ctx: TenantTx, input: LoanApplicationInput, a
       frequency: product.frequency,
       installments: n,
       processingFee,
+      allocation: product.allocation,
       purpose,
       appliedBy: actor.userId,
       appliedOn: await businessDate(ctx),
@@ -368,6 +370,7 @@ export interface LoanView {
   frequency: LoanFrequency;
   installments: number;
   processingFee: bigint;
+  allocation: Allocation;
   purpose: string | null;
   appliedOn: string;
   createdAt: Date;
@@ -381,6 +384,10 @@ export interface LoanView {
   paymentMethod: LoanPaymentMethod | null;
   paymentRef: string | null;
   entryNo: bigint | null;
+  closedOn: string | null;
+  /** Repaid so far. */
+  paidPrincipal: bigint;
+  paidInterest: bigint;
 }
 
 const applicant = alias(appUser, "applicant");
@@ -410,6 +417,14 @@ function loanQuery(ctx: TenantTx) {
       frequency: loan.frequency,
       installments: loan.installments,
       processingFee: loan.processingFee,
+      allocation: loan.allocation,
+      closedOn: loan.closedOn,
+      paidPrincipal: sql<string>`(select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id})`.mapWith(
+        (v: string | number) => BigInt(v),
+      ),
+      paidInterest: sql<string>`(select coalesce(sum(p.interest), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id})`.mapWith(
+        (v: string | number) => BigInt(v),
+      ),
       purpose: loan.purpose,
       appliedOn: loan.appliedOn,
       createdAt: loan.createdAt,
@@ -454,6 +469,7 @@ function view(r: LoanRow): LoanView {
     frequency: r.frequency,
     installments: r.installments,
     processingFee: r.processingFee,
+    allocation: r.allocation,
     purpose: r.purpose,
     appliedOn: r.appliedOn,
     createdAt: r.createdAt,
@@ -467,12 +483,15 @@ function view(r: LoanRow): LoanView {
     paymentMethod: r.paymentMethod,
     paymentRef: r.paymentRef,
     entryNo: r.entryNo,
+    closedOn: r.closedOn,
+    paidPrincipal: r.paidPrincipal,
+    paidInterest: r.paidInterest,
   };
 }
 
 export interface LoanDetail extends LoanView {
   /** The written schedule once paid out; before that, a projection from today. */
-  schedule: ScheduledInstallment[];
+  schedule: InstallmentState[];
   projected: boolean;
   summary: ScheduleSummary;
 }
@@ -481,19 +500,44 @@ export async function getLoan(ctx: TenantTx, loanId: string): Promise<LoanDetail
   const [row] = await loanQuery(ctx).where(and(eq(loan.tenantId, ctx.tenantId), eq(loan.id, loanId)));
   if (!row) return null;
   const v = view(row);
-  let schedule: ScheduledInstallment[];
+  let schedule: InstallmentState[];
   let projected = false;
   if (v.disbursedOn) {
-    schedule = await ctx.tx
-      .select({ seq: loanInstallment.seq, dueOn: loanInstallment.dueOn, principal: loanInstallment.principal, interest: loanInstallment.interest })
-      .from(loanInstallment)
-      .where(and(eq(loanInstallment.tenantId, ctx.tenantId), eq(loanInstallment.loanId, v.id)))
-      .orderBy(asc(loanInstallment.seq));
+    schedule = await scheduleState(ctx, v.id);
   } else {
-    schedule = buildSchedule(v, await businessDate(ctx));
+    schedule = buildSchedule(v, await businessDate(ctx)).map((r) => ({ ...r, paidPrincipal: 0n, paidInterest: 0n }));
     projected = true;
   }
   return { ...v, schedule, projected, summary: summarize(schedule) };
+}
+
+/** The written schedule with what each installment has had paid against it. */
+export async function scheduleState(ctx: TenantTx, loanId: string): Promise<InstallmentState[]> {
+  const { tx, tenantId } = ctx;
+  const paid = tx
+    .select({
+      seq: loanRepaymentLine.seq,
+      principal: sql<string>`sum(${loanRepaymentLine.principal})`.as("paid_principal"),
+      interest: sql<string>`sum(${loanRepaymentLine.interest})`.as("paid_interest"),
+    })
+    .from(loanRepaymentLine)
+    .where(and(eq(loanRepaymentLine.tenantId, tenantId), eq(loanRepaymentLine.loanId, loanId)))
+    .groupBy(loanRepaymentLine.seq)
+    .as("paid");
+  const rows = await tx
+    .select({
+      seq: loanInstallment.seq,
+      dueOn: loanInstallment.dueOn,
+      principal: loanInstallment.principal,
+      interest: loanInstallment.interest,
+      paidPrincipal: paid.principal,
+      paidInterest: paid.interest,
+    })
+    .from(loanInstallment)
+    .leftJoin(paid, eq(paid.seq, loanInstallment.seq))
+    .where(and(eq(loanInstallment.tenantId, tenantId), eq(loanInstallment.loanId, loanId)))
+    .orderBy(asc(loanInstallment.seq));
+  return rows.map((r) => ({ ...r, paidPrincipal: BigInt(r.paidPrincipal ?? 0), paidInterest: BigInt(r.paidInterest ?? 0) }));
 }
 
 export async function listLoans(
@@ -518,7 +562,7 @@ export interface LoanStats {
   applied: number;
   approved: number;
   live: number;
-  /** Principal paid out on loans not yet closed. */
+  /** Principal still owed on loans paid out and not yet closed. */
   outstandingPrincipal: bigint;
   /** Principal paid out in each of the last six months, oldest first. */
   monthly: { month: string; amount: bigint; count: number }[];
@@ -531,7 +575,7 @@ export async function loanStats(ctx: TenantTx): Promise<LoanStats> {
       applied: sql<number>`count(*) filter (where ${loan.status} = 'applied')::int`,
       approved: sql<number>`count(*) filter (where ${loan.status} = 'approved')::int`,
       live: sql<number>`count(*) filter (where ${loan.status} = 'disbursed')::int`,
-      outstanding: sql<string>`coalesce(sum(${loan.principal}) filter (where ${loan.status} = 'disbursed'), 0)`,
+      outstanding: sql<string>`coalesce(sum(${loan.principal} - (select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = loan.tenant_id and p.loan_id = loan.id)) filter (where ${loan.status} = 'disbursed'), 0)`,
     })
     .from(loan)
     .where(eq(loan.tenantId, tenantId));

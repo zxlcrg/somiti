@@ -1,6 +1,28 @@
-export { canApplyForLoans, canApproveLoans, canDisburseLoans, canManageLoanProducts, canViewLoans } from "./permissions";
+export { canApplyForLoans, canApproveLoans, canDisburseLoans, canManageLoanProducts, canViewLoans, repaymentChannel } from "./permissions";
+export {
+  allocate,
+  installmentStatus,
+  outstanding,
+  standing,
+  type Allocation,
+  type AllocatedLine,
+  type InstallmentState,
+  type InstallmentStatus,
+  type Standing,
+} from "./allocate";
+export {
+  listRepayments,
+  repayLoan,
+  repaymentsOn,
+  type RepaymentChannel,
+  type RepaymentError,
+  type RepaymentInput,
+  type RepaymentResult,
+  type RepaymentView,
+} from "./repayments";
 export { buildSchedule, dueDate, summarize, PERIODS_PER_YEAR, type LoanFrequency, type LoanMethod, type ScheduledInstallment, type ScheduleSummary } from "./schedule";
 export {
+  ALLOCATIONS,
   CHARGE_LABELS,
   checkLoanProductForm,
   createLoanProduct,
@@ -29,6 +51,7 @@ export {
   PAYMENT_METHODS,
   previewTerms,
   rejectLoan,
+  scheduleState,
   type LoanApplicationError,
   type LoanApplicationErrors,
   type LoanApplicationInput,

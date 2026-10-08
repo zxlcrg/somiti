@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { bigint, boolean, check, date, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { journalEntry } from "./ledger";
 import { member } from "./members";
+import { depositChannelEnum } from "./savings";
 import { paymentMethodEnum } from "./shares";
 import { appUser, tenant } from "./tenancy";
 
@@ -17,6 +18,12 @@ export const loanChargeLabelEnum = pgEnum("loan_charge_label", ["interest", "ser
  * applied → approved → disbursed → closed, or applied/approved → rejected/cancelled.
  * The guard trigger in 0029 enforces the moves.
  */
+/**
+ * How a repayment is split inside each installment, oldest installment first
+ * (architecture review: allocation order is a loan-product setting). Fines,
+ * once loans have them, always come first.
+ */
+export const loanAllocationEnum = pgEnum("loan_allocation", ["interest_first", "principal_first"]);
 export const loanStatusEnum = pgEnum("loan_status", ["applied", "approved", "rejected", "cancelled", "disbursed", "closed"]);
 
 /** A loan product is configuration, not code: method, yearly rate, installment rhythm and limits. */
@@ -40,6 +47,7 @@ export const loanProduct = pgTable(
     maxInstallments: integer("max_installments").notNull(),
     /** Taken once at disbursement, in basis points of the principal; 0 for none. */
     processingFeeBp: integer("processing_fee_bp").notNull().default(0),
+    allocation: loanAllocationEnum("allocation").notNull().default("interest_first"),
     active: boolean("active").notNull().default(true),
     createdBy: uuid("created_by").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -78,6 +86,7 @@ export const loan = pgTable(
     frequency: loanFrequencyEnum("frequency").notNull(),
     installments: integer("installments").notNull(),
     processingFee: bigint("processing_fee", { mode: "bigint" }).notNull(),
+    allocation: loanAllocationEnum("allocation").notNull().default("interest_first"),
     purpose: text("purpose"),
     status: loanStatusEnum("status").notNull().default("applied"),
     appliedBy: uuid("applied_by").notNull(),
@@ -95,6 +104,8 @@ export const loan = pgTable(
     paymentMethod: paymentMethodEnum("payment_method"),
     paymentRef: text("payment_ref"),
     entryId: uuid("entry_id"),
+    /** The business day the last of it was repaid. */
+    closedOn: date("closed_on", { mode: "string" }),
   },
   (t) => [
     unique("loan_tenant_id").on(t.tenantId, t.id),
@@ -123,6 +134,7 @@ export const loan = pgTable(
       "loan_decided",
       sql`(${t.status} = 'applied') = (${t.decidedBy} IS NULL) AND (${t.decidedBy} IS NULL) = (${t.decidedAt} IS NULL)`,
     ),
+    check("loan_closed", sql`(${t.status} = 'closed') = (${t.closedOn} IS NOT NULL)`),
     check("loan_reject_note", sql`${t.status} <> 'rejected' OR length(trim(coalesce(${t.decisionNote}, ''))) > 0`),
     check(
       "loan_disbursed",
@@ -155,5 +167,68 @@ export const loanInstallment = pgTable(
     foreignKey({ name: "loan_installment_loan_fk", columns: [t.tenantId, t.loanId], foreignColumns: [loan.tenantId, loan.id] }),
     check("loan_installment_seq_positive", sql`${t.seq} > 0`),
     check("loan_installment_amounts", sql`${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.principal} + ${t.interest} > 0`),
+  ],
+);
+
+/**
+ * Money a member paid against a loan. One row per receipt; the lines below
+ * say which installments it settled. Interest is income when the cash
+ * arrives (cash basis, architecture review).
+ */
+export const loanRepayment = pgTable(
+  "loan_repayment",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    loanId: uuid("loan_id").notNull(),
+    amount: bigint("amount", { mode: "bigint" }).notNull(),
+    principal: bigint("principal", { mode: "bigint" }).notNull(),
+    interest: bigint("interest", { mode: "bigint" }).notNull(),
+    channel: depositChannelEnum("channel").notNull(),
+    paymentMethod: paymentMethodEnum("payment_method").notNull(),
+    paymentRef: text("payment_ref"),
+    journalEntryId: uuid("journal_entry_id").notNull(),
+    businessDate: date("business_date", { mode: "string" }).notNull(),
+    createdBy: uuid("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("loan_repayment_tenant_id").on(t.tenantId, t.id),
+    unique("loan_repayment_entry").on(t.tenantId, t.journalEntryId),
+    index("loan_repayment_loan").on(t.tenantId, t.loanId, t.createdAt),
+    index("loan_repayment_collector").on(t.tenantId, t.createdBy, t.businessDate),
+    foreignKey({ name: "loan_repayment_loan_fk", columns: [t.tenantId, t.loanId], foreignColumns: [loan.tenantId, loan.id] }),
+    foreignKey({ name: "loan_repayment_entry_fk", columns: [t.tenantId, t.journalEntryId], foreignColumns: [journalEntry.tenantId, journalEntry.id] }),
+    foreignKey({ name: "loan_repayment_created_by_fk", columns: [t.tenantId, t.createdBy], foreignColumns: [appUser.tenantId, appUser.id] }),
+    check("loan_repayment_amounts", sql`${t.amount} > 0 AND ${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.amount} = ${t.principal} + ${t.interest}`),
+    check("loan_repayment_collector_cash", sql`${t.channel} = 'office' OR ${t.paymentMethod} = 'cash'`),
+  ],
+);
+
+/** How one repayment was split across installments. */
+export const loanRepaymentLine = pgTable(
+  "loan_repayment_line",
+  {
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    repaymentId: uuid("repayment_id").notNull(),
+    loanId: uuid("loan_id").notNull(),
+    seq: integer("seq").notNull(),
+    principal: bigint("principal", { mode: "bigint" }).notNull(),
+    interest: bigint("interest", { mode: "bigint" }).notNull(),
+  },
+  (t) => [
+    unique("loan_repayment_line_seq").on(t.tenantId, t.repaymentId, t.seq),
+    index("loan_repayment_line_installment").on(t.tenantId, t.loanId, t.seq),
+    foreignKey({ name: "loan_repayment_line_repayment_fk", columns: [t.tenantId, t.repaymentId], foreignColumns: [loanRepayment.tenantId, loanRepayment.id] }),
+    foreignKey({
+      name: "loan_repayment_line_installment_fk",
+      columns: [t.tenantId, t.loanId, t.seq],
+      foreignColumns: [loanInstallment.tenantId, loanInstallment.loanId, loanInstallment.seq],
+    }),
+    check("loan_repayment_line_amounts", sql`${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.principal} + ${t.interest} > 0`),
   ],
 );

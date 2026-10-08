@@ -16,12 +16,16 @@ import {
   createLoanProduct,
   disburseLoan,
   rejectLoan,
+  repaymentChannel,
+  repayLoan,
   setLoanProductActive,
   type LoanApplicationErrors,
   type LoanDecisionError,
   type LoanProductErrors,
+  type RepaymentError,
 } from "@/modules/loans";
 import { getCurrentUser } from "../auth";
+import { flushSms } from "../sms";
 
 const LEDGER_MESSAGES = new Set<LedgerErrorCode>(["DAY_CLOSED", "NO_OPEN_PERIOD"]);
 const device = async () => (await headers()).get("user-agent")?.slice(0, 200) ?? undefined;
@@ -56,6 +60,7 @@ export async function createLoanProductAction(prev: LoanProductState, form: Form
           nameBn: field(form, "nameBn"),
           method: field(form, "method"),
           chargeLabel: field(form, "chargeLabel"),
+          allocation: field(form, "allocation"),
           rate: field(form, "rate"),
           frequency: field(form, "frequency"),
           minAmount: field(form, "minAmount"),
@@ -151,4 +156,39 @@ export async function loanStepAction(loanId: string, step: "approve" | "reject" 
   if (!result.ok) return { error: result.error, attempt };
   revalidatePath("/", "layout");
   redirect(`/loans/${loanId}?done=${step}`);
+}
+
+// ---------- Repayments ----------
+
+export interface RepayState {
+  errors?: Partial<Record<"amount" | "method" | "paymentRef", RepaymentError>> & { form?: RepaymentError | "forbidden" | "server" | LedgerErrorCode };
+  /** What is still owed, when the amount was more than that. */
+  owed?: string;
+  attempt?: number;
+}
+
+export async function repayLoanAction(loanId: string, prev: RepayState, form: FormData): Promise<RepayState> {
+  const attempt = (prev.attempt ?? 0) + 1;
+  const user = await signedIn();
+  const channel = repaymentChannel(user.roles);
+  if (!channel) return { errors: { form: "forbidden" }, attempt };
+  let result;
+  try {
+    const dev = await device();
+    result = await withTenant(getAppDb(), user.tenantId, (ctx) =>
+      repayLoan(
+        ctx,
+        { loanId, amount: field(form, "amount"), method: field(form, "method"), paymentRef: field(form, "paymentRef"), idempotencyKey: field(form, "idempotencyKey") },
+        { userId: user.userId, channel, device: dev },
+      ),
+    );
+  } catch (err) {
+    if (err instanceof LedgerError && LEDGER_MESSAGES.has(err.code)) return { errors: { form: err.code }, attempt };
+    console.error(err);
+    return { errors: { form: "server" }, attempt };
+  }
+  if (!result.ok) return { errors: result.errors, owed: result.owed?.toString(), attempt };
+  await flushSms(user.tenantId);
+  revalidatePath("/", "layout");
+  redirect(`/loans/${loanId}?paid=${result.repayment.entryNo}${result.closed ? "&closed=1" : ""}`);
 }

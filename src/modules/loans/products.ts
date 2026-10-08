@@ -13,6 +13,8 @@ export const LOAN_METHODS = ["flat", "declining"] as const;
 export const LOAN_FREQUENCIES = ["weekly", "monthly"] as const;
 export const CHARGE_LABELS = ["service_charge", "interest"] as const;
 export type ChargeLabel = (typeof CHARGE_LABELS)[number];
+export const ALLOCATIONS = ["interest_first", "principal_first"] as const;
+export type Allocation = (typeof ALLOCATIONS)[number];
 /** 10 crore taka: far above any somiti loan, low enough to catch a slipped digit. */
 export const MAX_LOAN = 10_000_000_000n;
 export const MAX_INSTALLMENTS = 520;
@@ -23,6 +25,8 @@ export interface LoanProductForm {
   nameBn?: string;
   method: string;
   chargeLabel?: string;
+  /** Inside each installment, which half a repayment settles first. */
+  allocation?: string;
   /** Yearly rate as typed, in percent: "12" or "12.5". */
   rate: string;
   frequency: string;
@@ -55,6 +59,7 @@ export interface LoanProductView {
   nameBn: string | null;
   method: LoanMethod;
   chargeLabel: ChargeLabel;
+  allocation: Allocation;
   rateBp: number;
   frequency: LoanFrequency;
   minAmount: bigint;
@@ -64,7 +69,7 @@ export interface LoanProductView {
   active: boolean;
   /** Loans paid out and not yet closed. */
   liveLoans: number;
-  /** Principal paid out on those loans. */
+  /** Principal still owed on those loans. */
   disbursed: bigint;
 }
 
@@ -95,6 +100,8 @@ export function checkLoanProductForm(form: LoanProductForm):
   if (!method) errors.method = "invalid";
   const chargeLabel = CHARGE_LABELS.find((c) => c === (form.chargeLabel || "service_charge"));
   if (!chargeLabel) errors.chargeLabel = "invalid";
+  const allocation = ALLOCATIONS.find((a) => a === (form.allocation || "interest_first"));
+  if (!allocation) errors.allocation = "invalid";
   const frequency = LOAN_FREQUENCIES.find((f) => f === form.frequency);
   if (!frequency) errors.frequency = "invalid";
   const rateBp = form.rate.trim() ? parsePercent(form.rate, 10_000) : null;
@@ -123,6 +130,7 @@ export function checkLoanProductForm(form: LoanProductForm):
       nameBn,
       method: method!,
       chargeLabel: chargeLabel!,
+      allocation: allocation!,
       rateBp: rateBp!,
       frequency: frequency!,
       minAmount: min as bigint,
@@ -192,6 +200,7 @@ export async function listLoanProducts({ tx, tenantId }: TenantTx, opts: { activ
       nameBn: loanProduct.nameBn,
       method: loanProduct.method,
       chargeLabel: loanProduct.chargeLabel,
+      allocation: loanProduct.allocation,
       rateBp: loanProduct.rateBp,
       frequency: loanProduct.frequency,
       minAmount: loanProduct.minAmount,
@@ -199,8 +208,9 @@ export async function listLoanProducts({ tx, tenantId }: TenantTx, opts: { activ
       maxInstallments: loanProduct.maxInstallments,
       processingFeeBp: loanProduct.processingFeeBp,
       active: loanProduct.active,
-      liveLoans: sql<number>`(select count(*)::int from loan l where l.tenant_id = ${loanProduct.tenantId} and l.product_id = ${loanProduct.id} and l.status = 'disbursed')`,
-      disbursed: sql<string>`(select coalesce(sum(l.principal), 0) from loan l where l.tenant_id = ${loanProduct.tenantId} and l.product_id = ${loanProduct.id} and l.status = 'disbursed')`.mapWith(
+      liveLoans: sql<number>`(select count(*)::int from loan l where l.tenant_id = loan_product.tenant_id and l.product_id = loan_product.id and l.status = 'disbursed')`,
+      disbursed: sql<string>`(select coalesce(sum(l.principal - (select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = l.tenant_id and p.loan_id = l.id)), 0)
+         from loan l where l.tenant_id = loan_product.tenant_id and l.product_id = loan_product.id and l.status = 'disbursed')`.mapWith(
         (v: string | number) => BigInt(v),
       ),
     })

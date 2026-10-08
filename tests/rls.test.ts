@@ -5,7 +5,7 @@ import { appUser, otpChallenge, savingsFine, tenant, userRole, userSession } fro
 import { closeDay } from "../src/modules/dayend";
 import { admitMember, approveExit, buyShares, requestExit, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
-import { applyForLoan, approveLoan, createLoanProduct, disburseLoan } from "../src/modules/loans";
+import { applyForLoan, approveLoan, createLoanProduct, disburseLoan, repayLoan } from "../src/modules/loans";
 import { createProduct, deposit as depositSavings, openAccount, receiveHandover, requestWithdrawal } from "../src/modules/savings";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
@@ -117,6 +117,12 @@ beforeAll(async () => {
       await approveLoan(ctx, { loanId: applied.loanId, userId: collector!.id });
       const disbursed = await disburseLoan(ctx, { loanId: applied.loanId, method: "bank", userId: t.adminUserId });
       if (!disbursed.ok) throw new Error("seed disbursement");
+      const repaid = await repayLoan(
+        ctx,
+        { loanId: applied.loanId, amount: "100", method: "cash", idempotencyKey: `seed-repay-${t.tenantId}` },
+        { userId: t.adminUserId, channel: "office" },
+      );
+      if (!repaid.ok) throw new Error("seed repayment");
       const leaver = await admitMember(ctx, { nameEn: "Seed leaver", phone: "01722222222" }, { userId: t.adminUserId });
       if (!leaver.ok) throw new Error("seed leaver");
       await buyShares(

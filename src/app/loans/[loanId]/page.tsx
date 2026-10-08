@@ -8,11 +8,12 @@ import { tenant } from "@/db/schema";
 import { formatDate, formatDateTime, formatInteger, formatTaka } from "@/lib/format";
 import { primaryName } from "@/lib/names";
 import { formatBdPhone } from "@/lib/phone";
-import { canApplyForLoans, canApproveLoans, canDisburseLoans, canViewLoans, getLoan } from "@/modules/loans";
+import { canApplyForLoans, canApproveLoans, canDisburseLoans, canViewLoans, getLoan, installmentStatus, listRepayments, repaymentChannel, standing } from "@/modules/loans";
 import { requireUser } from "../../auth";
 import { pageLocale } from "../../books";
 import { MemberAvatar } from "../../members/member-avatar";
 import { METHOD_ICON, percent, STATUS_ICON } from "../ui";
+import { RepayPanel } from "./repay-panel";
 import { CancelPanel, DecidePanel, DisbursePanel } from "./step-panel";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -25,7 +26,7 @@ export default async function LoanPage({
   searchParams,
 }: {
   params: Promise<{ loanId: string }>;
-  searchParams: Promise<{ applied?: string; done?: string }>;
+  searchParams: Promise<{ applied?: string; done?: string; paid?: string; closed?: string }>;
 }) {
   const user = await requireUser();
   const t = await getTranslations("loans");
@@ -36,10 +37,10 @@ export default async function LoanPage({
   const data = await withTenant(getAppDb(), user.tenantId, async (ctx) => {
     const l = await getLoan(ctx, loanId);
     const [somiti] = await ctx.tx.select({ d: tenant.businessDate }).from(tenant).where(eq(tenant.id, ctx.tenantId));
-    return l ? { l, today: somiti!.d } : null;
+    return l ? { l, today: somiti!.d, repayments: l.disbursedOn ? await listRepayments(ctx, l.id) : [] } : null;
   });
   if (!data) notFound();
-  const { l, today } = data;
+  const { l, today, repayments } = data;
   const locale = await pageLocale();
   const taka = (p: bigint) => formatTaka(p, locale);
   const num = (n: number | bigint) => formatInteger(n, locale);
@@ -49,6 +50,13 @@ export default async function LoanPage({
   const ownWaiting = l.status === "applied" && l.appliedBy.id === user.userId;
   const canPay = l.status === "approved" && canDisburseLoans(user.roles);
   const canCancel = (l.status === "applied" || l.status === "approved") && canApplyForLoans(user.roles);
+  const channel = repaymentChannel(user.roles);
+  const canRepay = l.status === "disbursed" && channel !== null;
+  const running = l.status === "disbursed" || l.status === "closed";
+  const owedTotal = l.summary.totalRepayable - l.paidPrincipal - l.paidInterest;
+  const st = running ? standing(l.schedule, today) : null;
+  const repaidPct = running ? Number(((l.paidPrincipal + l.paidInterest) * 1000n) / l.summary.totalRepayable) / 10 : 0;
+  const paidNo = search.paid && /^\d{1,12}$/.test(search.paid) ? BigInt(search.paid) : null;
   const done = search.done && ["approve", "reject", "cancel", "disburse"].includes(search.done) ? search.done : null;
 
   const steps = [
@@ -60,6 +68,7 @@ export default async function LoanPage({
       when: l.decidedAt && l.status !== "cancelled" ? formatDateTime(l.decidedAt, locale) : null,
     },
     { key: "disbursed", on: !!l.disbursedOn, who: l.disbursedBy ? primaryName(l.disbursedBy, locale) : null, when: l.disbursedOn ? formatDate(l.disbursedOn, locale) : null },
+    { key: "closed", on: !!l.closedOn, who: null, when: l.closedOn ? formatDate(l.closedOn, locale) : null },
   ];
 
   return (
@@ -71,6 +80,12 @@ export default async function LoanPage({
       {search.applied === "1" && (
         <p className="celebrate" role="status">
           <span aria-hidden="true">📝</span> {t("detail.appliedBanner", { no: num(l.loanNo) })}
+        </p>
+      )}
+      {paidNo !== null && (
+        <p className="celebrate" role="status">
+          <span aria-hidden="true">{search.closed === "1" ? "🎉" : "🧾"}</span>{" "}
+          {search.closed === "1" ? t("detail.closedBanner", { no: num(paidNo) }) : t("detail.paidBanner", { no: num(paidNo), owed: taka(owedTotal) })}
         </p>
       )}
       {done && (
@@ -100,6 +115,19 @@ export default async function LoanPage({
           <strong>{taka(l.principal)}</strong>
           <span>{t(`detail.over.${l.frequency}`, { n: num(l.installments), count: l.installments })}</span>
         </div>
+        {running && (
+          <div className="loan-progress">
+            <div className="progress-track" role="img" aria-label={t("detail.repaidPct", { pct: num(Math.floor(repaidPct)) })}>
+              <span style={{ width: `${repaidPct}%` }} />
+            </div>
+            <span>
+              {t("detail.repaidOf", { paid: taka(l.paidPrincipal + l.paidInterest), total: taka(l.summary.totalRepayable) })}
+              {st && st.overdueCount > 0 && (
+                <strong className="overdue-note"> · {t("detail.overdueCount", { n: num(st.overdueCount), count: st.overdueCount })}</strong>
+              )}
+            </span>
+          </div>
+        )}
       </section>
 
       <ol className="loan-steps" aria-label={t("detail.progress")}>
@@ -109,16 +137,12 @@ export default async function LoanPage({
               {s.on ? (s.key === "rejected" ? "✕" : "✓") : ""}
             </span>
             <strong>{t(`detail.step.${s.key}`)}</strong>
-            {s.on && (
-              <small className="muted">
-                {s.who} · {s.when}
-              </small>
-            )}
+            {s.on && <small className="muted">{[s.who, s.when].filter(Boolean).join(" · ")}</small>}
           </li>
         ))}
       </ol>
 
-      <div className={`loan-grid${canDecide || canPay ? "" : " solo"}`}>
+      <div className={`loan-grid${canDecide || canPay || canRepay ? "" : " solo"}`}>
         <div className="loan-main">
           <section className="loan-card terms">
             <h2>{t("detail.terms")}</h2>
@@ -146,6 +170,10 @@ export default async function LoanPage({
               <div>
                 <dt>{t("apply.handedOver")}</dt>
                 <dd>{taka(l.principal - l.processingFee)}</dd>
+              </div>
+              <div>
+                <dt>{t("detail.allocation")}</dt>
+                <dd>{t(`allocation.${l.allocation}`, { charge })}</dd>
               </div>
               {l.purpose && (
                 <div>
@@ -194,17 +222,27 @@ export default async function LoanPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {l.schedule.map((r) => (
-                    <tr key={r.seq} className={!l.projected && r.dueOn <= today ? "due" : undefined}>
+                  {l.schedule.map((r) => {
+                    const state = running ? installmentStatus(r, today) : null;
+                    return (
+                    <tr key={r.seq} className={state ? `st-${state}` : undefined}>
                       <td className="num muted">{num(r.seq)}</td>
-                      <td>{formatDate(r.dueOn, locale)}</td>
+                      <td>
+                        {formatDate(r.dueOn, locale)}
+                        {state && state !== "upcoming" && (
+                          <span className={`inst-chip i-${state}`}>
+                            {state === "part" ? t("schedule.partPaid", { amount: taka(r.paidPrincipal + r.paidInterest) }) : t(`schedule.status.${state}`)}
+                          </span>
+                        )}
+                      </td>
                       <td className="num">{taka(r.principal)}</td>
                       <td className="num">{taka(r.interest)}</td>
                       <td className="num">
                         <strong>{taka(r.principal + r.interest)}</strong>
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
                 <tfoot>
                   <tr>
@@ -219,12 +257,62 @@ export default async function LoanPage({
                 </tfoot>
               </table>
             </div>
-            {l.status === "disbursed" && <p className="muted small-note">{t("detail.repaymentsSoon")}</p>}
           </section>
+
+          {running && (
+            <section className="loan-card">
+              <h2>{t("history.title")}</h2>
+              {repayments.length === 0 ? (
+                <p className="muted">{t("history.none")}</p>
+              ) : (
+                <ol className="repay-list">
+                  {repayments.map((r) => (
+                    <li key={r.id}>
+                      <span className="repay-icon" aria-hidden="true">
+                        {r.channel === "collector" ? "👜" : METHOD_ICON[r.paymentMethod]}
+                      </span>
+                      <span className="who">
+                        <strong>{taka(r.amount)}</strong>
+                        <small className="muted">
+                          {formatDate(r.businessDate, locale)} · {primaryName(r.createdBy, locale)} · {t("detail.voucher", { no: num(r.entryNo) })}
+                          {r.paymentRef ? ` · ${r.paymentRef}` : ""}
+                        </small>
+                      </span>
+                      <span className="repay-parts">
+                        <small>
+                          {r.firstSeq === r.lastSeq ? t("repay.covers.one", { n: num(r.firstSeq) }) : t("repay.covers.many", { a: num(r.firstSeq), b: num(r.lastSeq) })}
+                        </small>
+                        <small className="muted">
+                          {t("schedule.principal")} {taka(r.principal)} · {charge} {taka(r.interest)}
+                        </small>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          )}
         </div>
 
-        {(canDecide || canPay || ownWaiting || canCancel) && (
+        {(canDecide || canPay || ownWaiting || canCancel || canRepay) && (
           <aside className="loan-side">
+            {canRepay && (
+              <RepayPanel
+                loanId={l.id}
+                rows={l.schedule.map((r) => ({
+                  seq: r.seq,
+                  dueOn: r.dueOn,
+                  principal: r.principal.toString(),
+                  interest: r.interest.toString(),
+                  paidPrincipal: r.paidPrincipal.toString(),
+                  paidInterest: r.paidInterest.toString(),
+                }))}
+                allocation={l.allocation}
+                today={today}
+                channel={channel!}
+                charge={charge}
+              />
+            )}
             {canDecide && <DecidePanel loanId={l.id} today={today} />}
             {ownWaiting && (
               <p className="notice soft">

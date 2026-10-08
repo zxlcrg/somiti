@@ -1,11 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { appUser, auditLog, loan, loanInstallment, userRole } from "../src/db/schema";
+import { appUser, auditLog, loan, loanInstallment, loanRepayment, smsOutbox, userRole } from "../src/db/schema";
 import { addMonths } from "../src/lib/dates";
 import { getEntry, trialBalance } from "../src/modules/ledger";
 import { admitMember, exitBlockers } from "../src/modules/members";
+import { collectorBoard } from "../src/modules/savings";
 import {
+  allocate,
   applyForLoan,
   approveLoan,
   buildSchedule,
@@ -16,14 +18,20 @@ import {
   createLoanProduct,
   disburseLoan,
   getLoan,
+  installmentStatus,
   listLoanProducts,
+  listRepayments,
   listLoans,
   loanStats,
   parsePercent,
   previewTerms,
   rejectLoan,
+  repaymentChannel,
+  repayLoan,
   setLoanProductActive,
+  standing,
   summarize,
+  type InstallmentState,
   type LoanProductForm,
 } from "../src/modules/loans";
 import { newTenant, type TestTenant } from "./helpers";
@@ -102,7 +110,7 @@ describe("loan products", () => {
   });
 });
 
-async function addUser(t: TestTenant, role: "secretary" | "cashier" | "president", name = "Second Officer") {
+async function addUser(t: TestTenant, role: "secretary" | "cashier" | "president" | "field_collector", name = "Second Officer") {
   return t.run(async ({ tx, tenantId }) => {
     const [u] = await tx
       .insert(appUser)
@@ -224,5 +232,156 @@ describe("loan applications", () => {
     expect(canApproveLoans(["cashier", "field_collector"])).toBe(false);
     expect(canDisburseLoans(["cashier"])).toBe(true);
     expect(canDisburseLoans(["admin", "secretary"])).toBe(false);
+  });
+});
+
+const row = (seq: number, dueOn: string, principal: bigint, interest: bigint, paidPrincipal = 0n, paidInterest = 0n): InstallmentState => ({
+  seq,
+  dueOn,
+  principal,
+  interest,
+  paidPrincipal,
+  paidInterest,
+});
+
+describe("repayment allocation", () => {
+  const rows = [row(1, "2026-11-03", 2000_00n, 200_00n), row(2, "2026-12-03", 2000_00n, 200_00n), row(3, "2027-01-03", 2000_00n, 200_00n)];
+
+  it("settles the oldest installment first, in the loan's order inside each", () => {
+    expect(allocate(rows, 1000_00n, "interest_first")).toEqual([{ seq: 1, interest: 200_00n, principal: 800_00n }]);
+    expect(allocate(rows, 1000_00n, "principal_first")).toEqual([{ seq: 1, principal: 1000_00n, interest: 0n }]);
+    // More than one installment runs on into the next ones, as an advance.
+    expect(allocate(rows, 3000_00n, "interest_first")).toEqual([
+      { seq: 1, interest: 200_00n, principal: 2000_00n },
+      { seq: 2, interest: 200_00n, principal: 600_00n },
+    ]);
+    // A part-paid installment is finished before the next is touched.
+    const part = [row(1, "2026-11-03", 2000_00n, 200_00n, 500_00n, 200_00n), rows[1]!];
+    expect(allocate(part, 2000_00n, "interest_first")).toEqual([
+      { seq: 1, interest: 0n, principal: 1500_00n },
+      { seq: 2, interest: 200_00n, principal: 300_00n },
+    ]);
+  });
+
+  it("refuses nothing and more than is owed", () => {
+    expect(allocate(rows, 0n, "interest_first")).toBeNull();
+    expect(allocate(rows, 6600_00n + 1n, "interest_first")).toBeNull();
+    expect(allocate(rows, 6600_00n, "interest_first")).toHaveLength(3);
+  });
+
+  it("knows what is due, overdue and paid", () => {
+    const paid = [row(1, "2026-11-03", 2000_00n, 200_00n, 2000_00n, 200_00n), row(2, "2026-12-03", 2000_00n, 200_00n, 100_00n, 200_00n), rows[2]!];
+    expect(installmentStatus(paid[0]!, "2026-12-10")).toBe("paid");
+    expect(installmentStatus(paid[1]!, "2026-12-10")).toBe("overdue");
+    expect(installmentStatus(paid[1]!, "2026-12-03")).toBe("due");
+    expect(installmentStatus(paid[1]!, "2026-11-20")).toBe("part");
+    expect(installmentStatus(paid[2]!, "2026-12-10")).toBe("upcoming");
+    expect(standing(paid, "2026-12-10")).toEqual({ dueNow: 1900_00n, overdueCount: 1, next: { seq: 2, dueOn: "2026-12-03", amount: 1900_00n }, paidCount: 1 });
+  });
+});
+
+describe("loan repayments", () => {
+  async function running() {
+    const s = await setup();
+    const { loanId } = (await apply(s)) as { loanId: string };
+    await s.t.run((ctx) => approveLoan(ctx, { loanId, userId: s.secretary }));
+    await s.t.run((ctx) => disburseLoan(ctx, { loanId, method: "cash", userId: s.t.adminUserId }));
+    return { ...s, loanId };
+  }
+  const pay = (s: Awaited<ReturnType<typeof running>>, amount: string, extra: Partial<{ method: string; paymentRef: string; key: string }> = {}, channel: "office" | "collector" = "office", userId?: string) =>
+    s.t.run((ctx) =>
+      repayLoan(
+        ctx,
+        { loanId: s.loanId, amount, method: extra.method ?? "cash", paymentRef: extra.paymentRef, idempotencyKey: extra.key ?? randomUUID() },
+        { userId: userId ?? s.t.adminUserId, channel },
+      ),
+    );
+
+  it("posts cash in, principal off the receivable and the charge to income", async () => {
+    const s = await running();
+    const r = await pay(s, "3,000");
+    expect(r).toMatchObject({ ok: true, closed: false, replayed: false, repayment: { amount: 3000_00n, principal: 2600_00n, interest: 400_00n, firstSeq: 1, lastSeq: 2 } });
+
+    const tb = await s.t.run((ctx) => trialBalance(ctx, DATE));
+    const line = (id: string) => tb.rows.find((x) => x.accountId === id);
+    expect(line(s.t.accounts.loans_receivable)?.debit).toBe(17_400_00n);
+    expect(line(s.t.accounts.interest_income)?.credit).toBe(400_00n);
+    expect(line(s.t.accounts.cash_in_hand)?.credit).toBe(16_800_00n);
+
+    const l = (await s.t.run((ctx) => getLoan(ctx, s.loanId)))!;
+    expect(l).toMatchObject({ paidPrincipal: 2600_00n, paidInterest: 400_00n, status: "disbursed" });
+    expect(l.schedule[0]).toMatchObject({ paidPrincipal: 2000_00n, paidInterest: 200_00n });
+    expect(l.schedule[1]).toMatchObject({ paidPrincipal: 600_00n, paidInterest: 200_00n });
+    expect(await s.t.run((ctx) => loanStats(ctx))).toMatchObject({ outstandingPrincipal: 17_400_00n });
+    expect((await s.t.run((ctx) => listLoanProducts(ctx)))[0]).toMatchObject({ liveLoans: 1, disbursed: 17_400_00n });
+
+    const sms = await s.t.run(({ tx }) => tx.select().from(smsOutbox).where(sql`${smsOutbox.kind} = 'loan_repayment'`));
+    expect(sms).toHaveLength(1);
+    expect(sms[0]!.body).toContain("Still owed Tk 19,000");
+  });
+
+  it("checks the form, refuses more than is owed, and posts a double submit once", async () => {
+    const s = await running();
+    expect(await pay(s, "0")).toEqual({ ok: false, errors: { amount: "invalid_amount" } });
+    expect(await pay(s, "10", { method: "mobile_wallet" })).toEqual({ ok: false, errors: { paymentRef: "ref_required" } });
+    expect(await pay(s, "22,000.01")).toEqual({ ok: false, errors: { amount: "too_much" }, owed: 22_000_00n });
+    const key = randomUUID();
+    const first = await pay(s, "500", { key });
+    const again = await pay(s, "500", { key });
+    expect(again).toMatchObject({ ok: true, replayed: true, repayment: { id: (first as { repayment: { id: string } }).repayment.id } });
+    expect(await s.t.run((ctx) => listRepayments(ctx, s.loanId))).toHaveLength(1);
+  });
+
+  it("takes a collector's cash into their bag, cash only", async () => {
+    const s = await running();
+    const collector = await addUser(s.t, "field_collector", "Collector");
+    expect(repaymentChannel(["field_collector"])).toBe("collector");
+    expect(repaymentChannel(["cashier", "field_collector"])).toBe("office");
+    expect(repaymentChannel(["secretary"])).toBeNull();
+    expect(await pay(s, "100", { method: "bank" }, "collector", collector)).toEqual({ ok: false, errors: { method: "collector_cash_only" } });
+    expect(await pay(s, "2,200", {}, "collector", collector)).toMatchObject({ ok: true });
+    const tb = await s.t.run((ctx) => trialBalance(ctx, DATE));
+    expect(tb.rows.find((x) => x.accountId === s.t.accounts.cash_with_collector)?.debit).toBe(2200_00n);
+    const board = await s.t.run((ctx) => collectorBoard(ctx));
+    expect(board.find((b) => b.userId === collector)).toMatchObject({ held: 2200_00n, todayCount: 1, todayAmount: 2200_00n });
+  });
+
+  it("closes the loan with the last taka, and then takes no more", async () => {
+    const s = await running();
+    await pay(s, "10,000");
+    const r = await pay(s, "12,000");
+    expect(r).toMatchObject({ ok: true, closed: true });
+    const l = (await s.t.run((ctx) => getLoan(ctx, s.loanId)))!;
+    expect(l).toMatchObject({ status: "closed", closedOn: DATE, paidPrincipal: 20_000_00n, paidInterest: 2000_00n });
+    expect(await pay(s, "1")).toEqual({ ok: false, errors: { form: "not_running" } });
+    expect(await s.t.run((ctx) => exitBlockers(ctx, s.memberId))).toEqual([]);
+    expect(await s.t.run((ctx) => loanStats(ctx))).toMatchObject({ live: 0, outstandingPrincipal: 0n });
+    const sms = await s.t.run(({ tx }) => tx.select({ body: smsOutbox.body }).from(smsOutbox).where(sql`${smsOutbox.kind} = 'loan_repayment'`));
+    expect(sms.map((x) => x.body).some((b) => b.includes("Loan fully repaid"))).toBe(true);
+  });
+
+  it("follows the product's order, and the database keeps receipts and terms fixed", async () => {
+    const s = await running();
+    const p = await s.t.run((ctx) =>
+      createLoanProduct(
+        ctx,
+        { code: "PF", nameEn: "Principal first", method: "flat", rate: "12", frequency: "monthly", minAmount: "1000", maxAmount: "100000", maxInstallments: "24", allocation: "principal_first" },
+        { userId: s.t.adminUserId },
+      ),
+    );
+    expect(p.ok).toBe(true);
+    const form = { code: "X", nameEn: "X", method: "flat", rate: "12", frequency: "monthly", minAmount: "1000", maxAmount: "2000", maxInstallments: "6", allocation: "sideways" };
+    expect(checkLoanProductForm(form)).toMatchObject({ ok: false, errors: { allocation: "invalid" } });
+    const applied = await s.t.run((ctx) =>
+      applyForLoan(ctx, { memberId: s.memberId, productId: (p as { id: string }).id, amount: "12,000", installments: "12", submitKey: randomUUID() }, { userId: s.t.adminUserId }),
+    );
+    const loanId = (applied as { loanId: string }).loanId;
+    await s.t.run((ctx) => approveLoan(ctx, { loanId, userId: s.secretary }));
+    await s.t.run((ctx) => disburseLoan(ctx, { loanId, method: "cash", userId: s.t.adminUserId }));
+    const r = await s.t.run((ctx) => repayLoan(ctx, { loanId, amount: "500", method: "cash", idempotencyKey: randomUUID() }, { userId: s.t.adminUserId, channel: "office" }));
+    expect(r).toMatchObject({ ok: true, repayment: { principal: 500_00n, interest: 0n } });
+
+    await expect(s.t.run(({ tx }) => tx.update(loanRepayment).set({ amount: 1n }))).rejects.toThrow();
+    await expect(s.t.run(({ tx }) => tx.update(loan).set({ allocation: "interest_first" }).where(sql`${loan.id} = ${loanId}`))).rejects.toThrow();
   });
 });
