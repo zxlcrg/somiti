@@ -225,6 +225,20 @@
       "when": 1791401618883,
       "tag": "0031_loans_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791477704219,
+      "tag": "0032_loan_repayments",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1791477705355,
+      "tag": "0033_loan_repayments_rls",
+      "breakpoints": true
     }
   ]
 }

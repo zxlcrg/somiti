@@ -47,3 +47,26 @@ export function withdrawalText(m: MovementText, locale: Locale): string {
   }
   return `${m.somiti}: Tk ${amount(m.amount, "en")} withdrawn from ${m.productCode} a/c ${m.accountNo}, payment ${m.entryNo}. Balance Tk ${amount(m.balance, "en")}.`;
 }
+
+export interface LoanRepaymentText {
+  somiti: string;
+  productCode: string;
+  loanNo: number;
+  entryNo: bigint;
+  amount: bigint;
+  stillOwed: bigint;
+}
+
+export function loanRepaymentText(m: LoanRepaymentText, locale: Locale): string {
+  if (locale === "bn") {
+    const n = (v: bigint | number) => toBanglaDigits(String(v));
+    return (
+      `${m.somiti}: ${m.productCode} ঋণ ${n(m.loanNo)}-এ ৳${amount(m.amount, "bn")} কিস্তি জমা, রসিদ ${n(m.entryNo)}।` +
+      (m.stillOwed > 0n ? ` বাকি ৳${amount(m.stillOwed, "bn")}।` : " ঋণ সম্পূর্ণ পরিশোধ হয়েছে।")
+    );
+  }
+  return (
+    `${m.somiti}: Tk ${amount(m.amount, "en")} paid on ${m.productCode} loan ${m.loanNo}, receipt ${m.entryNo}.` +
+    (m.stillOwed > 0n ? ` Still owed Tk ${amount(m.stillOwed, "en")}.` : " Loan fully repaid.")
+  );
+}

@@ -1314,10 +1314,12 @@
       "go": "Open"
     },
     "stats": {
-      "outstanding": "Principal out on loan",
+      "outstanding": "Principal still owed",
       "live": "Running loans",
       "waiting": "In the pipeline",
-      "waitingSplit": "{applied} to approve · {approved} to pay"
+      "waitingSplit": "{applied} to approve · {approved} to pay",
+      "repaidToday": "Repaid today",
+      "repaidTodayCount": "{count, plural, =0 {–} one {# repayment} other {# repayments}}"
     },
     "chart": {
       "title": "Paid out, last six months",
@@ -1392,7 +1394,9 @@
       "totalCharge": "Total {label}",
       "totalRepay": "Total repaid",
       "feeTaken": "Fee kept at payout",
-      "save": "Create product"
+      "save": "Create product",
+      "allocation": "A repayment goes to",
+      "allocationHint": "Inside each installment, oldest installment first. Most somitis take the charge first."
     },
     "productErrors": {
       "required": "Fill this in.",
@@ -1460,7 +1464,15 @@
       "due": "Due",
       "principal": "Principal",
       "total": "Installment",
-      "totals": "Total"
+      "totals": "Total",
+      "status": {
+        "paid": "Paid",
+        "part": "Part paid",
+        "overdue": "Overdue",
+        "due": "Due today",
+        "upcoming": "Upcoming"
+      },
+      "partPaid": "Part paid, {amount}"
     },
     "detail": {
       "title": "Loan",
@@ -1480,7 +1492,8 @@
         "applied": "Applied",
         "approved": "Approved",
         "rejected": "Turned down",
-        "disbursed": "Paid out"
+        "disbursed": "Paid out",
+        "closed": "Repaid"
       },
       "terms": "Terms",
       "fee": "Processing fee",
@@ -1493,9 +1506,14 @@
       "schedule": "Repayment schedule",
       "projected": "Projected",
       "projectedNote": "Dates are worked out as if paid out today. The real schedule is fixed on the day the cashier pays out.",
-      "repaymentsSoon": "Collecting repayments against this schedule comes in the next update.",
       "waitingOther": "You entered this application, so another officer has to approve it.",
-      "waitingCashier": "Approved. Waiting for the cashier to pay it out."
+      "waitingCashier": "Approved. Waiting for the cashier to pay it out.",
+      "paidBanner": "Repayment taken, receipt #{no}. Still owed: {owed}.",
+      "closedBanner": "Repayment taken, receipt #{no}. This loan is fully repaid.",
+      "repaidPct": "{pct}% repaid",
+      "repaidOf": "{paid} repaid of {total}",
+      "overdueCount": "{count, plural, one {# installment overdue} other {# installments overdue}}",
+      "allocation": "A repayment goes to"
     },
     "steps": {
       "decideTitle": "Your decision",
@@ -1562,7 +1580,57 @@
       "apply": "Apply for a loan",
       "none": "No loans yet.",
       "paidOn": "Paid out {date}",
-      "appliedOn": "Applied {date}"
+      "appliedOn": "Applied {date}",
+      "stillOwed": "{amount} principal still owed",
+      "closedOn": "Repaid on {date}"
+    },
+    "allocation": {
+      "interest_first": "{charge} first, then principal",
+      "principal_first": "Principal first, then {charge}"
+    },
+    "repay": {
+      "title": "Take a repayment",
+      "dueNow": "Due now",
+      "overdue": "Due now, {count, plural, one {# installment late} other {# installments late}}",
+      "owed": "Still owed in all",
+      "amount": "Amount received",
+      "quick": {
+        "due": "Due now",
+        "next": "Installment {n}",
+        "all": "Pay off"
+      },
+      "paidBy": "Received by",
+      "collectorNote": "Cash only on a round. It goes in your bag until you hand it over.",
+      "goesTo": "Where it goes",
+      "covers": {
+        "one": "Installment {n}",
+        "many": "Installments {a} to {b}"
+      },
+      "after": "Still owed after this",
+      "closes": "This pays the loan off",
+      "submit": "Take {amount}",
+      "submitEmpty": "Enter an amount",
+      "confirm": "Take {amount}?",
+      "confirmBody": "The receipt is posted to the books and the member gets an SMS. It can't be edited afterwards.",
+      "submitNow": "Yes, take it"
+    },
+    "repayErrors": {
+      "invalid_amount": "Enter an amount in taka.",
+      "too_much": "That is more than is owed ({owed}).",
+      "invalid_method": "Choose how the money came in.",
+      "collector_cash_only": "On a round you can only take cash.",
+      "ref_required": "Enter the transaction ID.",
+      "ref_too_long": "That reference is too long.",
+      "not_found": "This loan was not found.",
+      "not_running": "This loan is not running, so it can't take repayments.",
+      "forbidden": "Only the cashier or a field collector can take repayments.",
+      "server": "Something went wrong. Nothing was posted; try again.",
+      "DAY_CLOSED": "Today's books are closed. Open the next day first.",
+      "NO_OPEN_PERIOD": "There is no open accounting period for today."
+    },
+    "history": {
+      "title": "Repayments",
+      "none": "Nothing repaid yet."
     }
   }
 }

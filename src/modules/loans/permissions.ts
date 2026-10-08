@@ -27,3 +27,10 @@ export function canDisburseLoans(roles: readonly string[]): boolean {
 export function canViewLoans(roles: readonly string[]): boolean {
   return canApplyForLoans(roles) || roles.includes("field_collector");
 }
+
+/** Repayments are taken like savings deposits: the cashier at the office, a field collector on a round. */
+export function repaymentChannel(roles: readonly string[]): "office" | "collector" | null {
+  if (roles.includes("cashier")) return "office";
+  if (roles.includes("field_collector")) return "collector";
+  return null;
+}

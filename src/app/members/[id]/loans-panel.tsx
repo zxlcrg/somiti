@@ -30,7 +30,7 @@ export async function LoansPanel({
           <h2 id="loans-title">{t("panel.title")}</h2>
           <p className="muted">{t("panel.subtitle", { name: memberName })}</p>
         </div>
-        {live.length > 0 && <strong className="savings-total loans-total">{taka(live.reduce((s, l) => s + l.principal, 0n))}</strong>}
+        {live.length > 0 && <strong className="savings-total loans-total">{taka(live.reduce((s, l) => s + l.principal - l.paidPrincipal, 0n))}</strong>}
         {canApply && (
           <Link href={`/loans/apply?member=${memberId}`} className="btn primary small">
             ＋ {t("panel.apply")}
@@ -55,8 +55,16 @@ export async function LoansPanel({
               <small className="muted">
                 {percent(l.rateBp, locale)} {t(`method.${l.method}`)} · {t(`detail.over.${l.frequency}`, { n: num(l.installments), count: l.installments })}
               </small>
+              {l.status === "disbursed" && (
+                <span className="mini-progress">
+                  <span className="progress-track">
+                    <span style={{ width: `${Number((l.paidPrincipal * 1000n) / l.principal) / 10}%` }} />
+                  </span>
+                  <small>{t("panel.stillOwed", { amount: taka(l.principal - l.paidPrincipal) })}</small>
+                </span>
+              )}
               <small className="muted">
-                {l.disbursedOn ? t("panel.paidOn", { date: formatDate(l.disbursedOn, locale) }) : t("panel.appliedOn", { date: formatDate(l.appliedOn, locale) })}
+                {l.closedOn ? t("panel.closedOn", { date: formatDate(l.closedOn, locale) }) : l.disbursedOn ? t("panel.paidOn", { date: formatDate(l.disbursedOn, locale) }) : t("panel.appliedOn", { date: formatDate(l.appliedOn, locale) })}
               </small>
             </Link>
           ))}

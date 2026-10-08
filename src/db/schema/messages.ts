@@ -3,7 +3,7 @@ import { check, foreignKey, index, integer, pgEnum, pgTable, text, timestamp, un
 import { member } from "./members";
 import { tenant } from "./tenancy";
 
-export const smsKindEnum = pgEnum("sms_kind", ["deposit", "withdrawal"]);
+export const smsKindEnum = pgEnum("sms_kind", ["deposit", "withdrawal", "loan_repayment"]);
 export const smsStatusEnum = pgEnum("sms_status", ["queued", "sent", "failed"]);
 
 /**

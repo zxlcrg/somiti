@@ -17,6 +17,7 @@ afterAll(async () => {
 
 export const ACCOUNT_KEYS = [
   "cash_in_hand",
+  "cash_with_collector",
   "bank",
   "member_savings",
   "share_capital",

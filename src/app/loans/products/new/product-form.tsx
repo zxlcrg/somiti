@@ -19,7 +19,7 @@ const FREQUENCIES: { key: LoanFrequency; icon: string }[] = [
   { key: "monthly", icon: "🌙" },
 ];
 
-type Field = "code" | "nameEn" | "nameBn" | "rate" | "minAmount" | "maxAmount" | "maxInstallments" | "fee" | "method" | "frequency" | "chargeLabel";
+type Field = "code" | "nameEn" | "nameBn" | "rate" | "minAmount" | "maxAmount" | "maxInstallments" | "fee" | "method" | "frequency" | "chargeLabel" | "allocation";
 
 export function LoanProductForm() {
   const t = useTranslations("loans");
@@ -38,6 +38,7 @@ export function LoanProductForm() {
     method: "flat",
     frequency: "monthly",
     chargeLabel: "service_charge",
+    allocation: "interest_first",
   });
   const [edited, setEdited] = useState<Set<string>>(new Set());
   const [seen, setSeen] = useState(state);
@@ -123,6 +124,7 @@ export function LoanProductForm() {
       <input type="hidden" name="method" value={v.method} />
       <input type="hidden" name="frequency" value={v.frequency} />
       <input type="hidden" name="chargeLabel" value={v.chargeLabel} />
+      <input type="hidden" name="allocation" value={v.allocation} />
       <div className="lpf-main">
         <section className="loan-card">
           {tiles("method", METHODS, t("productForm.method"), "method")}
@@ -136,6 +138,17 @@ export function LoanProductForm() {
                 </button>
               ))}
             </div>
+          </div>
+          <div className="choice-group">
+            <span className="label">{t("productForm.allocation")}</span>
+            <div className="seg" role="radiogroup" aria-label={t("productForm.allocation")}>
+              {(["interest_first", "principal_first"] as const).map((a) => (
+                <button key={a} type="button" role="radio" aria-checked={v.allocation === a} className={v.allocation === a ? "on" : undefined} onClick={() => set("allocation", a)}>
+                  {t(`allocation.${a}`, { charge })}
+                </button>
+              ))}
+            </div>
+            <small className="muted">{t("productForm.allocationHint")}</small>
           </div>
         </section>
         <section className="loan-card form-grid">

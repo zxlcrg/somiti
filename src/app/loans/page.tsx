@@ -13,6 +13,7 @@ import {
   listLoans,
   loanStats,
   type LoanView,
+  repaymentsOn,
 } from "@/modules/loans";
 import { requireUser } from "../auth";
 import { pageLocale } from "../books";
@@ -31,8 +32,9 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
   if (!canViewLoans(user.roles)) return <p className="notice">{t("noAccess")}</p>;
   const locale = await pageLocale();
   const { created } = await searchParams;
-  const { stats, products, applied, approved, recent } = await withTenant(getAppDb(), user.tenantId, async (ctx) => ({
+  const { stats, products, applied, approved, recent, repaidToday } = await withTenant(getAppDb(), user.tenantId, async (ctx) => ({
     stats: await loanStats(ctx),
+    repaidToday: await repaymentsOn(ctx),
     products: await listLoanProducts(ctx),
     applied: await listLoans(ctx, { status: "applied" }),
     approved: await listLoans(ctx, { status: "approved" }),
@@ -140,6 +142,11 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
           <span>{t("stats.waiting")}</span>
           <strong>{num(stats.applied + stats.approved)}</strong>
           <small>{t("stats.waitingSplit", { applied: num(stats.applied), approved: num(stats.approved) })}</small>
+        </div>
+        <div className="stat-tile tone-a">
+          <span>{t("stats.repaidToday")}</span>
+          <strong className="money-figure">{taka(repaidToday.amount)}</strong>
+          <small>{t("stats.repaidTodayCount", { n: num(repaidToday.count), count: repaidToday.count })}</small>
         </div>
       </div>
 

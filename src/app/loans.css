@@ -115,7 +115,7 @@
 }
 
 .loan-stats {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .loans-grid {
@@ -700,7 +700,8 @@
   background: color-mix(in srgb, var(--accent) 6%, transparent);
 }
 
-.schedule-table tr.due td:first-child {
+.schedule-table tr.st-overdue td:first-child,
+.schedule-table tr.st-due td:first-child {
   box-shadow: inset 3px 0 0 var(--accent-2);
 }
 
@@ -793,7 +794,7 @@
 
 .loan-steps {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem;
   margin: 0;
   padding: 0;
@@ -1036,7 +1037,7 @@
   }
 
   .loan-stats {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .loan-hero {
@@ -1102,4 +1103,180 @@
 
 .loan-steps li:not(.on) .dot {
   background: transparent;
+}
+
+/* ---------- Repayments ---------- */
+
+.loan-progress {
+  flex-basis: 100%;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.progress-track {
+  display: block;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 8%, var(--card));
+  overflow: hidden;
+}
+
+.progress-track > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--debit);
+  transition: width 0.4s ease;
+}
+
+.overdue-note {
+  color: #c93a4f;
+}
+
+.step-card.repay {
+  --tc: var(--accent-3);
+}
+
+.repay-owed {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin: 0 0 1rem;
+}
+
+.repay-owed > div {
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--fg) 4%, var(--card));
+}
+
+.repay-owed > div.hot {
+  background: color-mix(in srgb, var(--accent-2) 16%, var(--card));
+}
+
+.repay-owed dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.repay-owed dd {
+  margin: 0.1rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.repay-split {
+  padding: 0.75rem;
+  border: 1px dashed var(--line);
+  border-radius: 0.9rem;
+}
+
+.repay-split .split-bar {
+  margin-bottom: 0.6rem;
+}
+
+.inst-chip {
+  --ic: var(--muted);
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ic) 15%, transparent);
+  color: color-mix(in srgb, var(--ic) 70%, var(--fg));
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.inst-chip.i-paid {
+  --ic: var(--accent);
+}
+.inst-chip.i-part {
+  --ic: var(--accent-3);
+}
+.inst-chip.i-due {
+  --ic: var(--accent-2);
+}
+.inst-chip.i-overdue {
+  --ic: #c93a4f;
+}
+
+.schedule-table tr.st-paid td {
+  color: var(--muted);
+}
+
+.schedule-table tr.st-overdue {
+  background: color-mix(in srgb, #c93a4f 6%, transparent);
+}
+
+.repay-list {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.repay-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.75rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.8rem;
+  transition: background 0.15s ease;
+}
+
+.repay-list li:hover {
+  background: color-mix(in srgb, var(--accent) 7%, var(--card));
+}
+
+.repay-icon {
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  flex: none;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--accent-3) 16%, var(--card));
+}
+
+.repay-list .who {
+  display: grid;
+  flex: 1;
+  min-width: 10rem;
+}
+
+.repay-parts {
+  display: grid;
+  justify-items: end;
+  text-align: right;
+}
+
+.mini-progress {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.2rem 0;
+}
+
+.mini-progress .progress-track {
+  height: 0.4rem;
+}
+
+@media (max-width: 760px) {
+  .repay-parts {
+    justify-items: start;
+    text-align: left;
+  }
+}
+
+/* On phones the action comes before the long schedule. */
+@media (max-width: 760px) {
+  .loan-side {
+    order: -1;
+  }
 }
