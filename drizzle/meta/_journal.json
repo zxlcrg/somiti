@@ -281,6 +281,20 @@
       "when": 1791481484809,
       "tag": "0039_loan_reschedule_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791482702587,
+      "tag": "0040_collection_target",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1791482703772,
+      "tag": "0041_collection_target_grant",
+      "breakpoints": true
     }
   ]
 }

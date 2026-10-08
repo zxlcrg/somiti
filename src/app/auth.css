@@ -428,33 +428,6 @@
   font-size: 0.85rem;
 }
 
-/* ---------- Dashboard ---------- */
-
-.dash {
-  padding: 2rem 0;
-}
-
-.welcome {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 1.5rem;
-  align-items: start;
-  padding: 1.75rem;
-  border: 1px solid var(--line);
-  border-radius: 1.4rem;
-  background:
-    radial-gradient(circle at 100% 0, var(--glow-2), transparent 45%),
-    radial-gradient(circle at 0 100%, var(--glow-1), transparent 50%),
-    var(--card);
-  box-shadow: var(--shadow);
-  animation: step-in 0.4s ease-out;
-}
-
-.welcome h1 {
-  margin: 0 0 1rem;
-  font-size: clamp(1.5rem, 4vw, 2.1rem);
-}
-
 .avatar {
   display: grid;
   place-items: center;
@@ -503,10 +476,6 @@
 .section-title {
   margin: 2.5rem 0 0;
   font-size: 1.3rem;
-}
-
-.dash .features {
-  margin-top: 1rem;
 }
 
 .feature.soon .pill {

@@ -1,0 +1,2 @@
+ALTER TABLE "tenant" ADD COLUMN "collection_target" bigint;--> statement-breakpoint
+ALTER TABLE "tenant" ADD CONSTRAINT "tenant_collection_target_positive" CHECK ("tenant"."collection_target" IS NULL OR "tenant"."collection_target" > 0);
