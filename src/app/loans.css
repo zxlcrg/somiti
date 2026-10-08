@@ -1280,3 +1280,321 @@
     order: -1;
   }
 }
+
+/* ---------- Late fines ---------- */
+
+.lf-box {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px dashed color-mix(in srgb, var(--late-2) 55%, var(--line));
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--late-2) 8%, var(--card));
+}
+
+.lf-box.waived {
+  border-color: var(--line);
+  background: var(--card);
+}
+
+.lf-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.92rem;
+}
+
+.lf-line strong {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--late-3);
+}
+
+.lf-box.waived .lf-line:first-child strong {
+  color: var(--muted);
+}
+
+.lf-line.total {
+  padding-top: 0.45rem;
+  border-top: 1px solid var(--line);
+  font-weight: 700;
+}
+
+.lf-line.total strong {
+  color: inherit;
+  font-size: 1.05rem;
+}
+
+.waive-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.waive-check input {
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--accent);
+}
+
+.fine-tag {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--late-2) 14%, transparent);
+  color: var(--late-3);
+  font-weight: 600;
+}
+
+/* ---------- Overdue ---------- */
+
+/* One warm ramp, lighter to darker as a loan gets later. */
+.loans {
+  --late-1: #f0b429;
+  --late-2: #e07a2c;
+  --late-3: #c4402f;
+  --late-4: #7d1d3a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .loans {
+    --late-1: #f5c451;
+    --late-2: #f28a4b;
+    --late-3: #e8584a;
+    --late-4: #c43d6b;
+  }
+}
+
+.b-d1_30 {
+  --band: var(--late-1);
+}
+.b-d31_90 {
+  --band: var(--late-2);
+}
+.b-d91_180 {
+  --band: var(--late-3);
+}
+.b-d181 {
+  --band: var(--late-4);
+}
+
+.wd-callout.late {
+  border-color: color-mix(in srgb, var(--late-3) 45%, var(--line));
+  background: color-mix(in srgb, var(--late-3) 10%, var(--card));
+}
+
+.wd-callout.late .wd-callout-go {
+  color: var(--late-3);
+}
+
+.head-actions .btn .count-badge {
+  background: var(--late-3);
+  color: #fff;
+}
+
+.overdue-summary {
+  display: grid;
+  gap: 1rem;
+}
+
+.overdue-total {
+  display: grid;
+}
+
+.overdue-total strong {
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  line-height: 1.15;
+  color: var(--late-3);
+}
+
+.band-bar {
+  display: flex;
+  gap: 2px;
+  height: 0.85rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--line);
+}
+
+.band-bar span {
+  min-width: 4px;
+  background: var(--band);
+  transition: filter 0.15s;
+}
+
+.band-bar span:hover {
+  filter: brightness(1.1);
+}
+
+.band-tiles {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.band-tile {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--band, var(--fg));
+  border-radius: 0.9rem;
+  background: var(--card);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+}
+
+.band-tile:hover,
+.band-tile:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.band-tile.on {
+  background: color-mix(in srgb, var(--band, var(--accent)) 12%, var(--card));
+  border-color: color-mix(in srgb, var(--band, var(--accent)) 50%, var(--line));
+}
+
+.band-tile.zero {
+  opacity: 0.6;
+}
+
+.band-tile > span {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.band-tile .swatch {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 2px;
+  background: var(--band);
+}
+
+.band-tile strong {
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.band-tile small {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.overdue-list {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.overdue-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--band);
+  border-radius: 0.85rem;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.overdue-list a:hover,
+.overdue-list a:focus-visible {
+  background: color-mix(in srgb, var(--band) 9%, var(--card));
+  transform: translateX(3px);
+}
+
+.overdue-list .who {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.overdue-list .who small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.late-info {
+  display: grid;
+  justify-items: end;
+  text-align: right;
+}
+
+.late-chip {
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--band) 18%, transparent);
+  color: color-mix(in srgb, var(--band) 75%, var(--fg));
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.overdue-list .amt {
+  min-width: 6.5rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.all-clear {
+  display: grid;
+  justify-items: center;
+  padding: 2.5rem 1rem;
+  text-align: center;
+}
+
+.all-clear > span {
+  font-size: 2.6rem;
+}
+
+.all-clear h2 {
+  margin: 0.3rem 0 0;
+}
+
+@media (max-width: 760px) {
+  .band-tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .band-tile.all {
+    grid-column: 1 / -1;
+  }
+
+  .overdue-list a {
+    flex-wrap: wrap;
+  }
+
+  .late-info {
+    order: 3;
+    justify-items: start;
+    text-align: left;
+    flex-basis: 100%;
+    padding-left: 3.2rem;
+  }
+}
+
+.overdue-list + .small-note {
+  margin-top: 0.9rem;
+}
+
+.head-actions .btn {
+  gap: 0.4rem;
+}

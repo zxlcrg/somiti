@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
-import { appUser, otpChallenge, savingsFine, tenant, userRole, userSession } from "../src/db/schema";
+import { appUser, loanFine, otpChallenge, savingsFine, tenant, userRole, userSession } from "../src/db/schema";
 import { closeDay } from "../src/modules/dayend";
 import { admitMember, approveExit, buyShares, requestExit, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
@@ -123,6 +123,7 @@ beforeAll(async () => {
         { userId: t.adminUserId, channel: "office" },
       );
       if (!repaid.ok) throw new Error("seed repayment");
+      await ctx.tx.insert(loanFine).values({ tenantId: t.tenantId, loanId: applied.loanId, seq: 1, repaymentId: repaid.repayment.id, amount: 0n, waived: true });
       const leaver = await admitMember(ctx, { nameEn: "Seed leaver", phone: "01722222222" }, { userId: t.adminUserId });
       if (!leaver.ok) throw new Error("seed leaver");
       await buyShares(

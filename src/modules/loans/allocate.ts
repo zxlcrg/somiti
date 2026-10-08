@@ -97,3 +97,22 @@ export function standing(rows: readonly InstallmentState[], today: string): Stan
   }
   return { dueNow, overdueCount, next, paidCount };
 }
+
+/**
+ * The late fine a repayment brings with it: one fine for each installment it
+ * pays into after that installment's due date, unless that installment was
+ * fined (or the fine waived) before. Taken on top of the amount, like a
+ * savings late fine.
+ */
+export function lateFineFor(
+  rows: readonly InstallmentState[],
+  lines: readonly AllocatedLine[],
+  today: string,
+  lateFine: bigint | null,
+  fined: readonly number[],
+): { seqs: number[]; fine: bigint } {
+  if (!lateFine) return { seqs: [], fine: 0n };
+  const due = new Map(rows.map((r) => [r.seq, r.dueOn]));
+  const seqs = lines.filter((x) => (due.get(x.seq) ?? today) < today && !fined.includes(x.seq)).map((x) => x.seq);
+  return { seqs, fine: lateFine * BigInt(seqs.length) };
+}

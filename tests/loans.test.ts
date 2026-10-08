@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { appUser, auditLog, loan, loanInstallment, loanRepayment, smsOutbox, userRole } from "../src/db/schema";
+import { appUser, auditLog, loan, loanFine, loanInstallment, loanRepayment, smsOutbox, tenant, userRole } from "../src/db/schema";
 import { addMonths } from "../src/lib/dates";
 import { getEntry, trialBalance } from "../src/modules/ledger";
 import { admitMember, exitBlockers } from "../src/modules/members";
@@ -18,11 +18,15 @@ import {
   createLoanProduct,
   disburseLoan,
   getLoan,
+  ageBand,
   installmentStatus,
+  lateFineFor,
   listLoanProducts,
   listRepayments,
   listLoans,
   loanStats,
+  overdueCount,
+  overdueLoans,
   parsePercent,
   previewTerms,
   rejectLoan,
@@ -383,5 +387,92 @@ describe("loan repayments", () => {
 
     await expect(s.t.run(({ tx }) => tx.update(loanRepayment).set({ amount: 1n }))).rejects.toThrow();
     await expect(s.t.run(({ tx }) => tx.update(loan).set({ allocation: "interest_first" }).where(sql`${loan.id} = ${loanId}`))).rejects.toThrow();
+  });
+});
+
+describe("overdue loans and late fines", () => {
+  it("fines each late installment once, on the first repayment into it", () => {
+    const rows = [row(1, "2026-11-03", 2000_00n, 200_00n), row(2, "2026-12-03", 2000_00n, 200_00n), row(3, "2027-01-03", 2000_00n, 200_00n)];
+    const lines = allocate(rows, 5000_00n, "interest_first")!;
+    expect(lateFineFor(rows, lines, "2026-12-10", 50_00n, [])).toEqual({ seqs: [1, 2], fine: 100_00n });
+    expect(lateFineFor(rows, lines, "2026-12-10", 50_00n, [1])).toEqual({ seqs: [2], fine: 50_00n });
+    expect(lateFineFor(rows, lines, "2026-12-03", 50_00n, [])).toEqual({ seqs: [1], fine: 50_00n });
+    expect(lateFineFor(rows, lines, "2026-12-10", null, [])).toEqual({ seqs: [], fine: 0n });
+    expect([1, 30, 31, 90, 91, 180, 181].map(ageBand)).toEqual(["d1_30", "d1_30", "d31_90", "d31_90", "d91_180", "d91_180", "d181"]);
+  });
+
+  it("lists late loans by age, takes the fine on top, and lets the office waive it", async () => {
+    const s = await setup();
+    const p = await s.t.run((ctx) =>
+      createLoanProduct(
+        ctx,
+        { code: "LF", nameEn: "With fines", method: "flat", rate: "12", frequency: "monthly", minAmount: "1000", maxAmount: "100000", maxInstallments: "24", lateFine: "50" },
+        { userId: s.t.adminUserId },
+      ),
+    );
+    expect(checkLoanProductForm({ code: "X", nameEn: "X", method: "flat", rate: "12", frequency: "monthly", minAmount: "1", maxAmount: "2", maxInstallments: "1", lateFine: "-5" })).toMatchObject({
+      ok: false,
+      errors: { lateFine: "invalid_late_fine" },
+    });
+    const applied = await s.t.run((ctx) =>
+      applyForLoan(ctx, { memberId: s.memberId, productId: (p as { id: string }).id, amount: "22,000", installments: "10", submitKey: randomUUID() }, { userId: s.t.adminUserId }),
+    );
+    const loanId = (applied as { loanId: string }).loanId;
+    await s.t.run((ctx) => approveLoan(ctx, { loanId, userId: s.secretary }));
+    await s.t.run((ctx) => disburseLoan(ctx, { loanId, method: "cash", userId: s.t.adminUserId }));
+    expect(await s.t.run((ctx) => overdueCount(ctx))).toBe(0);
+
+    // Five weeks after the first due date: installments 1 and 2 are late.
+    await s.t.run(({ tx, tenantId }) => tx.update(tenant).set({ businessDate: "2026-12-10" }).where(eq(tenant.id, tenantId)));
+    const late = await s.t.run((ctx) => overdueLoans(ctx));
+    expect(late.loans).toHaveLength(1);
+    expect(late.loans[0]).toMatchObject({ installments: 2, amount: 4840_00n, oldestDue: "2026-11-03", daysLate: 37, band: "d31_90" });
+    expect(late.byBand.d31_90).toEqual({ count: 1, amount: 4840_00n });
+    expect(await s.t.run((ctx) => overdueCount(ctx))).toBe(1);
+
+    const pay = (amount: string, extra: Partial<{ waiveFine: boolean }> = {}, channel: "office" | "collector" = "office") =>
+      s.t.run((ctx) => repayLoan(ctx, { loanId, amount, method: "cash", idempotencyKey: randomUUID(), ...extra }, { userId: s.t.adminUserId, channel }));
+    expect(await pay("1,000")).toMatchObject({ ok: true, repayment: { amount: 1000_00n, fine: 50_00n } });
+    // The rest of installment 1 brings no second fine.
+    expect(await pay("1,420")).toMatchObject({ ok: true, repayment: { fine: 0n } });
+    // A collector can't waive; the office can, and that is remembered.
+    expect(await pay("100", { waiveFine: true }, "collector")).toMatchObject({ ok: true, repayment: { fine: 50_00n } });
+    expect(await s.t.run((ctx) => getLoan(ctx, loanId))).toMatchObject({ fined: [1, 2] });
+
+    const tb = await s.t.run((ctx) => trialBalance(ctx, "2026-12-10"));
+    expect(tb.rows.find((x) => x.accountId === s.t.accounts.fine_income)?.credit).toBe(100_00n);
+    const fines = await s.t.run(({ tx }) => tx.select().from(loanFine).where(eq(loanFine.loanId, loanId)));
+    expect(fines.map((f) => [f.seq, f.amount, f.waived])).toEqual([
+      [1, 50_00n, false],
+      [2, 50_00n, false],
+    ]);
+    const sms = await s.t.run(({ tx }) => tx.select({ body: smsOutbox.body }).from(smsOutbox).where(sql`${smsOutbox.kind} = 'loan_repayment'`));
+    expect(sms.some((x) => x.body.includes("Late fine Tk 50"))).toBe(true);
+  });
+
+  it("records a waived fine so it is not charged again", async () => {
+    const s = await setup();
+    const p = await s.t.run((ctx) =>
+      createLoanProduct(
+        ctx,
+        { code: "LF", nameEn: "With fines", method: "flat", rate: "12", frequency: "monthly", minAmount: "1000", maxAmount: "100000", maxInstallments: "24", lateFine: "50" },
+        { userId: s.t.adminUserId },
+      ),
+    );
+    const applied = await s.t.run((ctx) =>
+      applyForLoan(ctx, { memberId: s.memberId, productId: (p as { id: string }).id, amount: "22,000", installments: "10", submitKey: randomUUID() }, { userId: s.t.adminUserId }),
+    );
+    const loanId = (applied as { loanId: string }).loanId;
+    await s.t.run((ctx) => approveLoan(ctx, { loanId, userId: s.secretary }));
+    await s.t.run((ctx) => disburseLoan(ctx, { loanId, method: "cash", userId: s.t.adminUserId }));
+    await s.t.run(({ tx, tenantId }) => tx.update(tenant).set({ businessDate: "2026-11-20" }).where(eq(tenant.id, tenantId)));
+    const pay = (amount: string, waiveFine = false) =>
+      s.t.run((ctx) => repayLoan(ctx, { loanId, amount, method: "cash", idempotencyKey: randomUUID(), waiveFine }, { userId: s.t.adminUserId, channel: "office" }));
+    expect(await pay("500", true)).toMatchObject({ ok: true, repayment: { fine: 0n } });
+    expect(await pay("500")).toMatchObject({ ok: true, repayment: { fine: 0n } });
+    const fines = await s.t.run(({ tx }) => tx.select().from(loanFine).where(eq(loanFine.loanId, loanId)));
+    expect(fines.map((f) => [f.seq, f.amount, f.waived])).toEqual([[1, 0n, true]]);
+    await expect(s.t.run(({ tx }) => tx.update(loanFine).set({ waived: false }))).rejects.toThrow();
+    await expect(s.t.run(({ tx }) => tx.update(loan).set({ lateFine: 1n }).where(eq(loan.id, loanId)))).rejects.toThrow();
   });
 });

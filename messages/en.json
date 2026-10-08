@@ -1311,7 +1311,10 @@
     "callout": {
       "decide": "{count, plural, one {{n} application waits for your decision} other {{n} applications wait for your decision}}",
       "pay": "{count, plural, one {{n} approved loan to pay out} other {{n} approved loans to pay out}}",
-      "go": "Open"
+      "go": "Open",
+      "overdue": "{count, plural, one {{n} loan is overdue} other {{n} loans are overdue}}",
+      "overdueOwing": "{amount} past its date",
+      "see": "See list"
     },
     "stats": {
       "outstanding": "Principal still owed",
@@ -1354,7 +1357,9 @@
       "noFee": "None",
       "live": "{count, plural, one {{n} running loan} other {{n} running loans}}",
       "switchOff": "Switch off",
-      "switchOn": "Switch on"
+      "switchOn": "Switch on",
+      "lateFine": "Late fine",
+      "noLateFine": "None"
     },
     "recent": {
       "title": "Recent loans",
@@ -1396,7 +1401,10 @@
       "feeTaken": "Fee kept at payout",
       "save": "Create product",
       "allocation": "A repayment goes to",
-      "allocationHint": "Inside each installment, oldest installment first. Most somitis take the charge first."
+      "allocationHint": "Inside each installment, oldest installment first. Most somitis take the charge first.",
+      "lateFine": "Late fine per installment",
+      "lateFineHint": "Taken once for each installment paid after its date. Leave empty for no fine.",
+      "lateFineEach": "Late fine, each installment"
     },
     "productErrors": {
       "required": "Fill this in.",
@@ -1411,7 +1419,8 @@
       "invalid_installments": "Between 1 and 520 installments.",
       "invalid_fee": "Write the fee as a percent, up to 10.",
       "forbidden": "Only the admin, president or secretary can set up loan products.",
-      "server": "Something went wrong. Try again."
+      "server": "Something went wrong. Try again.",
+      "invalid_late_fine": "Enter a fine above zero and up to 1,00,000, or leave it empty."
     },
     "apply": {
       "title": "Loan application",
@@ -1513,7 +1522,10 @@
       "repaidPct": "{pct}% repaid",
       "repaidOf": "{paid} repaid of {total}",
       "overdueCount": "{count, plural, one {# installment overdue} other {# installments overdue}}",
-      "allocation": "A repayment goes to"
+      "allocation": "A repayment goes to",
+      "lateFine": "Late fine",
+      "lateFineEach": "{amount} per late installment",
+      "noLateFine": "None"
     },
     "steps": {
       "decideTitle": "Your decision",
@@ -1612,7 +1624,11 @@
       "submitEmpty": "Enter an amount",
       "confirm": "Take {amount}?",
       "confirmBody": "The receipt is posted to the books and the member gets an SMS. It can't be edited afterwards.",
-      "submitNow": "Yes, take it"
+      "submitNow": "Yes, take it",
+      "fine": "Late fine, {count, plural, one {# installment past its date} other {# installments past their date}}",
+      "fineWaived": "Waived",
+      "waive": "Waive the late fine this time",
+      "takeIn": "Total to take"
     },
     "repayErrors": {
       "invalid_amount": "Enter an amount in taka.",
@@ -1630,7 +1646,31 @@
     },
     "history": {
       "title": "Repayments",
-      "none": "Nothing repaid yet."
+      "none": "Nothing repaid yet.",
+      "fine": "Late fine {amount}"
+    },
+    "overdue": {
+      "link": "Overdue",
+      "title": "Overdue loans",
+      "subtitle": "Installments past their date and not fully paid, as of {date}.",
+      "none": "No loan is overdue",
+      "noneHint": "Every running loan is paid up to date. Nice work.",
+      "total": "Overdue amount",
+      "loans": "Across {count, plural, one {{n} loan} other {{n} loans}}",
+      "byAge": "Overdue by age",
+      "all": "All",
+      "listTitle": "Oldest first",
+      "noneInBand": "No loan in this group.",
+      "band": {
+        "d1_30": "1–30 days",
+        "d31_90": "31–90 days",
+        "d91_180": "91–180 days",
+        "d181": "Over 180 days"
+      },
+      "daysLate": "{count, plural, one {{n} day late} other {{n} days late}}",
+      "installments": "{count, plural, one {{n} installment} other {{n} installments}}",
+      "since": "since {date}",
+      "howFines": "When a member pays a late installment, its late fine is added on top. The cashier can waive it; a collector cannot."
     }
   }
 }

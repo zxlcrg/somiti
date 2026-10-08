@@ -19,7 +19,7 @@ const FREQUENCIES: { key: LoanFrequency; icon: string }[] = [
   { key: "monthly", icon: "🌙" },
 ];
 
-type Field = "code" | "nameEn" | "nameBn" | "rate" | "minAmount" | "maxAmount" | "maxInstallments" | "fee" | "method" | "frequency" | "chargeLabel" | "allocation";
+type Field = "code" | "nameEn" | "nameBn" | "rate" | "minAmount" | "maxAmount" | "maxInstallments" | "fee" | "method" | "frequency" | "chargeLabel" | "allocation" | "lateFine";
 
 export function LoanProductForm() {
   const t = useTranslations("loans");
@@ -35,6 +35,7 @@ export function LoanProductForm() {
     maxAmount: "",
     maxInstallments: "",
     fee: "",
+    lateFine: "",
     method: "flat",
     frequency: "monthly",
     chargeLabel: "service_charge",
@@ -58,6 +59,7 @@ export function LoanProductForm() {
   const rateBp = parsePercent(v.rate, 10_000);
   const feeBp = v.fee.trim() ? parsePercent(v.fee, 1000) : 0;
   const max = parseTaka(v.maxAmount);
+  const lateFine = v.lateFine.trim() ? parseTaka(v.lateFine) : null;
   const nText = toLatinDigits(v.maxInstallments.trim());
   const n = /^\d{1,3}$/.test(nText) ? Number(nText) : 0;
   const example =
@@ -160,6 +162,7 @@ export function LoanProductForm() {
           {text("maxAmount", { placeholder: "1,00,000", money: true })}
           {text("maxInstallments", { placeholder: v.frequency === "weekly" ? "46" : "12", hint: t(`productForm.installmentsHint.${v.frequency as "weekly"}`) })}
           {text("fee", { placeholder: "1", suffix: "%", hint: t("productForm.feeHint") })}
+          {text("lateFine", { placeholder: "50", money: true, hint: t("productForm.lateFineHint") })}
         </section>
       </div>
 
@@ -182,6 +185,12 @@ export function LoanProductForm() {
                   <dt>{t("productForm.totalRepay")}</dt>
                   <dd>{taka(example.totalRepayable)}</dd>
                 </div>
+                {lateFine !== null && lateFine > 0n && (
+                  <div>
+                    <dt>{t("productForm.lateFineEach")}</dt>
+                    <dd>{taka(lateFine)}</dd>
+                  </div>
+                )}
                 {feeBp !== null && feeBp > 0 && (
                   <div>
                     <dt>{t("productForm.feeTaken")}</dt>

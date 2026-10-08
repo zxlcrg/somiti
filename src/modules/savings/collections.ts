@@ -31,7 +31,7 @@ const withFine = sql.raw(
 
 /** Loan repayments a collector took, optionally on one business day. */
 const loanCash = (user: ReturnType<typeof sql>, day?: string) => sql`
-  (select coalesce(sum(p.amount), 0) from loan_repayment p
+  (select coalesce(sum(p.amount + p.fine), 0) from loan_repayment p
     where p.tenant_id = ${sql.raw("u.tenant_id")} and p.created_by = ${user} and p.channel = 'collector'
       ${day ? sql`and p.business_date = ${day}` : sql``} and ${notReversed("p")})`;
 
@@ -43,7 +43,7 @@ async function heldBy(ctx: TenantTx, collectorId: string): Promise<bigint> {
         where t.tenant_id = ${ctx.tenantId} and t.created_by = ${collectorId}
           and t.channel = 'collector' and t.kind = 'deposit' and ${notReversed("t")})
       +
-      (select coalesce(sum(p.amount), 0) from loan_repayment p
+      (select coalesce(sum(p.amount + p.fine), 0) from loan_repayment p
         where p.tenant_id = ${ctx.tenantId} and p.created_by = ${collectorId}
           and p.channel = 'collector' and ${notReversed("p")})
       -

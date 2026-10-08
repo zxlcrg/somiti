@@ -48,6 +48,8 @@ export const loanProduct = pgTable(
     /** Taken once at disbursement, in basis points of the principal; 0 for none. */
     processingFeeBp: integer("processing_fee_bp").notNull().default(0),
     allocation: loanAllocationEnum("allocation").notNull().default("interest_first"),
+    /** Fine per installment paid after its due date, in paisa; null means no fines. */
+    lateFine: bigint("late_fine", { mode: "bigint" }),
     active: boolean("active").notNull().default(true),
     createdBy: uuid("created_by").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -62,6 +64,7 @@ export const loanProduct = pgTable(
     check("loan_product_amounts", sql`${t.minAmount} > 0 AND ${t.maxAmount} >= ${t.minAmount}`),
     check("loan_product_installments", sql`${t.maxInstallments} BETWEEN 1 AND 520`),
     check("loan_product_fee", sql`${t.processingFeeBp} BETWEEN 0 AND 1000`),
+    check("loan_product_late_fine", sql`${t.lateFine} IS NULL OR ${t.lateFine} > 0`),
   ],
 );
 
@@ -87,6 +90,7 @@ export const loan = pgTable(
     installments: integer("installments").notNull(),
     processingFee: bigint("processing_fee", { mode: "bigint" }).notNull(),
     allocation: loanAllocationEnum("allocation").notNull().default("interest_first"),
+    lateFine: bigint("late_fine", { mode: "bigint" }),
     purpose: text("purpose"),
     status: loanStatusEnum("status").notNull().default("applied"),
     appliedBy: uuid("applied_by").notNull(),
@@ -186,6 +190,8 @@ export const loanRepayment = pgTable(
     amount: bigint("amount", { mode: "bigint" }).notNull(),
     principal: bigint("principal", { mode: "bigint" }).notNull(),
     interest: bigint("interest", { mode: "bigint" }).notNull(),
+    /** Late fine taken on top of the amount, booked to Fine income. */
+    fine: bigint("fine", { mode: "bigint" }).notNull().default(sql`0`),
     channel: depositChannelEnum("channel").notNull(),
     paymentMethod: paymentMethodEnum("payment_method").notNull(),
     paymentRef: text("payment_ref"),
@@ -202,7 +208,7 @@ export const loanRepayment = pgTable(
     foreignKey({ name: "loan_repayment_loan_fk", columns: [t.tenantId, t.loanId], foreignColumns: [loan.tenantId, loan.id] }),
     foreignKey({ name: "loan_repayment_entry_fk", columns: [t.tenantId, t.journalEntryId], foreignColumns: [journalEntry.tenantId, journalEntry.id] }),
     foreignKey({ name: "loan_repayment_created_by_fk", columns: [t.tenantId, t.createdBy], foreignColumns: [appUser.tenantId, appUser.id] }),
-    check("loan_repayment_amounts", sql`${t.amount} > 0 AND ${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.amount} = ${t.principal} + ${t.interest}`),
+    check("loan_repayment_amounts", sql`${t.amount} > 0 AND ${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.fine} >= 0 AND ${t.amount} = ${t.principal} + ${t.interest}`),
     check("loan_repayment_collector_cash", sql`${t.channel} = 'office' OR ${t.paymentMethod} = 'cash'`),
   ],
 );
@@ -230,5 +236,34 @@ export const loanRepaymentLine = pgTable(
       foreignColumns: [loanInstallment.tenantId, loanInstallment.loanId, loanInstallment.seq],
     }),
     check("loan_repayment_line_amounts", sql`${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.principal} + ${t.interest} > 0`),
+  ],
+);
+
+/**
+ * The late fine on one installment: charged once, by the first repayment
+ * that pays into it after its due date. A waived fine is kept too (amount
+ * 0), so a later part-payment doesn't charge it again.
+ */
+export const loanFine = pgTable(
+  "loan_fine",
+  {
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    loanId: uuid("loan_id").notNull(),
+    seq: integer("seq").notNull(),
+    repaymentId: uuid("repayment_id").notNull(),
+    amount: bigint("amount", { mode: "bigint" }).notNull(),
+    waived: boolean("waived").notNull().default(false),
+  },
+  (t) => [
+    unique("loan_fine_installment").on(t.tenantId, t.loanId, t.seq),
+    foreignKey({
+      name: "loan_fine_installment_fk",
+      columns: [t.tenantId, t.loanId, t.seq],
+      foreignColumns: [loanInstallment.tenantId, loanInstallment.loanId, loanInstallment.seq],
+    }),
+    foreignKey({ name: "loan_fine_repayment_fk", columns: [t.tenantId, t.repaymentId], foreignColumns: [loanRepayment.tenantId, loanRepayment.id] }),
+    check("loan_fine_amount", sql`(${t.waived} AND ${t.amount} = 0) OR (NOT ${t.waived} AND ${t.amount} > 0)`),
   ],
 );

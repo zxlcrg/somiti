@@ -172,6 +172,10 @@ export default async function LoanPage({
                 <dd>{taka(l.principal - l.processingFee)}</dd>
               </div>
               <div>
+                <dt>{t("detail.lateFine")}</dt>
+                <dd>{l.lateFine ? t("detail.lateFineEach", { amount: taka(l.lateFine) }) : t("detail.noLateFine")}</dd>
+              </div>
+              <div>
                 <dt>{t("detail.allocation")}</dt>
                 <dd>{t(`allocation.${l.allocation}`, { charge })}</dd>
               </div>
@@ -285,6 +289,7 @@ export default async function LoanPage({
                         <small className="muted">
                           {t("schedule.principal")} {taka(r.principal)} · {charge} {taka(r.interest)}
                         </small>
+                        {r.fine > 0n && <small className="fine-tag">{t("history.fine", { amount: taka(r.fine) })}</small>}
                       </span>
                     </li>
                   ))}
@@ -308,6 +313,8 @@ export default async function LoanPage({
                   paidInterest: r.paidInterest.toString(),
                 }))}
                 allocation={l.allocation}
+                lateFine={l.lateFine?.toString() ?? null}
+                fined={l.fined}
                 today={today}
                 channel={channel!}
                 charge={charge}

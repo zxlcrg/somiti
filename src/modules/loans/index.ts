@@ -2,6 +2,7 @@ export { canApplyForLoans, canApproveLoans, canDisburseLoans, canManageLoanProdu
 export {
   allocate,
   installmentStatus,
+  lateFineFor,
   outstanding,
   standing,
   type Allocation,
@@ -51,6 +52,7 @@ export {
   PAYMENT_METHODS,
   previewTerms,
   rejectLoan,
+  finedSeqs,
   scheduleState,
   type LoanApplicationError,
   type LoanApplicationErrors,
@@ -63,3 +65,4 @@ export {
   type LoanView,
   type TermsPreview,
 } from "./loans";
+export { AGE_BANDS, ageBand, overdueCount, overdueLoans, type AgeBand, type OverdueLoan, type OverdueSummary } from "./overdue";
