@@ -1,6 +1,7 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { TenantTx } from "@/db/client";
 import {
+  loan,
   member,
   memberExit,
   memberExitPayout,
@@ -26,8 +27,8 @@ import { PAYMENT_METHODS, shareHolding, type PaymentMethod } from "./shares";
  * line), closes the accounts and marks the member exited. Amounts are worked
  * out at approval, since deposits may arrive after the request.
  *
- * Loans arrive in M3; their outstanding-balance and guarantee checks belong
- * in exitBlockers() then.
+ * A loan that is applied for, approved or still running blocks the exit;
+ * guarantees will join it once loans have guarantors.
  */
 
 export const MAX_EXIT_REASON = 500;
@@ -59,9 +60,9 @@ export async function exitSettlement(ctx: TenantTx, memberId: string): Promise<E
   return { shareRefund, shares: holding.shares, savings, savingsPayout, total: shareRefund + savingsPayout };
 }
 
-export type ExitBlocker = "not_active" | "pending_withdrawal" | "negative_balance";
+export type ExitBlocker = "not_active" | "pending_withdrawal" | "negative_balance" | "open_loan";
 
-/** Reasons a member can't leave yet. Loans will add theirs here (M3). */
+/** Reasons a member can't leave yet. */
 export async function exitBlockers(ctx: TenantTx, memberId: string): Promise<ExitBlocker[]> {
   const { tx, tenantId } = ctx;
   const blockers: ExitBlocker[] = [];
@@ -75,6 +76,11 @@ export async function exitBlockers(ctx: TenantTx, memberId: string): Promise<Exi
   if ((pending?.n ?? 0) > 0) blockers.push("pending_withdrawal");
   const accounts = await memberAccounts(ctx, memberId);
   if (accounts.some((a) => a.status === "active" && a.balance < 0n)) blockers.push("negative_balance");
+  const [loans] = await tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(loan)
+    .where(and(eq(loan.tenantId, tenantId), eq(loan.memberId, memberId), inArray(loan.status, ["applied", "approved", "disbursed"])));
+  if ((loans?.n ?? 0) > 0) blockers.push("open_loan");
   return blockers;
 }
 

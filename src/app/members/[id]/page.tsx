@@ -22,9 +22,11 @@ import {
   shareHolding,
   sharePrice,
 } from "@/modules/members";
+import { canApplyForLoans, canViewLoans, listLoans, type LoanView } from "@/modules/loans";
 import { canManageSavings, canTakeDeposits, listProducts, memberAccounts } from "@/modules/savings";
 import { requireUser } from "../../auth";
 import { MemberAvatar, memberHue } from "../member-avatar";
+import { LoansPanel } from "./loans-panel";
 import { ExitPanel, exitNotice } from "./exit-panel";
 import { NomineesPanel } from "./nominees-panel";
 import { PhotoDialog } from "./photo/photo-dialog";
@@ -45,6 +47,7 @@ async function load(id: string) {
     exits: [],
     settlement: null,
     blockers: [],
+    loans: [] as LoanView[],
   };
   if (!canViewMembers(user.roles)) return none;
   return withTenant(getAppDb(), user.tenantId, async (ctx) => {
@@ -63,6 +66,7 @@ async function load(id: string) {
       price: await sharePrice(ctx),
       accounts: await memberAccounts(ctx, member.id),
       hasProducts: (await listProducts(ctx, { activeOnly: true })).length > 0,
+      loans: canViewLoans(user.roles) ? await listLoans(ctx, { memberId: member.id }) : [],
       exits: await memberExits(ctx, member.id),
       settlement: await exitSettlement(ctx, member.id),
       blockers: await exitBlockers(ctx, member.id),
@@ -83,10 +87,6 @@ function ageOn(birth: string, on: string): number {
   return oy - by - (om < bm || (om === bm && od < bd) ? 1 : 0);
 }
 
-const soonIcons = {
-  loans: "M3 12h18M12 3v18M7 8l-4 4 4 4M17 8l4 4-4 4",
-};
-
 export default async function MemberPage({
   params,
   searchParams,
@@ -94,9 +94,8 @@ export default async function MemberPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ admitted?: string; nominees?: string; bought?: string; exit?: string }>;
 }) {
-  const tDash = await getTranslations("dashboard");
   const t = await getTranslations("members");
-  const { user, member, addedBy, nominees, holding, price, accounts, hasProducts, exits, settlement, blockers } = await load(
+  const { user, member, addedBy, nominees, holding, price, accounts, hasProducts, exits, settlement, blockers, loans } = await load(
     (await params).id,
   );
   if (!canViewMembers(user.roles)) return <p className="notice">{t("noAccess")}</p>;
@@ -191,6 +190,16 @@ export default async function MemberPage({
         hasProducts={hasProducts}
       />
 
+      {canViewLoans(user.roles) && (
+        <LoansPanel
+          loans={loans}
+          memberId={member.id}
+          memberName={name}
+          locale={locale}
+          canApply={canApplyForLoans(user.roles) && member.status === "active"}
+        />
+      )}
+
       {holding && (
         <SharesPanel
           holding={holding}
@@ -227,19 +236,6 @@ export default async function MemberPage({
         />
       )}
 
-      <h2 className="section-title">{t("profile.soonTitle")}</h2>
-      <section className="features">
-        {(["loans"] as const).map((k) => (
-          <article className="feature soon" key={k}>
-            <span className="pill">{tDash("soon")}</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d={soonIcons[k]} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <h3>{t(`profile.soon.${k}`)}</h3>
-            <p>{t(`profile.soon.${k}Body`)}</p>
-          </article>
-        ))}
-      </section>
     </div>
   );
 }

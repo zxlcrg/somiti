@@ -5,6 +5,7 @@ import { appUser, otpChallenge, savingsFine, tenant, userRole, userSession } fro
 import { closeDay } from "../src/modules/dayend";
 import { admitMember, approveExit, buyShares, requestExit, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
+import { applyForLoan, approveLoan, createLoanProduct, disburseLoan } from "../src/modules/loans";
 import { createProduct, deposit as depositSavings, openAccount, receiveHandover, requestWithdrawal } from "../src/modules/savings";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
@@ -101,6 +102,21 @@ beforeAll(async () => {
         { userId: t.adminUserId },
       );
       if (!handed.ok) throw new Error("seed handover");
+      const loanProduct = await createLoanProduct(
+        ctx,
+        { code: "GL", nameEn: "General loan", method: "flat", rate: "12", frequency: "monthly", minAmount: "100", maxAmount: "1000", maxInstallments: "6" },
+        { userId: t.adminUserId },
+      );
+      if (!loanProduct.ok) throw new Error("seed loan product");
+      const applied = await applyForLoan(
+        ctx,
+        { memberId: admitted.member.id, productId: loanProduct.id, amount: "600", installments: "6", submitKey: `seed-loan-${t.tenantId}` },
+        { userId: t.adminUserId },
+      );
+      if (!applied.ok) throw new Error("seed loan");
+      await approveLoan(ctx, { loanId: applied.loanId, userId: collector!.id });
+      const disbursed = await disburseLoan(ctx, { loanId: applied.loanId, method: "bank", userId: t.adminUserId });
+      if (!disbursed.ok) throw new Error("seed disbursement");
       const leaver = await admitMember(ctx, { nameEn: "Seed leaver", phone: "01722222222" }, { userId: t.adminUserId });
       if (!leaver.ok) throw new Error("seed leaver");
       await buyShares(

@@ -18,6 +18,8 @@
     "savings": "Savings",
     "label": "Main",
     "savingsWaiting": "{count} withdrawals waiting for you",
+    "loans": "Loans",
+    "loansWaiting": "{count, plural, one {# loan waits for you} other {# loans wait for you}}",
     "exitsWaiting": "{count, plural, one {# exit} other {# exits}} waiting for your approval"
   },
   "home": {
@@ -479,6 +481,7 @@
       "blockers": {
         "not_active": "This member is no longer active.",
         "pending_withdrawal": "A savings withdrawal is still waiting for a decision. Approve or reject it first.",
+        "open_loan": "This member has a loan that is open or waiting. It must be repaid, turned down or withdrawn first.",
         "negative_balance": "A savings account is overdrawn. Sort it out before the member leaves."
       },
       "loansNote": "Loans arrive later; once they do, a member with an unpaid loan or an active guarantee can't leave.",
@@ -510,6 +513,7 @@
         "already_pending": "An exit for this member is already waiting for approval.",
         "not_active": "This member is no longer active.",
         "pending_withdrawal": "A savings withdrawal is still waiting for a decision.",
+        "open_loan": "This member has a loan that is open or waiting.",
         "negative_balance": "A savings account is overdrawn.",
         "not_found": "This member or request could not be found.",
         "decided": "Someone has already decided this request.",
@@ -1269,5 +1273,296 @@
     },
     "imported": "{count, plural, one {{n} member was} other {{n} members were}} brought in with their balances (numbers {from}–{to}).",
     "importLink": "Import from old books"
+  },
+  "loans": {
+    "title": "Loans",
+    "subtitle": "Applications, approvals and payouts, with every repayment schedule.",
+    "noAccess": "You don't have access to loans.",
+    "newProduct": "New loan product",
+    "loanNo": "Loan #{no}",
+    "status": {
+      "applied": "Waiting for approval",
+      "approved": "Approved, to pay out",
+      "rejected": "Turned down",
+      "cancelled": "Withdrawn",
+      "disbursed": "Running",
+      "closed": "Repaid"
+    },
+    "method": {
+      "flat": "Flat",
+      "declining": "Declining"
+    },
+    "methodHint": {
+      "flat": "Charge on the full amount for the whole term, the same every installment.",
+      "declining": "Charge only on what is still owed, so it shrinks as the member repays."
+    },
+    "frequency": {
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "frequencyHint": {
+      "weekly": "An installment every week",
+      "monthly": "An installment every month"
+    },
+    "chargeLabel": {
+      "interest": "Interest",
+      "service_charge": "Service charge"
+    },
+    "callout": {
+      "decide": "{count, plural, one {{n} application waits for your decision} other {{n} applications wait for your decision}}",
+      "pay": "{count, plural, one {{n} approved loan to pay out} other {{n} approved loans to pay out}}",
+      "go": "Open"
+    },
+    "stats": {
+      "outstanding": "Principal out on loan",
+      "live": "Running loans",
+      "waiting": "In the pipeline",
+      "waitingSplit": "{applied} to approve · {approved} to pay"
+    },
+    "chart": {
+      "title": "Paid out, last six months",
+      "empty": "No loans paid out yet. Payouts will show here month by month.",
+      "tip": "{month}: {amount}, {count, plural, one {# loan} other {# loans}}",
+      "note": "Bar height is the principal paid out; the number on top is how many loans."
+    },
+    "queue": {
+      "decide": "Needs a decision",
+      "pay": "Ready to pay out",
+      "none": "Nothing waiting.",
+      "appliedOn": "applied {date}",
+      "handOver": "hand over {amount}"
+    },
+    "products": {
+      "title": "Loan products",
+      "none": "No loan products yet. Set one up to start taking applications.",
+      "created": "Loan product {code} is ready for applications.",
+      "off": "Switched off",
+      "perYear": {
+        "interest": "interest a year",
+        "service_charge": "service charge a year"
+      },
+      "repaid": "Repaid",
+      "range": "Amount",
+      "term": "Longest term",
+      "upTo": {
+        "weekly": "{count, plural, one {{n} week} other {{n} weeks}}",
+        "monthly": "{count, plural, one {{n} month} other {{n} months}}"
+      },
+      "fee": "Processing fee",
+      "noFee": "None",
+      "live": "{count, plural, one {{n} running loan} other {{n} running loans}}",
+      "switchOff": "Switch off",
+      "switchOn": "Switch on"
+    },
+    "recent": {
+      "title": "Recent loans",
+      "none": "No loans yet.",
+      "loan": "Loan",
+      "member": "Member",
+      "status": "Status",
+      "amount": "Amount",
+      "howToApply": "To take an application, open the member's profile and press Apply for a loan."
+    },
+    "productForm": {
+      "title": "New loan product",
+      "subtitle": "How the charge is worked out, how often members repay, and the limits. Existing loans keep the terms they were given.",
+      "method": "How the charge is worked out",
+      "frequency": "Repayments",
+      "chargeLabel": "Call the charge",
+      "code": "Short code",
+      "codeHint": "Printed on loan cards, like GL or BL-1.",
+      "nameEn": "Name in English",
+      "nameBn": "Name in Bangla",
+      "rate": "Yearly rate",
+      "perYearSuffix": "% a year",
+      "rateHint": "As your bylaws state it, like 12 or 12.5.",
+      "minAmount": "Smallest loan",
+      "maxAmount": "Largest loan",
+      "maxInstallments": "Most installments",
+      "installmentsHint": {
+        "weekly": "46 weeks is close to a year.",
+        "monthly": "12 months is a year."
+      },
+      "fee": "Processing fee",
+      "feeHint": "Kept from the payout, as a percent of the loan. Leave blank for none.",
+      "example": "Worked example",
+      "exampleEmpty": "Fill in the rate, largest loan and most installments to see what a member would pay.",
+      "exampleLead": "The largest loan, {amount}, over {count, plural, one {# installment} other {# installments}}, repaid {frequency}:",
+      "eachInstallment": "Each installment",
+      "totalCharge": "Total {label}",
+      "totalRepay": "Total repaid",
+      "feeTaken": "Fee kept at payout",
+      "save": "Create product"
+    },
+    "productErrors": {
+      "required": "Fill this in.",
+      "code_format": "Use capital letters, digits and dashes, up to 12.",
+      "code_taken": "Another loan product already uses this code.",
+      "too_long": "This is too long.",
+      "invalid": "Choose one of the options.",
+      "invalid_rate": "Write the rate as a percent, like 12 or 12.5.",
+      "invalid_amount": "Write an amount in taka.",
+      "too_large": "That amount is far too large.",
+      "max_below_min": "The largest loan can't be less than the smallest.",
+      "invalid_installments": "Between 1 and 520 installments.",
+      "invalid_fee": "Write the fee as a percent, up to 10.",
+      "forbidden": "Only the admin, president or secretary can set up loan products.",
+      "server": "Something went wrong. Try again."
+    },
+    "apply": {
+      "title": "Loan application",
+      "subtitle": "For {name}. Nothing is paid until another officer approves and the cashier pays out.",
+      "noProducts": "There are no loan products switched on yet. Set one up under Loans first.",
+      "product": "Loan product",
+      "alreadyOpen": "Already has one open",
+      "amount": "Amount asked for",
+      "range": "Between {min} and {max}.",
+      "installments": {
+        "weekly": "Number of weekly installments",
+        "monthly": "Number of monthly installments"
+      },
+      "termHint": "Up to {n} for this product.",
+      "purpose": "Purpose",
+      "purposePlaceholder": "What the money is for, like a rickshaw or a cow",
+      "scheduleTitle": "Repayment schedule if paid out today",
+      "moreRows": "and {n} more, the last on {last}.",
+      "summary": "What the member repays",
+      "summaryEmpty": "Enter an amount and a term within the product's limits to see the installments.",
+      "each": {
+        "weekly": "Every week",
+        "monthly": "Every month"
+      },
+      "lastOne": "last one {amount}",
+      "splitLabel": "Principal {principal} and charge {charge}",
+      "totalRepay": "Total repaid",
+      "fee": "Processing fee ({rate})",
+      "handedOver": "Handed to the member",
+      "submit": "Submit application",
+      "nextStep": "Next, a different officer approves it, then the cashier pays it out."
+    },
+    "applyErrors": {
+      "invalid_amount": "Write an amount in taka.",
+      "below_min": "That's below this product's smallest loan.",
+      "above_max": "That's above this product's largest loan.",
+      "invalid_installments": "Write a number of installments.",
+      "too_many_installments": "More installments than this product allows.",
+      "installment_too_small": "Each installment would be under ৳1. Use fewer installments.",
+      "purpose_too_long": "Keep the purpose under 300 letters.",
+      "invalid_product": "Choose a loan product.",
+      "product_inactive": "That product is switched off.",
+      "member_inactive": "This member is no longer active, so they can't take a loan.",
+      "already_open": "This member already has an open loan in this product.",
+      "not_found": "That member wasn't found.",
+      "forbidden": "Your role can't take loan applications.",
+      "server": "Something went wrong. Nothing was saved; try again."
+    },
+    "schedule": {
+      "due": "Due",
+      "principal": "Principal",
+      "total": "Installment",
+      "totals": "Total"
+    },
+    "detail": {
+      "title": "Loan",
+      "appliedBanner": "Application for loan #{no} saved. It now waits for another officer to approve it.",
+      "done": {
+        "approve": "Approved. The cashier can now pay it out.",
+        "reject": "The application was turned down.",
+        "cancel": "The loan was withdrawn.",
+        "disburse": "Paid out {amount} (voucher #{no}). The repayment schedule is set."
+      },
+      "over": {
+        "weekly": "over {count, plural, one {{n} week} other {{n} weeks}}",
+        "monthly": "over {count, plural, one {{n} month} other {{n} months}}"
+      },
+      "progress": "Progress",
+      "step": {
+        "applied": "Applied",
+        "approved": "Approved",
+        "rejected": "Turned down",
+        "disbursed": "Paid out"
+      },
+      "terms": "Terms",
+      "fee": "Processing fee",
+      "meeting": "Approved in the meeting of",
+      "paidBy": "Paid out by",
+      "voucher": "voucher #{no}",
+      "note": "Approver's note",
+      "rejectReason": "Why it was turned down",
+      "cancelReason": "Why it was withdrawn",
+      "schedule": "Repayment schedule",
+      "projected": "Projected",
+      "projectedNote": "Dates are worked out as if paid out today. The real schedule is fixed on the day the cashier pays out.",
+      "repaymentsSoon": "Collecting repayments against this schedule comes in the next update.",
+      "waitingOther": "You entered this application, so another officer has to approve it.",
+      "waitingCashier": "Approved. Waiting for the cashier to pay it out."
+    },
+    "steps": {
+      "decideTitle": "Your decision",
+      "approveTab": "Approve",
+      "rejectTab": "Turn down",
+      "meetingOn": "Committee meeting date",
+      "meetingHint": "Optional. The day the committee agreed to it.",
+      "note": "Note",
+      "approve": "Approve loan",
+      "rejectReason": "Reason the member will be told",
+      "rejectHint": "Required.",
+      "reject": "Turn down",
+      "payTitle": "Pay out",
+      "payBy": "Paid from",
+      "method": {
+        "cash": "Cash",
+        "bank": "Bank",
+        "mobile_wallet": "bKash / Nagad"
+      },
+      "ref": {
+        "bank": "Cheque or transfer number",
+        "mobile_wallet": "Transaction ID"
+      },
+      "from": {
+        "cash": "Cash in hand",
+        "bank": "Bank",
+        "mobile_wallet": "Mobile wallet"
+      },
+      "entry": "Ledger entry",
+      "debit": "Debit",
+      "credit": "Credit",
+      "receivable": "Loans receivable · {name}",
+      "feeIncome": "Fee income",
+      "pay": "Pay out {amount}",
+      "confirmPay": "Hand {amount} to {name}?",
+      "confirmPayBody": "This posts the entry on today's business date and fixes the repayment schedule.",
+      "payNow": "Yes, pay out",
+      "back": "Back",
+      "cancelOpen": "Withdraw this loan",
+      "cancelReason": "Why it is being withdrawn",
+      "cancelReasonOptional": "Reason (optional)",
+      "cancel": "Withdraw"
+    },
+    "stepErrors": {
+      "not_found": "That loan wasn't found.",
+      "wrong_status": "Someone has already moved this loan on. Reload to see where it stands.",
+      "self_decision": "You entered this application, so another officer has to decide it.",
+      "note_required": "Write a reason.",
+      "invalid_date": "That date can't be read.",
+      "meeting_after_today": "The meeting date can't be after today's business date.",
+      "invalid_method": "Choose how it is paid.",
+      "ref_required": "Enter the transaction ID.",
+      "ref_too_long": "That reference is too long.",
+      "product_inactive": "That product is switched off.",
+      "member_inactive": "This member is no longer active.",
+      "forbidden": "Your role can't do this step.",
+      "server": "Something went wrong. Nothing changed; try again.",
+      "DAY_CLOSED": "Today's business day is closed. Nothing was paid out.",
+      "NO_OPEN_PERIOD": "No open fiscal year covers today. Nothing was paid out."
+    },
+    "panel": {
+      "title": "Loans",
+      "subtitle": "{name}'s loans, newest first.",
+      "apply": "Apply for a loan",
+      "none": "No loans yet.",
+      "paidOn": "Paid out {date}",
+      "appliedOn": "Applied {date}"
+    }
   }
 }
