@@ -68,6 +68,7 @@ export async function createLoanProductAction(prev: LoanProductState, form: Form
           maxInstallments: field(form, "maxInstallments"),
           fee: field(form, "fee"),
           lateFine: field(form, "lateFine"),
+          rebate: field(form, "rebate"),
         },
         { userId: user.userId, device: dev },
       ),
@@ -179,7 +180,7 @@ export async function repayLoanAction(loanId: string, prev: RepayState, form: Fo
     result = await withTenant(getAppDb(), user.tenantId, (ctx) =>
       repayLoan(
         ctx,
-        { loanId, amount: field(form, "amount"), method: field(form, "method"), paymentRef: field(form, "paymentRef"), idempotencyKey: field(form, "idempotencyKey"), waiveFine: form.get("waiveFine") === "1" },
+        { loanId, amount: field(form, "amount"), method: field(form, "method"), paymentRef: field(form, "paymentRef"), idempotencyKey: field(form, "idempotencyKey"), waiveFine: form.get("waiveFine") === "1", settle: form.get("settle") === "1" },
         { userId: user.userId, channel, device: dev },
       ),
     );

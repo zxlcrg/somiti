@@ -27,6 +27,7 @@ import {
   loanStats,
   overdueCount,
   overdueLoans,
+  settlementQuote,
   parsePercent,
   previewTerms,
   rejectLoan,
@@ -474,5 +475,66 @@ describe("overdue loans and late fines", () => {
     expect(fines.map((f) => [f.seq, f.amount, f.waived])).toEqual([[1, 0n, true]]);
     await expect(s.t.run(({ tx }) => tx.update(loanFine).set({ waived: false }))).rejects.toThrow();
     await expect(s.t.run(({ tx }) => tx.update(loan).set({ lateFine: 1n }).where(eq(loan.id, loanId)))).rejects.toThrow();
+  });
+});
+
+describe("early settlement", () => {
+  it("lets off the product's share of charge not yet due, rounded down", () => {
+    const rows = [row(1, "2026-11-03", 2000_00n, 200_00n, 2000_00n, 200_00n), row(2, "2026-12-03", 2000_00n, 200_00n, 0n, 50_00n), row(3, "2027-01-03", 2000_00n, 200_00n)];
+    expect(settlementQuote(rows, "2026-12-03", 5000)).toEqual({
+      lines: [
+        { seq: 2, principal: 2000_00n, interest: 150_00n, rebate: 0n },
+        { seq: 3, principal: 2000_00n, interest: 100_00n, rebate: 100_00n },
+      ],
+      principal: 4000_00n,
+      interest: 250_00n,
+      rebate: 100_00n,
+      total: 4250_00n,
+    });
+    expect(settlementQuote(rows, "2026-11-20", 3333).lines.map((x) => x.rebate)).toEqual([49_99n, 66_66n]);
+    expect(settlementQuote(rows, "2026-11-20", 0).total).toBe(4350_00n);
+  });
+
+  it("closes the loan at the settlement figure, office only, and charges only what was taken", async () => {
+    const s = await setup();
+    const p = await s.t.run((ctx) =>
+      createLoanProduct(
+        ctx,
+        { code: "ES", nameEn: "Settle early", method: "flat", rate: "12", frequency: "monthly", minAmount: "1000", maxAmount: "100000", maxInstallments: "24", rebate: "50" },
+        { userId: s.t.adminUserId },
+      ),
+    );
+    expect(checkLoanProductForm({ code: "X", nameEn: "X", method: "flat", rate: "12", frequency: "monthly", minAmount: "1", maxAmount: "2", maxInstallments: "1", rebate: "120" })).toMatchObject({
+      ok: false,
+      errors: { rebate: "invalid_rebate" },
+    });
+    const applied = await s.t.run((ctx) =>
+      applyForLoan(ctx, { memberId: s.memberId, productId: (p as { id: string }).id, amount: "22,000", installments: "10", submitKey: randomUUID() }, { userId: s.t.adminUserId }),
+    );
+    const loanId = (applied as { loanId: string }).loanId;
+    await s.t.run((ctx) => approveLoan(ctx, { loanId, userId: s.secretary }));
+    await s.t.run((ctx) => disburseLoan(ctx, { loanId, method: "cash", userId: s.t.adminUserId }));
+    await s.t.run(({ tx, tenantId }) => tx.update(tenant).set({ businessDate: "2026-11-20" }).where(eq(tenant.id, tenantId)));
+    const pay = (amount: string, extra: Partial<{ settle: boolean }> = {}, channel: "office" | "collector" = "office") =>
+      s.t.run((ctx) => repayLoan(ctx, { loanId, amount, method: "cash", idempotencyKey: randomUUID(), ...extra }, { userId: s.t.adminUserId, channel }));
+    expect(await pay("2,420")).toMatchObject({ ok: true, closed: false });
+
+    // Nine installments left: 19,800 principal and 1,980 charge, half of it let off.
+    expect(await pay("20,790", { settle: true }, "collector")).toMatchObject({ ok: false, errors: { form: "settle_office_only" } });
+    expect(await pay("20,000", { settle: true })).toMatchObject({ ok: false, errors: { amount: "quote_changed" }, owed: 20790_00n });
+    const done = await pay("20,790", { settle: true });
+    expect(done).toMatchObject({ ok: true, closed: true, repayment: { amount: 20790_00n, principal: 19800_00n, interest: 990_00n, rebate: 990_00n, settlement: true } });
+
+    const l = await s.t.run((ctx) => getLoan(ctx, loanId));
+    expect(l).toMatchObject({ status: "closed", closedOn: "2026-11-20" });
+    const tb = await s.t.run((ctx) => trialBalance(ctx, "2026-11-20"));
+    expect(tb.rows.find((x) => x.accountId === s.t.accounts.interest_income)?.credit).toBe(1210_00n);
+    // Nothing is left owing on the books.
+    const receivable = tb.rows.find((x) => x.accountId === s.t.accounts.loans_receivable);
+    expect((receivable?.debit ?? 0n) - (receivable?.credit ?? 0n)).toBe(0n);
+    expect(await pay("1")).toMatchObject({ ok: false, errors: { form: "not_running" } });
+    const sms = await s.t.run(({ tx }) => tx.select({ body: smsOutbox.body }).from(smsOutbox).where(sql`${smsOutbox.kind} = 'loan_repayment'`));
+    expect(sms.some((x) => x.body.includes("Early settlement rebate Tk 990") && x.body.includes("Loan fully repaid"))).toBe(true);
+    await expect(s.t.run(({ tx }) => tx.update(loan).set({ settlementRebateBp: 10000 }).where(eq(loan.id, loanId)))).rejects.toThrow();
   });
 });

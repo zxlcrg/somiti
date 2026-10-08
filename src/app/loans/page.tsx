@@ -230,6 +230,10 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
                     <dt>{t("products.lateFine")}</dt>
                     <dd>{p.lateFine ? taka(p.lateFine) : t("products.noLateFine")}</dd>
                   </div>
+                  <div>
+                    <dt>{t("products.rebate")}</dt>
+                    <dd>{p.settlementRebateBp ? percent(p.settlementRebateBp, locale) : t("products.noRebate")}</dd>
+                  </div>
                 </dl>
                 <footer>
                   <span className="muted">

@@ -6,7 +6,7 @@ import { recordAudit } from "@/modules/audit/log";
 import { accountIdsByKey, postEntry } from "@/modules/ledger";
 import { queueMemberSms } from "@/modules/messages/outbox";
 import { loanRepaymentText } from "@/modules/messages/texts";
-import { allocate, lateFineFor, outstanding } from "./allocate";
+import { allocate, lateFineFor, outstanding, settlementQuote, type SettlementLine } from "./allocate";
 import { finedSeqs, PAYMENT_METHODS, scheduleState, type LoanPaymentMethod } from "./loans";
 
 /*
@@ -37,6 +37,12 @@ export interface RepaymentInput {
   idempotencyKey: string;
   /** Office only: skip the late fine this repayment would bring. */
   waiveFine?: boolean;
+  /**
+   * Office only: close the loan early at its settlement figure, with the
+   * product's rebate on charge not yet due. `amount` must be that figure, so
+   * a quote that went stale while the form was open is refused, not guessed.
+   */
+  settle?: boolean;
 }
 
 export type RepaymentError =
@@ -47,7 +53,10 @@ export type RepaymentError =
   | "ref_required"
   | "ref_too_long"
   | "not_found"
-  | "not_running";
+  | "not_running"
+  | "settle_office_only"
+  | "quote_changed"
+  | "nothing_to_settle";
 
 export interface RepaymentView {
   id: string;
@@ -56,6 +65,9 @@ export interface RepaymentView {
   interest: bigint;
   /** Late fine taken on top of the amount. */
   fine: bigint;
+  /** Charge let off because the loan was settled early. */
+  rebate: bigint;
+  settlement: boolean;
   channel: RepaymentChannel;
   paymentMethod: LoanPaymentMethod;
   paymentRef: string | null;
@@ -80,6 +92,8 @@ function repaymentQuery(ctx: TenantTx) {
       principal: loanRepayment.principal,
       interest: loanRepayment.interest,
       fine: loanRepayment.fine,
+      rebate: loanRepayment.rebate,
+      settlement: loanRepayment.settlement,
       channel: loanRepayment.channel,
       paymentMethod: loanRepayment.paymentMethod,
       paymentRef: loanRepayment.paymentRef,
@@ -104,6 +118,8 @@ const toView = (r: Row): RepaymentView => ({
   principal: r.principal,
   interest: r.interest,
   fine: r.fine,
+  rebate: r.rebate,
+  settlement: r.settlement,
   channel: r.channel,
   paymentMethod: r.paymentMethod,
   paymentRef: r.paymentRef,
@@ -137,6 +153,7 @@ export async function repayLoan(
   const paymentRef = input.paymentRef?.trim() || null;
   if (method === "mobile_wallet" && !paymentRef) errors.paymentRef = "ref_required";
   if (paymentRef && paymentRef.length > 64) errors.paymentRef = "ref_too_long";
+  if (input.settle && actor.channel !== "office") errors.form = "settle_office_only";
   if (Object.keys(errors).length) return { ok: false, errors };
 
   const { tx, tenantId } = ctx;
@@ -158,11 +175,21 @@ export async function repayLoan(
 
   const rows = await scheduleState(ctx, l.id);
   const owed = outstanding(rows).total;
-  const lines = allocate(rows, amount!, l.allocation);
-  if (!lines) return { ok: false, errors: { amount: "too_much" }, owed };
+  const [day] = await tx.select({ d: tenant.businessDate }).from(tenant).where(eq(tenant.id, tenantId));
+  let lines: SettlementLine[];
+  if (input.settle) {
+    const quote = settlementQuote(rows, day!.d, l.settlementRebateBp);
+    if (quote.total === 0n) return { ok: false, errors: { form: "nothing_to_settle" } };
+    if (quote.total !== amount) return { ok: false, errors: { amount: "quote_changed" }, owed: quote.total };
+    lines = quote.lines;
+  } else {
+    const split = allocate(rows, amount!, l.allocation);
+    if (!split) return { ok: false, errors: { amount: "too_much" }, owed };
+    lines = split.map((x) => ({ ...x, rebate: 0n }));
+  }
   const principal = lines.reduce((s, x) => s + x.principal, 0n);
   const interest = lines.reduce((s, x) => s + x.interest, 0n);
-  const [day] = await tx.select({ d: tenant.businessDate }).from(tenant).where(eq(tenant.id, tenantId));
+  const rebate = lines.reduce((s, x) => s + x.rebate, 0n);
   const late = lateFineFor(rows, lines, day!.d, l.lateFine, await finedSeqs(ctx, l.id));
   // Only the office can waive; a collector on a round collects what is due.
   const waived = input.waiveFine === true && actor.channel === "office" && late.fine > 0n;
@@ -179,8 +206,9 @@ export async function repayLoan(
   const posted = await postEntry(ctx, {
     branchId: owner!.branchId,
     source: "loan_repayment",
-    narration: `Loan repayment: ${owner!.code} loan #${l.loanNo}, member #${owner!.memberNo}, ${seqs}${paymentRef ? `, ref ${paymentRef}` : ""}` +
-      (fine > 0n ? `, late fine for ${late.seqs.length} installment(s)` : ""),
+    narration: `${input.settle ? "Early settlement" : "Loan repayment"}: ${owner!.code} loan #${l.loanNo}, member #${owner!.memberNo}, ${seqs}${paymentRef ? `, ref ${paymentRef}` : ""}` +
+      (fine > 0n ? `, late fine for ${late.seqs.length} installment(s)` : "") +
+      (rebate > 0n ? `, rebate ${rebate / 100n}.${String(rebate % 100n).padStart(2, "0")} not charged` : ""),
     createdBy: actor.userId,
     idempotencyKey: input.idempotencyKey,
     device: actor.device,
@@ -201,6 +229,8 @@ export async function repayLoan(
       principal,
       interest,
       fine,
+      rebate,
+      settlement: input.settle === true,
       channel: actor.channel,
       paymentMethod: method!,
       paymentRef,
@@ -216,7 +246,7 @@ export async function repayLoan(
       .values(late.seqs.map((seq) => ({ tenantId, loanId: l.id, seq, repaymentId: rep!.id, amount: waived ? 0n : l.lateFine!, waived })));
   }
 
-  const stillOwed = owed - amount!;
+  const stillOwed = owed - amount! - rebate;
   const closed = stillOwed === 0n;
   if (closed) {
     await tx
@@ -240,6 +270,7 @@ export async function repayLoan(
       paymentMethod: method,
       paymentRef,
       ...(late.seqs.length ? { lateInstallments: late.seqs, fine: fine.toString(), fineWaived: waived } : {}),
+      ...(input.settle ? { settlement: true, rebate: rebate.toString() } : {}),
       ...(closed ? { closed: true } : {}),
     },
     device: actor.device,
@@ -249,7 +280,7 @@ export async function repayLoan(
     kind: "loan_repayment",
     refId: posted.entry.id,
     text: (locale, somiti) =>
-      loanRepaymentText({ somiti, productCode: owner!.code, loanNo: l.loanNo, entryNo: posted.entry.entryNo, amount: amount!, stillOwed, fine }, locale),
+      loanRepaymentText({ somiti, productCode: owner!.code, loanNo: l.loanNo, entryNo: posted.entry.entryNo, amount: amount!, stillOwed, fine, rebate }, locale),
   });
   const [done] = await repaymentQuery(ctx).where(and(eq(loanRepayment.tenantId, tenantId), eq(loanRepayment.id, rep!.id)));
   return { ok: true, repayment: toView(done!), closed, replayed: false };

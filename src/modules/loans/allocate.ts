@@ -18,6 +18,8 @@ export interface InstallmentState {
   interest: bigint;
   paidPrincipal: bigint;
   paidInterest: bigint;
+  /** Charge let off by an early settlement. */
+  rebated?: bigint;
 }
 
 export interface AllocatedLine {
@@ -28,7 +30,7 @@ export interface AllocatedLine {
 
 export type InstallmentStatus = "paid" | "part" | "overdue" | "due" | "upcoming";
 
-const left = (r: InstallmentState) => ({ principal: r.principal - r.paidPrincipal, interest: r.interest - r.paidInterest });
+const left = (r: InstallmentState) => ({ principal: r.principal - r.paidPrincipal, interest: r.interest - r.paidInterest - (r.rebated ?? 0n) });
 
 export function outstanding(rows: readonly InstallmentState[]): { principal: bigint; interest: bigint; total: bigint } {
   let principal = 0n;
@@ -115,4 +117,41 @@ export function lateFineFor(
   const due = new Map(rows.map((r) => [r.seq, r.dueOn]));
   const seqs = lines.filter((x) => (due.get(x.seq) ?? today) < today && !fined.includes(x.seq)).map((x) => x.seq);
   return { seqs, fine: lateFine * BigInt(seqs.length) };
+}
+
+export interface SettlementLine extends AllocatedLine {
+  rebate: bigint;
+}
+
+export interface SettlementQuote {
+  lines: SettlementLine[];
+  principal: bigint;
+  /** Charge still taken: all of it on installments already due, the rest less the rebate. */
+  interest: bigint;
+  rebate: bigint;
+  /** What the member pays to close the loan today (before any late fine). */
+  total: bigint;
+}
+
+/**
+ * Paying a loan off before its term ends. Everything already due is paid in
+ * full; on installments not yet due the principal is paid in full and the
+ * product's rebate share of their charge is let off, rounded down to the
+ * paisa so the somiti never lets off more than its rule says.
+ */
+export function settlementQuote(rows: readonly InstallmentState[], today: string, rebateBp: number): SettlementQuote {
+  const lines: SettlementLine[] = [];
+  let principal = 0n;
+  let interest = 0n;
+  let rebate = 0n;
+  for (const r of [...rows].sort((a, b) => a.seq - b.seq)) {
+    const l = left(r);
+    if (l.principal + l.interest === 0n) continue;
+    const off = r.dueOn > today ? (l.interest * BigInt(rebateBp)) / 10_000n : 0n;
+    lines.push({ seq: r.seq, principal: l.principal, interest: l.interest - off, rebate: off });
+    principal += l.principal;
+    interest += l.interest - off;
+    rebate += off;
+  }
+  return { lines, principal, interest, rebate, total: principal + interest };
 }

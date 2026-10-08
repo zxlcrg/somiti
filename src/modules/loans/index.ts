@@ -3,6 +3,7 @@ export {
   allocate,
   installmentStatus,
   lateFineFor,
+  settlementQuote,
   outstanding,
   standing,
   type Allocation,

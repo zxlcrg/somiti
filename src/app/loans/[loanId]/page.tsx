@@ -176,6 +176,10 @@ export default async function LoanPage({
                 <dd>{l.lateFine ? t("detail.lateFineEach", { amount: taka(l.lateFine) }) : t("detail.noLateFine")}</dd>
               </div>
               <div>
+                <dt>{t("detail.rebate")}</dt>
+                <dd>{l.settlementRebateBp ? t("detail.rebateShare", { percent: percent(l.settlementRebateBp, locale), charge: charge.toLowerCase() }) : t("detail.noRebate")}</dd>
+              </div>
+              <div>
                 <dt>{t("detail.allocation")}</dt>
                 <dd>{t(`allocation.${l.allocation}`, { charge })}</dd>
               </div>
@@ -290,6 +294,7 @@ export default async function LoanPage({
                           {t("schedule.principal")} {taka(r.principal)} · {charge} {taka(r.interest)}
                         </small>
                         {r.fine > 0n && <small className="fine-tag">{t("history.fine", { amount: taka(r.fine) })}</small>}
+                        {r.settlement && <small className="settle-tag">{r.rebate > 0n ? t("history.settledRebate", { amount: taka(r.rebate) }) : t("history.settled")}</small>}
                       </span>
                     </li>
                   ))}
@@ -311,10 +316,12 @@ export default async function LoanPage({
                   interest: r.interest.toString(),
                   paidPrincipal: r.paidPrincipal.toString(),
                   paidInterest: r.paidInterest.toString(),
+                  rebated: (r.rebated ?? 0n).toString(),
                 }))}
                 allocation={l.allocation}
                 lateFine={l.lateFine?.toString() ?? null}
                 fined={l.fined}
+                rebateBp={l.settlementRebateBp}
                 today={today}
                 channel={channel!}
                 charge={charge}

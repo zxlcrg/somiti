@@ -1359,7 +1359,9 @@
       "switchOff": "Switch off",
       "switchOn": "Switch on",
       "lateFine": "Late fine",
-      "noLateFine": "None"
+      "noLateFine": "None",
+      "rebate": "Early settlement rebate",
+      "noRebate": "None"
     },
     "recent": {
       "title": "Recent loans",
@@ -1404,7 +1406,9 @@
       "allocationHint": "Inside each installment, oldest installment first. Most somitis take the charge first.",
       "lateFine": "Late fine per installment",
       "lateFineHint": "Taken once for each installment paid after its date. Leave empty for no fine.",
-      "lateFineEach": "Late fine, each installment"
+      "lateFineEach": "Late fine, each installment",
+      "rebate": "Rebate for settling early",
+      "rebateHint": "Share of the {charge} on installments not yet due that is let off when a member pays the loan off early. Leave empty for none."
     },
     "productErrors": {
       "required": "Fill this in.",
@@ -1420,7 +1424,8 @@
       "invalid_fee": "Write the fee as a percent, up to 10.",
       "forbidden": "Only the admin, president or secretary can set up loan products.",
       "server": "Something went wrong. Try again.",
-      "invalid_late_fine": "Enter a fine above zero and up to 1,00,000, or leave it empty."
+      "invalid_late_fine": "Enter a fine above zero and up to 1,00,000, or leave it empty.",
+      "invalid_rebate": "Enter a percent from 0 to 100, or leave it empty."
     },
     "apply": {
       "title": "Loan application",
@@ -1525,7 +1530,10 @@
       "allocation": "A repayment goes to",
       "lateFine": "Late fine",
       "lateFineEach": "{amount} per late installment",
-      "noLateFine": "None"
+      "noLateFine": "None",
+      "rebate": "Settling early",
+      "rebateShare": "{percent} of the {charge} not yet due is let off",
+      "noRebate": "No rebate"
     },
     "steps": {
       "decideTitle": "Your decision",
@@ -1609,7 +1617,8 @@
       "quick": {
         "due": "Due now",
         "next": "Installment {n}",
-        "all": "Pay off"
+        "all": "Pay off",
+        "settle": "Settle early"
       },
       "paidBy": "Received by",
       "collectorNote": "Cash only on a round. It goes in your bag until you hand it over.",
@@ -1628,7 +1637,9 @@
       "fine": "Late fine, {count, plural, one {# installment past its date} other {# installments past their date}}",
       "fineWaived": "Waived",
       "waive": "Waive the late fine this time",
-      "takeIn": "Total to take"
+      "takeIn": "Total to take",
+      "rebate": "Rebate on {charge} not yet due",
+      "settleNote": "Settling early: everything due now, all principal left, and the {charge} not yet due less {percent}."
     },
     "repayErrors": {
       "invalid_amount": "Enter an amount in taka.",
@@ -1642,12 +1653,17 @@
       "forbidden": "Only the cashier or a field collector can take repayments.",
       "server": "Something went wrong. Nothing was posted; try again.",
       "DAY_CLOSED": "Today's books are closed. Open the next day first.",
-      "NO_OPEN_PERIOD": "There is no open accounting period for today."
+      "NO_OPEN_PERIOD": "There is no open accounting period for today.",
+      "settle_office_only": "Only the office can settle a loan early.",
+      "quote_changed": "The settlement figure has changed. Check it and try again.",
+      "nothing_to_settle": "Nothing is left to pay on this loan."
     },
     "history": {
       "title": "Repayments",
       "none": "Nothing repaid yet.",
-      "fine": "Late fine {amount}"
+      "fine": "Late fine {amount}",
+      "settled": "Settled early",
+      "settledRebate": "Settled early · rebate {amount}"
     },
     "overdue": {
       "link": "Overdue",
