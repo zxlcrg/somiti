@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { formatInteger, formatTaka } from "@/lib/format";
 import { parseTaka } from "@/lib/money";
-import { allocate, outstanding, standing, type Allocation, type InstallmentState } from "@/modules/loans/allocate";
+import { allocate, lateFineFor, outstanding, standing, type Allocation, type InstallmentState } from "@/modules/loans/allocate";
 import { repayLoanAction, type RepayState } from "../actions";
 import { METHOD_ICON } from "../ui-client";
 
@@ -26,6 +26,8 @@ export function RepayPanel({
   today,
   channel,
   charge,
+  lateFine: lateFineRaw,
+  fined,
 }: {
   loanId: string;
   rows: SerialRow[];
@@ -33,6 +35,8 @@ export function RepayPanel({
   today: string;
   channel: "office" | "collector";
   charge: string;
+  lateFine: string | null;
+  fined: number[];
 }) {
   const t = useTranslations("loans");
   const l = useLocale();
@@ -43,6 +47,7 @@ export function RepayPanel({
   const [method, setMethod] = useState<"cash" | "bank" | "mobile_wallet">("cash");
   const [confirming, setConfirming] = useState(false);
   const [edited, setEdited] = useState(false);
+  const [waive, setWaive] = useState(false);
   const [seen, setSeen] = useState(state);
   if (seen !== state) {
     setSeen(state);
@@ -74,6 +79,9 @@ export function RepayPanel({
   const split = lines
     ? { principal: lines.reduce((s, x) => s + x.principal, 0n), interest: lines.reduce((s, x) => s + x.interest, 0n), first: lines[0]!.seq, last: lines.at(-1)!.seq }
     : null;
+  const late = lines ? lateFineFor(rows, lines, today, lateFineRaw ? BigInt(lateFineRaw) : null, fined) : { seqs: [], fine: 0n };
+  const fine = waive && channel === "office" ? 0n : late.fine;
+  const takeIn = paisa !== null && split ? paisa + fine : null;
   const tooMuch = paisa !== null && paisa > owed.total;
 
   const quick: { key: string; label: string; value: bigint }[] = [];
@@ -113,6 +121,7 @@ export function RepayPanel({
       >
         <input type="hidden" name="idempotencyKey" value={key} />
         <input type="hidden" name="method" value={method} />
+        {waive && late.fine > 0n && <input type="hidden" name="waiveFine" value="1" />}
         <div className={`field${fieldErr || tooMuch ? " has-error" : ""}`}>
           <label htmlFor="repayAmount">{t("repay.amount")}</label>
           <span className="money-input big">
@@ -208,6 +217,26 @@ export function RepayPanel({
                 <dd>{paisa === owed.total ? "🎉" : taka(owed.total - paisa!)}</dd>
               </div>
             </dl>
+            {late.fine > 0n && (
+              <div className={`lf-box${fine === 0n ? " waived" : ""}`}>
+                <div className="lf-line">
+                  <span>
+                    <span aria-hidden="true">⏰</span> {t("repay.fine", { n: num(late.seqs.length), count: late.seqs.length })}
+                  </span>
+                  <strong>{fine === 0n ? t("repay.fineWaived") : `+ ${taka(late.fine)}`}</strong>
+                </div>
+                {channel === "office" && (
+                  <label className="waive-check">
+                    <input type="checkbox" checked={waive} onChange={(ev) => { setWaive(ev.target.checked); setConfirming(false); }} />
+                    {t("repay.waive")}
+                  </label>
+                )}
+                <div className="lf-line total">
+                  <span>{t("repay.takeIn")}</span>
+                  <strong>{taka(takeIn!)}</strong>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -218,7 +247,7 @@ export function RepayPanel({
         )}
         {confirming && split ? (
           <div className="confirm-close" role="alertdialog" aria-labelledby="confirm-repay">
-            <strong id="confirm-repay">{t("repay.confirm", { amount: taka(paisa!) })}</strong>
+            <strong id="confirm-repay">{t("repay.confirm", { amount: taka(takeIn!) })}</strong>
             <p>{t("repay.confirmBody")}</p>
             <div className="confirm-actions">
               <button type="button" className="btn ghost" onClick={() => setConfirming(false)} disabled={pending}>
@@ -231,7 +260,7 @@ export function RepayPanel({
           </div>
         ) : (
           <button className="btn primary block" disabled={!split}>
-            <span aria-hidden="true">🧾</span> {split ? t("repay.submit", { amount: taka(paisa!) }) : t("repay.submitEmpty")}
+            <span aria-hidden="true">🧾</span> {split ? t("repay.submit", { amount: taka(takeIn!) }) : t("repay.submitEmpty")}
           </button>
         )}
       </form>

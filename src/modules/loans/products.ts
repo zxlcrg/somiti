@@ -27,6 +27,8 @@ export interface LoanProductForm {
   chargeLabel?: string;
   /** Inside each installment, which half a repayment settles first. */
   allocation?: string;
+  /** Taka per late installment; blank for none. */
+  lateFine?: string;
   /** Yearly rate as typed, in percent: "12" or "12.5". */
   rate: string;
   frequency: string;
@@ -48,7 +50,8 @@ export type LoanProductError =
   | "too_large"
   | "max_below_min"
   | "invalid_installments"
-  | "invalid_fee";
+  | "invalid_fee"
+  | "invalid_late_fine";
 
 export type LoanProductErrors = Partial<Record<keyof LoanProductForm, LoanProductError>>;
 
@@ -60,6 +63,7 @@ export interface LoanProductView {
   method: LoanMethod;
   chargeLabel: ChargeLabel;
   allocation: Allocation;
+  lateFine: bigint | null;
   rateBp: number;
   frequency: LoanFrequency;
   minAmount: bigint;
@@ -120,6 +124,8 @@ export function checkLoanProductForm(form: LoanProductForm):
 
   const fee = form.fee?.trim() ? parsePercent(form.fee, 1000) : 0;
   if (fee === null) errors.fee = "invalid_fee";
+  const lateFine = form.lateFine?.trim() ? parseTaka(form.lateFine) : null;
+  if (form.lateFine?.trim() && (lateFine === null || lateFine <= 0n || lateFine > 1_00_000_00n)) errors.lateFine = "invalid_late_fine";
 
   if (Object.keys(errors).length) return { ok: false, errors };
   return {
@@ -131,6 +137,7 @@ export function checkLoanProductForm(form: LoanProductForm):
       method: method!,
       chargeLabel: chargeLabel!,
       allocation: allocation!,
+      lateFine,
       rateBp: rateBp!,
       frequency: frequency!,
       minAmount: min as bigint,
@@ -201,6 +208,7 @@ export async function listLoanProducts({ tx, tenantId }: TenantTx, opts: { activ
       method: loanProduct.method,
       chargeLabel: loanProduct.chargeLabel,
       allocation: loanProduct.allocation,
+      lateFine: loanProduct.lateFine,
       rateBp: loanProduct.rateBp,
       frequency: loanProduct.frequency,
       minAmount: loanProduct.minAmount,

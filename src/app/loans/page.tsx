@@ -13,6 +13,7 @@ import {
   listLoans,
   loanStats,
   type LoanView,
+  overdueLoans,
   repaymentsOn,
 } from "@/modules/loans";
 import { requireUser } from "../auth";
@@ -32,8 +33,9 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
   if (!canViewLoans(user.roles)) return <p className="notice">{t("noAccess")}</p>;
   const locale = await pageLocale();
   const { created } = await searchParams;
-  const { stats, products, applied, approved, recent, repaidToday } = await withTenant(getAppDb(), user.tenantId, async (ctx) => ({
+  const { stats, products, applied, approved, recent, repaidToday, overdue } = await withTenant(getAppDb(), user.tenantId, async (ctx) => ({
     stats: await loanStats(ctx),
+    overdue: await overdueLoans(ctx),
     repaidToday: await repaymentsOn(ctx),
     products: await listLoanProducts(ctx),
     applied: await listLoans(ctx, { status: "applied" }),
@@ -87,6 +89,10 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
           <p className="muted">{t("subtitle")}</p>
         </div>
         <div className="head-actions">
+          <Link href="/loans/overdue" className="btn ghost">
+            <span aria-hidden="true">⏰</span> {t("overdue.link")}
+            {overdue.loans.length > 0 && <span className="count-badge">{num(overdue.loans.length)}</span>}
+          </Link>
           {manage && (
             <Link href="/loans/products/new" className="btn primary">
               <span aria-hidden="true">＋</span> {t("newProduct")}
@@ -101,8 +107,20 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
         </p>
       )}
 
-      {(decide > 0 || pay > 0) && (
+      {(decide > 0 || pay > 0 || overdue.loans.length > 0) && (
         <div className="loan-callouts">
+          {overdue.loans.length > 0 && (
+            <Link href="/loans/overdue" className="wd-callout late">
+              <span className="wd-callout-icon" aria-hidden="true">
+                ⏰
+              </span>
+              <span>
+                <strong>{t("callout.overdue", { count: overdue.loans.length, n: num(overdue.loans.length) })}</strong>
+                <small>{t("callout.overdueOwing", { amount: taka(overdue.total) })}</small>
+              </span>
+              <span className="wd-callout-go">{t("callout.see")} →</span>
+            </Link>
+          )}
           {decide > 0 && (
             <a href="#decide" className="wd-callout">
               <span className="wd-callout-icon" aria-hidden="true">
@@ -207,6 +225,10 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
                   <div>
                     <dt>{t("products.fee")}</dt>
                     <dd>{p.processingFeeBp ? percent(p.processingFeeBp, locale) : t("products.noFee")}</dd>
+                  </div>
+                  <div>
+                    <dt>{t("products.lateFine")}</dt>
+                    <dd>{p.lateFine ? taka(p.lateFine) : t("products.noLateFine")}</dd>
                   </div>
                 </dl>
                 <footer>

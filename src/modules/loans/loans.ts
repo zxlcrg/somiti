@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { TenantTx } from "@/db/client";
-import { appUser, loan, loanInstallment, loanProduct, loanRepaymentLine, member, tenant } from "@/db/schema";
+import { appUser, loan, loanFine, loanInstallment, loanProduct, loanRepaymentLine, member, tenant } from "@/db/schema";
 import { toLatinDigits } from "@/lib/digits";
 import { applyBasisPoints, parseTaka } from "@/lib/money";
 import { recordAudit } from "@/modules/audit/log";
@@ -169,6 +169,7 @@ export async function applyForLoan(ctx: TenantTx, input: LoanApplicationInput, a
       installments: n,
       processingFee,
       allocation: product.allocation,
+      lateFine: product.lateFine,
       purpose,
       appliedBy: actor.userId,
       appliedOn: await businessDate(ctx),
@@ -371,6 +372,8 @@ export interface LoanView {
   installments: number;
   processingFee: bigint;
   allocation: Allocation;
+  /** Fine per late installment; null for none. */
+  lateFine: bigint | null;
   purpose: string | null;
   appliedOn: string;
   createdAt: Date;
@@ -418,6 +421,7 @@ function loanQuery(ctx: TenantTx) {
       installments: loan.installments,
       processingFee: loan.processingFee,
       allocation: loan.allocation,
+      lateFine: loan.lateFine,
       closedOn: loan.closedOn,
       paidPrincipal: sql<string>`(select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id})`.mapWith(
         (v: string | number) => BigInt(v),
@@ -470,6 +474,7 @@ function view(r: LoanRow): LoanView {
     installments: r.installments,
     processingFee: r.processingFee,
     allocation: r.allocation,
+    lateFine: r.lateFine,
     purpose: r.purpose,
     appliedOn: r.appliedOn,
     createdAt: r.createdAt,
@@ -493,6 +498,8 @@ export interface LoanDetail extends LoanView {
   /** The written schedule once paid out; before that, a projection from today. */
   schedule: InstallmentState[];
   projected: boolean;
+  /** Installments whose late fine was already charged or waived. */
+  fined: number[];
   summary: ScheduleSummary;
 }
 
@@ -508,7 +515,16 @@ export async function getLoan(ctx: TenantTx, loanId: string): Promise<LoanDetail
     schedule = buildSchedule(v, await businessDate(ctx)).map((r) => ({ ...r, paidPrincipal: 0n, paidInterest: 0n }));
     projected = true;
   }
-  return { ...v, schedule, projected, summary: summarize(schedule) };
+  const fined = v.disbursedOn ? await finedSeqs(ctx, v.id) : [];
+  return { ...v, schedule, projected, fined, summary: summarize(schedule) };
+}
+
+export async function finedSeqs({ tx, tenantId }: TenantTx, loanId: string): Promise<number[]> {
+  const rows = await tx
+    .select({ seq: loanFine.seq })
+    .from(loanFine)
+    .where(and(eq(loanFine.tenantId, tenantId), eq(loanFine.loanId, loanId)));
+  return rows.map((r) => r.seq);
 }
 
 /** The written schedule with what each installment has had paid against it. */
@@ -542,7 +558,7 @@ export async function scheduleState(ctx: TenantTx, loanId: string): Promise<Inst
 
 export async function listLoans(
   ctx: TenantTx,
-  opts: { status?: LoanStatus | LoanStatus[]; memberId?: string; limit?: number } = {},
+  opts: { status?: LoanStatus | LoanStatus[]; memberId?: string; ids?: string[]; limit?: number } = {},
 ): Promise<LoanView[]> {
   const statuses = opts.status ? (Array.isArray(opts.status) ? opts.status : [opts.status]) : undefined;
   const rows = await loanQuery(ctx)
@@ -551,6 +567,7 @@ export async function listLoans(
         eq(loan.tenantId, ctx.tenantId),
         statuses ? inArray(loan.status, statuses) : undefined,
         opts.memberId ? eq(loan.memberId, opts.memberId) : undefined,
+        opts.ids ? inArray(loan.id, opts.ids) : undefined,
       ),
     )
     .orderBy(desc(loan.createdAt))
