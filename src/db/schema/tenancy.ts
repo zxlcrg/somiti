@@ -48,12 +48,15 @@ export const tenant = pgTable(
     lockedThrough: date("locked_through", { mode: "string" }),
     /** Price of one share, in paisa, as the bylaws set it. ৳100 until the somiti says otherwise. */
     sharePrice: bigint("share_price", { mode: "bigint" }).notNull().default(sql`10000`),
+    /** What the somiti aims to collect each month (savings and loan repayments), in paisa; null until set. */
+    collectionTarget: bigint("collection_target", { mode: "bigint" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     check("tenant_has_name", sql`${t.nameEn} IS NOT NULL OR ${t.nameBn} IS NOT NULL`),
     check("tenant_fiscal_month", sql`${t.fiscalYearStartMonth} BETWEEN 1 AND 12`),
     check("tenant_share_price_positive", sql`${t.sharePrice} > 0`),
+    check("tenant_collection_target_positive", sql`${t.collectionTarget} IS NULL OR ${t.collectionTarget} > 0`),
     check(
       "tenant_business_date_after_lock",
       sql`${t.lockedThrough} IS NULL OR ${t.businessDate} > ${t.lockedThrough}`,

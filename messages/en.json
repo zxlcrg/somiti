@@ -20,7 +20,17 @@
     "savingsWaiting": "{count} withdrawals waiting for you",
     "loans": "Loans",
     "loansWaiting": "{count, plural, one {# loan waits for you} other {# loans wait for you}}",
-    "exitsWaiting": "{count, plural, one {# exit} other {# exits}} waiting for your approval"
+    "exitsWaiting": "{count, plural, one {# exit} other {# exits}} waiting for your approval",
+    "menu": "Open menu",
+    "closeMenu": "Close menu",
+    "collections": "Collections",
+    "overdue": "Overdue",
+    "overdueCount": "{count, plural, one {# loan is overdue} other {# loans are overdue}}",
+    "vouchers": "Vouchers",
+    "expenses": "Expenses",
+    "cashBook": "Cash book",
+    "trialBalance": "Trial balance",
+    "dayEnd": "Day end"
   },
   "home": {
     "badge": "Foundation release",
@@ -142,22 +152,116 @@
     }
   },
   "dashboard": {
-    "greeting": "Welcome, {name}",
-    "somiti": "Somiti",
-    "phone": "Mobile",
-    "roles": "Your roles",
-    "comingTitle": "Your workspace",
-    "soon": "Soon",
-    "tiles": {
-      "members": "Members",
-      "membersBody": "Register members and their savings accounts.",
-      "vouchers": "Vouchers",
-      "vouchersBody": "Record deposits, withdrawals and expenses.",
-      "trialBalance": "Trial balance",
-      "trialBalanceBody": "See every account balanced, as of any day.",
-      "membersOpen": "Open",
+    "greeting": {
+      "morning": "Good morning, {name}",
+      "afternoon": "Good afternoon, {name}",
+      "evening": "Good evening, {name}"
+    },
+    "businessDate": "Business date: {date}",
+    "memberSoon": "Your own savings and loans will show here once the member view is ready.",
+    "search": "Find a member",
+    "actions": {
+      "newMember": "New member",
+      "newVoucher": "New voucher"
+    },
+    "statsLabel": "Somiti at a glance",
+    "stats": {
+      "members": "Total members",
+      "membersSub": "+{n} joined this month",
+      "savings": "Total savings",
+      "savingsSub": "{amount} deposited this month",
+      "loans": "Loans outstanding",
+      "loansSub": "{count, plural, one {# loan running} other {# loans running}}",
+      "overdue": "Overdue installments",
+      "overdueSub": "{count, plural, one {# loan late} other {# loans late}}",
+      "overdueNone": "Nothing late",
+      "cash": "Cash & bank",
+      "cashSub": "{hand} in hand · {bank} bank and mobile",
+      "shares": "Share capital",
+      "sharesSub": "Members' shares"
+    },
+    "round": {
+      "title": "Your round today",
+      "today": "{count, plural, one {# payment taken} other {# payments taken}}",
+      "held": "Cash in your bag",
+      "heldHint": "Hand it in at the office",
+      "open": "Collections",
+      "todayNone": "No payments taken yet"
+    },
+    "chart": {
+      "title": "Collection vs disbursement",
+      "subtitle": "Last six months",
+      "collected": "Collected",
+      "disbursed": "Loans paid out",
       "savings": "Savings",
-      "savingsBody": "Products, deposits, dues and passbooks."
+      "repayments": "Repayments",
+      "month": "Month",
+      "aria": "Bar chart of money collected and loans paid out in each of the last six months",
+      "empty": "Nothing collected or paid out yet in these months."
+    },
+    "target": {
+      "title": "{month} target",
+      "collected": "Collected",
+      "goal": "Target",
+      "notSet": "Not set",
+      "toGo": "Still to collect",
+      "met": "Target reached",
+      "aria": "{pct}% of this month's target collected",
+      "none": "No target set",
+      "daysLeft": "{count, plural, one {# day left this month} other {# days left this month}}",
+      "askManager": "The secretary or president can set a monthly target.",
+      "set": "Set a target",
+      "change": "Change target",
+      "label": "Monthly collection target",
+      "save": "Save",
+      "cancel": "Cancel",
+      "hint": "Savings deposits and loan repayments together. Leave blank to remove.",
+      "errors": {
+        "invalid_amount": "Enter an amount in taka, such as 5,00,000.",
+        "too_large": "That is far too large; check the number of zeros.",
+        "not_allowed": "Only the secretary, president or admin can set the target."
+      },
+      "lastDay": "Last day of the month"
+    },
+    "portfolio": {
+      "title": "Loan portfolio",
+      "subtitle": "{count, plural, one {# running loan} other {# running loans}} · {amount} principal left",
+      "none": "No loans running yet.",
+      "aria": "How the running loans stand, by principal left",
+      "onTrack": "On track",
+      "dueSoon": "Due this week",
+      "overdue": "Overdue",
+      "loans": "{count, plural, one {# loan} other {# loans}}"
+    },
+    "inbox": {
+      "title": "Waiting for your approval",
+      "subtitle": "Requests other officers entered. Open each one to check it.",
+      "none": "Nothing waits for you.",
+      "review": "Review",
+      "memberNo": "No. {no}",
+      "by": "By {name} · {at}",
+      "more": "{count, plural, one {# more waits} other {# more wait}} after these",
+      "kind": {
+        "loan": "Loan application",
+        "disburse": "Loan to pay out",
+        "voucher": "Voucher",
+        "withdrawal": "Savings withdrawal",
+        "exit": "Member exit"
+      }
+    },
+    "collect": {
+      "title": "To collect today",
+      "subtitle": "Installments due up to {date}, late ones first",
+      "taken": "{count, plural, one {# payment today} other {# payments today}} · {amount}",
+      "none": "Everyone is paid up to today.",
+      "loan": "Loan {no} · {code}",
+      "savings": "Savings A/C {no} · {code}",
+      "paidToday": "Paid today",
+      "behind": "Behind",
+      "lateSince": "Late since {date}",
+      "dueToday": "Due today",
+      "more": "{count, plural, one {# more} other {# more}} · {amount} in all",
+      "takenNone": "Nothing taken yet today"
     }
   },
   "roles": {

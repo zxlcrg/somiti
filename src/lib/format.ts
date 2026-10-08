@@ -41,3 +41,17 @@ export function formatDateTime(at: Date, locale: Locale): string {
     timeZone: "Asia/Dhaka",
   }).format(at);
 }
+
+/** Short amount for cards and chart axes, in lakh and crore: "৳12.5L" / "৳১২.৫ লা". */
+export function formatTakaShort(paisa: Paisa, locale: Locale): string {
+  const taka = Number(paisa / 100n);
+  const short = new Intl.NumberFormat(intlLocale[locale], { notation: "compact", maximumFractionDigits: 1 }).format(Math.abs(taka));
+  return `${taka < 0 ? "-" : ""}৳${short}`;
+}
+
+/** A calendar month, "2026-10": "Oct" / "অক্টোবর", or with the year when long. */
+export function formatMonth(month: string, locale: Locale, style: "short" | "long" = "short"): string {
+  return new Intl.DateTimeFormat(intlLocale[locale], { month: style, ...(style === "long" ? { year: "numeric" } : {}), timeZone: "UTC" }).format(
+    new Date(`${month}-01T00:00:00Z`),
+  );
+}
