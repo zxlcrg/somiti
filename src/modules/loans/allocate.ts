@@ -20,6 +20,11 @@ export interface InstallmentState {
   paidInterest: bigint;
   /** Charge let off by an early settlement. */
   rebated?: bigint;
+  /** What a rescheduling moved off this installment onto the new schedule. */
+  movedPrincipal?: bigint;
+  movedInterest?: bigint;
+  /** Which schedule wrote it: 0 at disbursement, n after the nth rescheduling. */
+  scheduleNo?: number;
 }
 
 export interface AllocatedLine {
@@ -28,9 +33,13 @@ export interface AllocatedLine {
   interest: bigint;
 }
 
-export type InstallmentStatus = "paid" | "part" | "overdue" | "due" | "upcoming";
+export type InstallmentStatus = "paid" | "moved" | "part" | "overdue" | "due" | "upcoming";
 
-const left = (r: InstallmentState) => ({ principal: r.principal - r.paidPrincipal, interest: r.interest - r.paidInterest - (r.rebated ?? 0n) });
+const left = (r: InstallmentState) => ({
+  principal: r.principal - r.paidPrincipal - (r.movedPrincipal ?? 0n),
+  interest: r.interest - r.paidInterest - (r.rebated ?? 0n) - (r.movedInterest ?? 0n),
+});
+const moved = (r: InstallmentState) => (r.movedPrincipal ?? 0n) + (r.movedInterest ?? 0n) > 0n;
 
 export function outstanding(rows: readonly InstallmentState[]): { principal: bigint; interest: bigint; total: bigint } {
   let principal = 0n;
@@ -65,7 +74,7 @@ export function allocate(rows: readonly InstallmentState[], amount: bigint, orde
 
 export function installmentStatus(r: InstallmentState, today: string): InstallmentStatus {
   const l = left(r);
-  if (l.principal + l.interest === 0n) return "paid";
+  if (l.principal + l.interest === 0n) return moved(r) ? "moved" : "paid";
   if (r.dueOn < today) return "overdue";
   if (r.dueOn === today) return "due";
   return r.paidPrincipal + r.paidInterest > 0n ? "part" : "upcoming";
@@ -90,7 +99,7 @@ export function standing(rows: readonly InstallmentState[], today: string): Stan
     const l = left(r);
     const owing = l.principal + l.interest;
     if (owing === 0n) {
-      paidCount++;
+      if (!moved(r)) paidCount++;
       continue;
     }
     if (!next) next = { seq: r.seq, dueOn: r.dueOn, amount: owing };

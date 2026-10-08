@@ -170,11 +170,14 @@ export const loanInstallment = pgTable(
     dueOn: date("due_on", { mode: "string" }).notNull(),
     principal: bigint("principal", { mode: "bigint" }).notNull(),
     interest: bigint("interest", { mode: "bigint" }).notNull(),
+    /** 0 for the schedule written at disbursement; n for the one written by the loan's nth rescheduling. */
+    scheduleNo: integer("schedule_no").notNull().default(0),
   },
   (t) => [
     unique("loan_installment_seq").on(t.tenantId, t.loanId, t.seq),
     foreignKey({ name: "loan_installment_loan_fk", columns: [t.tenantId, t.loanId], foreignColumns: [loan.tenantId, loan.id] }),
     check("loan_installment_seq_positive", sql`${t.seq} > 0`),
+    check("loan_installment_schedule_no", sql`${t.scheduleNo} >= 0`),
     check("loan_installment_amounts", sql`${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.principal} + ${t.interest} > 0`),
   ],
 );
@@ -277,5 +280,72 @@ export const loanFine = pgTable(
     }),
     foreignKey({ name: "loan_fine_repayment_fk", columns: [t.tenantId, t.repaymentId], foreignColumns: [loanRepayment.tenantId, loanRepayment.id] }),
     check("loan_fine_amount", sql`(${t.waived} AND ${t.amount} = 0) OR (NOT ${t.waived} AND ${t.amount} > 0)`),
+  ],
+);
+
+/**
+ * A new schedule for what a running loan still owes. No money moves: what
+ * was left on the old installments is recorded as moved (the lines below)
+ * and written again as new installments, with any extra charge agreed for
+ * the longer term. Charges stay income only when paid.
+ */
+export const loanReschedule = pgTable(
+  "loan_reschedule",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    loanId: uuid("loan_id").notNull(),
+    /** 1 for the loan's first rescheduling; matches loan_installment.schedule_no. */
+    no: integer("no").notNull(),
+    businessDate: date("business_date", { mode: "string" }).notNull(),
+    /** Principal and charge moved off the old installments. */
+    principal: bigint("principal", { mode: "bigint" }).notNull(),
+    interest: bigint("interest", { mode: "bigint" }).notNull(),
+    /** Charge added for the new term; 0 for none. */
+    extraCharge: bigint("extra_charge", { mode: "bigint" }).notNull().default(sql`0`),
+    installments: integer("installments").notNull(),
+    firstDueOn: date("first_due_on", { mode: "string" }).notNull(),
+    reason: text("reason").notNull(),
+    createdBy: uuid("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("loan_reschedule_tenant_id").on(t.tenantId, t.id),
+    unique("loan_reschedule_no").on(t.tenantId, t.loanId, t.no),
+    foreignKey({ name: "loan_reschedule_loan_fk", columns: [t.tenantId, t.loanId], foreignColumns: [loan.tenantId, loan.id] }),
+    foreignKey({ name: "loan_reschedule_created_by_fk", columns: [t.tenantId, t.createdBy], foreignColumns: [appUser.tenantId, appUser.id] }),
+    check("loan_reschedule_no_positive", sql`${t.no} > 0`),
+    check("loan_reschedule_amounts", sql`${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.extraCharge} >= 0 AND ${t.principal} + ${t.interest} > 0`),
+    check("loan_reschedule_installments", sql`${t.installments} BETWEEN 1 AND 520`),
+    check("loan_reschedule_first_due", sql`${t.firstDueOn} > ${t.businessDate}`),
+    check("loan_reschedule_reason", sql`length(trim(${t.reason})) BETWEEN 3 AND 300`),
+  ],
+);
+
+/** What one rescheduling moved off one old installment. */
+export const loanRescheduleLine = pgTable(
+  "loan_reschedule_line",
+  {
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    rescheduleId: uuid("reschedule_id").notNull(),
+    loanId: uuid("loan_id").notNull(),
+    seq: integer("seq").notNull(),
+    principal: bigint("principal", { mode: "bigint" }).notNull(),
+    interest: bigint("interest", { mode: "bigint" }).notNull(),
+  },
+  (t) => [
+    unique("loan_reschedule_line_seq").on(t.tenantId, t.rescheduleId, t.seq),
+    index("loan_reschedule_line_installment").on(t.tenantId, t.loanId, t.seq),
+    foreignKey({ name: "loan_reschedule_line_reschedule_fk", columns: [t.tenantId, t.rescheduleId], foreignColumns: [loanReschedule.tenantId, loanReschedule.id] }),
+    foreignKey({
+      name: "loan_reschedule_line_installment_fk",
+      columns: [t.tenantId, t.loanId, t.seq],
+      foreignColumns: [loanInstallment.tenantId, loanInstallment.loanId, loanInstallment.seq],
+    }),
+    check("loan_reschedule_line_amounts", sql`${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.principal} + ${t.interest} > 0`),
   ],
 );

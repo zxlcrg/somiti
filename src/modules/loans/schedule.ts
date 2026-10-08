@@ -118,6 +118,35 @@ export interface ScheduleSummary {
   totalRepayable: bigint;
 }
 
+export interface RescheduleTerms {
+  /** Principal still owed, all of it moving to the new schedule. */
+  principal: bigint;
+  /** Charge still owed plus any extra charge agreed for the new term. */
+  interest: bigint;
+  installments: number;
+  frequency: LoanFrequency;
+  firstDueOn: IsoDate;
+}
+
+/**
+ * The new installments a rescheduling writes: principal and charge each
+ * spread evenly, by the same whole-taka rule as a flat schedule, one period
+ * apart from the first due date. Null when there are too many installments
+ * for what is owed (one would come out as nothing).
+ */
+export function rescheduleRows(t: RescheduleTerms): ScheduledInstallment[] | null {
+  const n = BigInt(t.installments);
+  const principal = evenParts(t.principal, n);
+  const interest = evenParts(t.interest, n);
+  const rows = principal.map((p, k) => ({
+    seq: k + 1,
+    dueOn: t.frequency === "weekly" ? addDays(t.firstDueOn, 7 * k) : addMonths(t.firstDueOn, k),
+    principal: p,
+    interest: interest[k]!,
+  }));
+  return rows.every((r) => r.principal >= 0n && r.interest >= 0n && r.principal + r.interest > 0n) ? rows : null;
+}
+
 export function summarize(rows: readonly { principal: bigint; interest: bigint }[]): ScheduleSummary {
   const totalInterest = rows.reduce((s, r) => s + r.interest, 0n);
   const totalPrincipal = rows.reduce((s, r) => s + r.principal, 0n);

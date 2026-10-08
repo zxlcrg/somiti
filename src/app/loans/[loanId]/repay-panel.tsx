@@ -17,6 +17,8 @@ export interface SerialRow {
   paidPrincipal: string;
   paidInterest: string;
   rebated: string;
+  movedPrincipal: string;
+  movedInterest: string;
 }
 
 /** The cashier's (or a collector's) repayment form, with the split it will post. */
@@ -69,6 +71,8 @@ export function RepayPanel({
         paidPrincipal: BigInt(r.paidPrincipal),
         paidInterest: BigInt(r.paidInterest),
         rebated: BigInt(r.rebated),
+        movedPrincipal: BigInt(r.movedPrincipal),
+        movedInterest: BigInt(r.movedInterest),
       })),
     [raw],
   );

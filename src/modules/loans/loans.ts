@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { TenantTx } from "@/db/client";
-import { appUser, loan, loanFine, loanInstallment, loanProduct, loanRepaymentLine, member, tenant } from "@/db/schema";
+import { appUser, loan, loanFine, loanInstallment, loanProduct, loanRepaymentLine, loanRescheduleLine, member, tenant } from "@/db/schema";
 import { toLatinDigits } from "@/lib/digits";
 import { applyBasisPoints, parseTaka } from "@/lib/money";
 import { recordAudit } from "@/modules/audit/log";
@@ -520,7 +520,22 @@ export async function getLoan(ctx: TenantTx, loanId: string): Promise<LoanDetail
     projected = true;
   }
   const fined = v.disbursedOn ? await finedSeqs(ctx, v.id) : [];
-  return { ...v, schedule, projected, fined, summary: summarize(schedule) };
+  return { ...v, schedule, projected, fined, summary: effectiveSummary(schedule) };
+}
+
+/**
+ * Totals of what the loan asks for now: a rescheduling moves amounts off the
+ * old installments onto new ones, so those are counted once, and the regular
+ * installment is the current schedule's.
+ */
+function effectiveSummary(rows: readonly InstallmentState[]): ScheduleSummary {
+  const latest = rows.reduce((m, r) => Math.max(m, r.scheduleNo ?? 0), 0);
+  if (latest === 0) return summarize(rows);
+  const effective = rows
+    .map((r) => ({ principal: r.principal - (r.movedPrincipal ?? 0n), interest: r.interest - (r.movedInterest ?? 0n) }))
+    .filter((r) => r.principal + r.interest > 0n);
+  const current = rows.filter((r) => (r.scheduleNo ?? 0) === latest);
+  return { ...summarize(effective), installment: current[0]!.principal + current[0]!.interest, lastInstallment: current.at(-1)!.principal + current.at(-1)!.interest };
 }
 
 export async function finedSeqs({ tx, tenantId }: TenantTx, loanId: string): Promise<number[]> {
@@ -545,6 +560,16 @@ export async function scheduleState(ctx: TenantTx, loanId: string): Promise<Inst
     .where(and(eq(loanRepaymentLine.tenantId, tenantId), eq(loanRepaymentLine.loanId, loanId)))
     .groupBy(loanRepaymentLine.seq)
     .as("paid");
+  const moved = tx
+    .select({
+      seq: loanRescheduleLine.seq,
+      principal: sql<string>`sum(${loanRescheduleLine.principal})`.as("moved_principal"),
+      interest: sql<string>`sum(${loanRescheduleLine.interest})`.as("moved_interest"),
+    })
+    .from(loanRescheduleLine)
+    .where(and(eq(loanRescheduleLine.tenantId, tenantId), eq(loanRescheduleLine.loanId, loanId)))
+    .groupBy(loanRescheduleLine.seq)
+    .as("moved");
   const rows = await tx
     .select({
       seq: loanInstallment.seq,
@@ -554,9 +579,13 @@ export async function scheduleState(ctx: TenantTx, loanId: string): Promise<Inst
       paidPrincipal: paid.principal,
       paidInterest: paid.interest,
       rebated: paid.rebated,
+      movedPrincipal: moved.principal,
+      movedInterest: moved.interest,
+      scheduleNo: loanInstallment.scheduleNo,
     })
     .from(loanInstallment)
     .leftJoin(paid, eq(paid.seq, loanInstallment.seq))
+    .leftJoin(moved, eq(moved.seq, loanInstallment.seq))
     .where(and(eq(loanInstallment.tenantId, tenantId), eq(loanInstallment.loanId, loanId)))
     .orderBy(asc(loanInstallment.seq));
   return rows.map((r) => ({
@@ -564,6 +593,8 @@ export async function scheduleState(ctx: TenantTx, loanId: string): Promise<Inst
     paidPrincipal: BigInt(r.paidPrincipal ?? 0),
     paidInterest: BigInt(r.paidInterest ?? 0),
     rebated: BigInt(r.rebated ?? 0),
+    movedPrincipal: BigInt(r.movedPrincipal ?? 0),
+    movedInterest: BigInt(r.movedInterest ?? 0),
   }));
 }
 

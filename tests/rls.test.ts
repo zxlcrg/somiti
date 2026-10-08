@@ -1,3 +1,4 @@
+import { addDays } from "../src/lib/dates";
 import { eq, sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
@@ -5,7 +6,7 @@ import { appUser, loanFine, otpChallenge, savingsFine, tenant, userRole, userSes
 import { closeDay } from "../src/modules/dayend";
 import { admitMember, approveExit, buyShares, requestExit, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
-import { applyForLoan, approveLoan, createLoanProduct, disburseLoan, repayLoan } from "../src/modules/loans";
+import { applyForLoan, approveLoan, createLoanProduct, disburseLoan, repayLoan, rescheduleLoan } from "../src/modules/loans";
 import { createProduct, deposit as depositSavings, openAccount, receiveHandover, requestWithdrawal } from "../src/modules/savings";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
@@ -123,6 +124,13 @@ beforeAll(async () => {
         { userId: t.adminUserId, channel: "office" },
       );
       if (!repaid.ok) throw new Error("seed repayment");
+      const [today] = await ctx.tx.select({ d: tenant.businessDate }).from(tenant).where(eq(tenant.id, t.tenantId));
+      const moved = await rescheduleLoan(
+        ctx,
+        { loanId: applied.loanId, installments: "3", firstDueOn: addDays(today!.d, 30), reason: "Seed reschedule" },
+        { userId: t.adminUserId },
+      );
+      if (!moved.ok) throw new Error("seed reschedule");
       await ctx.tx.insert(loanFine).values({ tenantId: t.tenantId, loanId: applied.loanId, seq: 1, repaymentId: repaid.repayment.id, amount: 0n, waived: true });
       const leaver = await admitMember(ctx, { nameEn: "Seed leaver", phone: "01722222222" }, { userId: t.adminUserId });
       if (!leaver.ok) throw new Error("seed leaver");

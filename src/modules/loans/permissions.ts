@@ -34,3 +34,8 @@ export function repaymentChannel(roles: readonly string[]): "office" | "collecto
   if (roles.includes("field_collector")) return "collector";
   return null;
 }
+
+/** A new schedule is a credit decision, so it is made by the managing officers who approve loans. */
+export function canRescheduleLoans(roles: readonly string[]): boolean {
+  return canApproveLoans(roles);
+}

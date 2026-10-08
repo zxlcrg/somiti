@@ -77,3 +77,22 @@ export function loanRepaymentText(m: LoanRepaymentText, locale: Locale): string 
     (m.stillOwed > 0n ? ` Still owed Tk ${amount(m.stillOwed, "en")}.` : " Loan fully repaid.")
   );
 }
+
+export interface LoanRescheduleText {
+  somiti: string;
+  productCode: string;
+  loanNo: number;
+  installments: number;
+  /** The usual new installment (the last may be smaller). */
+  installment: bigint;
+  firstDueOn: string;
+}
+
+export function loanRescheduleText(m: LoanRescheduleText, locale: Locale): string {
+  const [y, mo, d] = m.firstDueOn.split("-");
+  if (locale === "bn") {
+    const n = (v: bigint | number | string) => toBanglaDigits(String(v));
+    return `${m.somiti}: ${m.productCode} ঋণ ${n(m.loanNo)} নতুন সূচি: ${n(m.installments)} কিস্তি, প্রতিটি ৳${amount(m.installment, "bn")}, প্রথমটি ${n(`${d}/${mo}/${y}`)}।`;
+  }
+  return `${m.somiti}: ${m.productCode} loan ${m.loanNo} rescheduled: ${m.installments} installments of Tk ${amount(m.installment, "en")}, first due ${d}/${mo}/${y}.`;
+}

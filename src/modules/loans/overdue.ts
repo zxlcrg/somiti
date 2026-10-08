@@ -47,10 +47,13 @@ export async function overdueLoans(ctx: TenantTx): Promise<OverdueSummary> {
   const today = day!.d;
   const rows = await tx.execute<{ loan_id: string; installments: number; amount: string; oldest: string; days: number }>(sql`
     with paid as (
-      select x.loan_id, x.seq, sum(x.principal + x.interest + x.rebate) as paid
-        from loan_repayment_line x
-       where x.tenant_id = ${tenantId}
-       group by x.loan_id, x.seq
+      select loan_id, seq, sum(amount) as paid
+        from (select x.loan_id, x.seq, x.principal + x.interest + x.rebate as amount
+                from loan_repayment_line x where x.tenant_id = ${tenantId}
+              union all
+              select m.loan_id, m.seq, m.principal + m.interest
+                from loan_reschedule_line m where m.tenant_id = ${tenantId}) settled
+       group by loan_id, seq
     ), late as (
       select i.loan_id, i.due_on, i.principal + i.interest - coalesce(p.paid, 0) as owing
         from loan_installment i
@@ -98,7 +101,9 @@ export async function overdueCount(ctx: TenantTx): Promise<number> {
           select 1 from loan_installment i
            where i.tenant_id = loan.tenant_id and i.loan_id = loan.id and i.due_on < ${day!.d}::date
              and i.principal + i.interest > coalesce((select sum(x.principal + x.interest + x.rebate) from loan_repayment_line x
-                                                       where x.tenant_id = i.tenant_id and x.loan_id = i.loan_id and x.seq = i.seq), 0))`,
+                                                       where x.tenant_id = i.tenant_id and x.loan_id = i.loan_id and x.seq = i.seq), 0)
+                                          + coalesce((select sum(m.principal + m.interest) from loan_reschedule_line m
+                                                       where m.tenant_id = i.tenant_id and m.loan_id = i.loan_id and m.seq = i.seq), 0))`,
       ),
     );
   return row?.n ?? 0;

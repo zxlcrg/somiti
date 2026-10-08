@@ -1633,3 +1633,111 @@
   color: color-mix(in srgb, var(--accent-3) 70%, var(--fg));
   font-weight: 600;
 }
+
+/* ---------- Rescheduling ---------- */
+
+.inst-chip.i-moved {
+  --ic: #7a5af5;
+}
+
+.schedule-table tr.st-moved td {
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 50%, transparent);
+}
+
+.schedule-table tr.st-moved td .inst-chip {
+  text-decoration: none;
+  display: inline-block;
+}
+
+.schedule-table tr.resched-divider td {
+  padding: 0.55rem 0.75rem;
+  border-top: 2px solid color-mix(in srgb, #7a5af5 45%, var(--line));
+  background: color-mix(in srgb, #7a5af5 8%, var(--card));
+  font-size: 0.88rem;
+}
+
+.resched-card {
+  border-top: 4px solid color-mix(in srgb, #7a5af5 70%, var(--line));
+}
+
+.resched-card.closed p {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 0.9rem;
+}
+
+.resched-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 0.75rem;
+}
+
+.resched-preview {
+  padding: 0.75rem;
+  border: 1px dashed color-mix(in srgb, #7a5af5 45%, var(--line));
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, #7a5af5 5%, var(--card));
+}
+
+.resched-card .confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .inst-chip.i-moved {
+    --ic: #a08bff;
+  }
+}
+
+.resched-grid input {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 520px) {
+  .resched-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.step-form textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1.5px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  resize: vertical;
+  outline: 0;
+}
+
+.step-form textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.step-form .field.has-error textarea {
+  border-color: #e5484d;
+}
+
+.resched-card .btn {
+  gap: 0.4rem;
+}
+
+.resched-card {
+  min-width: 0;
+}
+
+.resched-preview .example-rows div {
+  flex-wrap: wrap;
+  column-gap: 0.75rem;
+}
+
+.resched-preview .example-rows dd {
+  margin-left: auto;
+  text-align: right;
+}
