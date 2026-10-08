@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getTranslations } from "next-intl/server";
@@ -8,12 +9,25 @@ import { tenant } from "@/db/schema";
 import { formatDate, formatDateTime, formatInteger, formatTaka } from "@/lib/format";
 import { primaryName } from "@/lib/names";
 import { formatBdPhone } from "@/lib/phone";
-import { canApplyForLoans, canApproveLoans, canDisburseLoans, canViewLoans, getLoan, installmentStatus, listRepayments, repaymentChannel, standing } from "@/modules/loans";
+import {
+  canApplyForLoans,
+  canApproveLoans,
+  canDisburseLoans,
+  canRescheduleLoans,
+  canViewLoans,
+  getLoan,
+  installmentStatus,
+  listRepayments,
+  listReschedules,
+  repaymentChannel,
+  standing,
+} from "@/modules/loans";
 import { requireUser } from "../../auth";
 import { pageLocale } from "../../books";
 import { MemberAvatar } from "../../members/member-avatar";
 import { METHOD_ICON, percent, STATUS_ICON } from "../ui";
 import { RepayPanel } from "./repay-panel";
+import { ReschedulePanel } from "./reschedule-panel";
 import { CancelPanel, DecidePanel, DisbursePanel } from "./step-panel";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,7 +40,7 @@ export default async function LoanPage({
   searchParams,
 }: {
   params: Promise<{ loanId: string }>;
-  searchParams: Promise<{ applied?: string; done?: string; paid?: string; closed?: string }>;
+  searchParams: Promise<{ applied?: string; done?: string; paid?: string; closed?: string; rescheduled?: string }>;
 }) {
   const user = await requireUser();
   const t = await getTranslations("loans");
@@ -37,10 +51,12 @@ export default async function LoanPage({
   const data = await withTenant(getAppDb(), user.tenantId, async (ctx) => {
     const l = await getLoan(ctx, loanId);
     const [somiti] = await ctx.tx.select({ d: tenant.businessDate }).from(tenant).where(eq(tenant.id, ctx.tenantId));
-    return l ? { l, today: somiti!.d, repayments: l.disbursedOn ? await listRepayments(ctx, l.id) : [] } : null;
+    return l
+      ? { l, today: somiti!.d, repayments: l.disbursedOn ? await listRepayments(ctx, l.id) : [], reschedules: l.disbursedOn ? await listReschedules(ctx, l.id) : [] }
+      : null;
   });
   if (!data) notFound();
-  const { l, today, repayments } = data;
+  const { l, today, repayments, reschedules } = data;
   const locale = await pageLocale();
   const taka = (p: bigint) => formatTaka(p, locale);
   const num = (n: number | bigint) => formatInteger(n, locale);
@@ -52,6 +68,7 @@ export default async function LoanPage({
   const canCancel = (l.status === "applied" || l.status === "approved") && canApplyForLoans(user.roles);
   const channel = repaymentChannel(user.roles);
   const canRepay = l.status === "disbursed" && channel !== null;
+  const canReschedule = l.status === "disbursed" && canRescheduleLoans(user.roles);
   const running = l.status === "disbursed" || l.status === "closed";
   const owedTotal = l.summary.totalRepayable - l.paidPrincipal - l.paidInterest;
   const st = running ? standing(l.schedule, today) : null;
@@ -86,6 +103,12 @@ export default async function LoanPage({
         <p className="celebrate" role="status">
           <span aria-hidden="true">{search.closed === "1" ? "🎉" : "🧾"}</span>{" "}
           {search.closed === "1" ? t("detail.closedBanner", { no: num(paidNo) }) : t("detail.paidBanner", { no: num(paidNo), owed: taka(owedTotal) })}
+        </p>
+      )}
+      {search.rescheduled === "1" && reschedules.length > 0 && (
+        <p className="celebrate" role="status">
+          <span aria-hidden="true">🔁</span>{" "}
+          {t("reschedule.banner", { n: num(reschedules.at(-1)!.installments), count: reschedules.at(-1)!.installments, date: formatDate(reschedules.at(-1)!.firstDueOn, locale) })}
         </p>
       )}
       {done && (
@@ -230,10 +253,24 @@ export default async function LoanPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {l.schedule.map((r) => {
+                  {l.schedule.map((r, i) => {
                     const state = running ? installmentStatus(r, today) : null;
+                    const fresh = (r.scheduleNo ?? 0) > 0 && r.scheduleNo !== l.schedule[i - 1]?.scheduleNo ? reschedules.find((x) => x.no === r.scheduleNo) : undefined;
                     return (
-                    <tr key={r.seq} className={state ? `st-${state}` : undefined}>
+                    <Fragment key={r.seq}>
+                    {fresh && (
+                      <tr className="resched-divider">
+                        <td colSpan={5}>
+                          <span aria-hidden="true">🔁</span>{" "}
+                          <strong>{t("reschedule.divider", { date: formatDate(fresh.businessDate, locale) })}</strong>{" "}
+                          <span className="muted">
+                            · {fresh.reason} · {primaryName(fresh.createdBy, locale)}
+                            {fresh.extraCharge > 0n ? ` · ${t("reschedule.extraShort", { amount: taka(fresh.extraCharge), charge: charge.toLowerCase() })}` : ""}
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+                    <tr className={state ? `st-${state}` : undefined}>
                       <td className="num muted">{num(r.seq)}</td>
                       <td>
                         {formatDate(r.dueOn, locale)}
@@ -249,6 +286,7 @@ export default async function LoanPage({
                         <strong>{taka(r.principal + r.interest)}</strong>
                       </td>
                     </tr>
+                    </Fragment>
                     );
                   })}
                 </tbody>
@@ -304,7 +342,7 @@ export default async function LoanPage({
           )}
         </div>
 
-        {(canDecide || canPay || ownWaiting || canCancel || canRepay) && (
+        {(canDecide || canPay || ownWaiting || canCancel || canRepay || canReschedule) && (
           <aside className="loan-side">
             {canRepay && (
               <RepayPanel
@@ -317,6 +355,8 @@ export default async function LoanPage({
                   paidPrincipal: r.paidPrincipal.toString(),
                   paidInterest: r.paidInterest.toString(),
                   rebated: (r.rebated ?? 0n).toString(),
+                  movedPrincipal: (r.movedPrincipal ?? 0n).toString(),
+                  movedInterest: (r.movedInterest ?? 0n).toString(),
                 }))}
                 allocation={l.allocation}
                 lateFine={l.lateFine?.toString() ?? null}
@@ -324,6 +364,25 @@ export default async function LoanPage({
                 rebateBp={l.settlementRebateBp}
                 today={today}
                 channel={channel!}
+                charge={charge}
+              />
+            )}
+            {canReschedule && (
+              <ReschedulePanel
+                loanId={l.id}
+                rows={l.schedule.map((r) => ({
+                  seq: r.seq,
+                  dueOn: r.dueOn,
+                  principal: r.principal.toString(),
+                  interest: r.interest.toString(),
+                  paidPrincipal: r.paidPrincipal.toString(),
+                  paidInterest: r.paidInterest.toString(),
+                  rebated: (r.rebated ?? 0n).toString(),
+                  movedPrincipal: (r.movedPrincipal ?? 0n).toString(),
+                  movedInterest: (r.movedInterest ?? 0n).toString(),
+                }))}
+                today={today}
+                frequency={l.frequency}
                 charge={charge}
               />
             )}

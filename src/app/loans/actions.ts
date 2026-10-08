@@ -12,17 +12,21 @@ import {
   canApproveLoans,
   canDisburseLoans,
   canManageLoanProducts,
+  canRescheduleLoans,
   cancelLoan,
   createLoanProduct,
   disburseLoan,
   rejectLoan,
   repaymentChannel,
   repayLoan,
+  rescheduleLoan,
   setLoanProductActive,
   type LoanApplicationErrors,
   type LoanDecisionError,
   type LoanProductErrors,
   type RepaymentError,
+  type RescheduleError,
+  type RescheduleErrors,
 } from "@/modules/loans";
 import { getCurrentUser } from "../auth";
 import { flushSms } from "../sms";
@@ -193,4 +197,41 @@ export async function repayLoanAction(loanId: string, prev: RepayState, form: Fo
   await flushSms(user.tenantId);
   revalidatePath("/", "layout");
   redirect(`/loans/${loanId}?paid=${result.repayment.entryNo}${result.closed ? "&closed=1" : ""}`);
+}
+
+// ---------- Rescheduling ----------
+
+export interface RescheduleState {
+  errors?: Omit<RescheduleErrors, "form"> & { form?: RescheduleError | "forbidden" | "server" };
+  attempt?: number;
+}
+
+export async function rescheduleLoanAction(loanId: string, prev: RescheduleState, form: FormData): Promise<RescheduleState> {
+  const attempt = (prev.attempt ?? 0) + 1;
+  const user = await signedIn();
+  if (!canRescheduleLoans(user.roles)) return { errors: { form: "forbidden" }, attempt };
+  let result;
+  try {
+    const dev = await device();
+    result = await withTenant(getAppDb(), user.tenantId, (ctx) =>
+      rescheduleLoan(
+        ctx,
+        {
+          loanId,
+          installments: field(form, "installments"),
+          firstDueOn: field(form, "firstDueOn"),
+          extraCharge: field(form, "extraCharge"),
+          reason: field(form, "reason"),
+        },
+        { userId: user.userId, device: dev },
+      ),
+    );
+  } catch (err) {
+    console.error(err);
+    return { errors: { form: "server" }, attempt };
+  }
+  if (!result.ok) return { errors: result.errors, attempt };
+  await flushSms(user.tenantId);
+  revalidatePath("/", "layout");
+  redirect(`/loans/${loanId}?rescheduled=1`);
 }

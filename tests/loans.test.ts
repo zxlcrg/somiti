@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { eq, sql } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { appUser, auditLog, loan, loanFine, loanInstallment, loanRepayment, smsOutbox, tenant, userRole } from "../src/db/schema";
+import { appUser, auditLog, loan, loanFine, loanInstallment, loanRepayment, loanReschedule, smsOutbox, tenant, userRole } from "../src/db/schema";
 import { addMonths } from "../src/lib/dates";
 import { getEntry, trialBalance } from "../src/modules/ledger";
 import { admitMember, exitBlockers } from "../src/modules/members";
@@ -27,6 +27,8 @@ import {
   loanStats,
   overdueCount,
   overdueLoans,
+  rescheduleLoan,
+  rescheduleRows,
   settlementQuote,
   parsePercent,
   previewTerms,
@@ -536,5 +538,72 @@ describe("early settlement", () => {
     const sms = await s.t.run(({ tx }) => tx.select({ body: smsOutbox.body }).from(smsOutbox).where(sql`${smsOutbox.kind} = 'loan_repayment'`));
     expect(sms.some((x) => x.body.includes("Early settlement rebate Tk 990") && x.body.includes("Loan fully repaid"))).toBe(true);
     await expect(s.t.run(({ tx }) => tx.update(loan).set({ settlementRebateBp: 10000 }).where(eq(loan.id, loanId)))).rejects.toThrow();
+  });
+});
+
+describe("rescheduling", () => {
+  it("spreads what is owed over the new installments, one period apart", () => {
+    expect(rescheduleRows({ principal: 1000_00n, interest: 100_00n, installments: 3, frequency: "monthly", firstDueOn: "2027-01-31" })).toEqual([
+      { seq: 1, dueOn: "2027-01-31", principal: 334_00n, interest: 34_00n },
+      { seq: 2, dueOn: "2027-02-28", principal: 334_00n, interest: 34_00n },
+      { seq: 3, dueOn: "2027-03-31", principal: 332_00n, interest: 32_00n },
+    ]);
+    expect(rescheduleRows({ principal: 300_00n, interest: 0n, installments: 2, frequency: "weekly", firstDueOn: "2027-01-01" })?.map((r) => r.dueOn)).toEqual(["2027-01-01", "2027-01-08"]);
+    expect(rescheduleRows({ principal: 1_00n, interest: 0n, installments: 3, frequency: "weekly", firstDueOn: "2027-01-01" })).toBeNull();
+  });
+
+  it("moves what is left onto a new schedule, without posting, and keeps the old one", async () => {
+    const s = await setup();
+    const p = await s.t.run((ctx) =>
+      createLoanProduct(
+        ctx,
+        { code: "RS", nameEn: "Reschedule", method: "flat", rate: "12", frequency: "monthly", minAmount: "1000", maxAmount: "100000", maxInstallments: "24" },
+        { userId: s.t.adminUserId },
+      ),
+    );
+    const applied = await s.t.run((ctx) =>
+      applyForLoan(ctx, { memberId: s.memberId, productId: (p as { id: string }).id, amount: "22,000", installments: "10", submitKey: randomUUID() }, { userId: s.t.adminUserId }),
+    );
+    const loanId = (applied as { loanId: string }).loanId;
+    await s.t.run((ctx) => approveLoan(ctx, { loanId, userId: s.secretary }));
+    await s.t.run((ctx) => disburseLoan(ctx, { loanId, method: "cash", userId: s.t.adminUserId }));
+    await s.t.run(({ tx, tenantId }) => tx.update(tenant).set({ businessDate: "2027-01-10" }).where(eq(tenant.id, tenantId)));
+    const pay = (amount: string) =>
+      s.t.run((ctx) => repayLoan(ctx, { loanId, amount, method: "cash", idempotencyKey: randomUUID() }, { userId: s.t.adminUserId, channel: "office" }));
+    expect(await pay("1,000")).toMatchObject({ ok: true });
+    expect(await s.t.run((ctx) => overdueCount(ctx))).toBe(1);
+    const before = await s.t.run((ctx) => trialBalance(ctx, "2027-01-10"));
+
+    const resched = (f: Partial<{ installments: string; firstDueOn: string; extraCharge: string; reason: string }>) =>
+      s.t.run((ctx) =>
+        rescheduleLoan(ctx, { loanId, installments: "12", firstDueOn: "2027-02-10", extraCharge: "600", reason: "Crop failure", ...f }, { userId: s.secretary }),
+      );
+    expect(await resched({ firstDueOn: "2027-01-10", reason: "x", installments: "0" })).toEqual({
+      ok: false,
+      errors: { firstDueOn: "date_past", reason: "reason_length", installments: "invalid_installments" },
+    });
+    // 1,000 paid 220 charge then 780 principal: 21,220 principal and 1,980 charge left, plus 600 agreed.
+    const done = await resched({});
+    expect(done).toMatchObject({ ok: true, reschedule: { no: 1, principal: 21220_00n, interest: 1980_00n, extraCharge: 600_00n, installments: 12 } });
+
+    const l = (await s.t.run((ctx) => getLoan(ctx, loanId)))!;
+    expect(l.schedule).toHaveLength(22);
+    expect(l.schedule.slice(0, 10).map((r) => installmentStatus(r, "2027-01-10"))).toEqual(Array(10).fill("moved"));
+    expect(l.schedule[10]).toMatchObject({ seq: 11, dueOn: "2027-02-10", principal: 1769_00n, interest: 215_00n, scheduleNo: 1 });
+    expect(l.schedule[21]).toMatchObject({ seq: 22, dueOn: "2028-01-10", principal: 1761_00n, interest: 215_00n });
+    expect(l.summary).toMatchObject({ installment: 1984_00n, totalRepayable: 24800_00n });
+    expect(await s.t.run((ctx) => overdueCount(ctx))).toBe(0);
+    // No money moved, so the books are as they were.
+    expect(await s.t.run((ctx) => trialBalance(ctx, "2027-01-10"))).toEqual(before);
+
+    expect(await pay("1,984")).toMatchObject({ ok: true, repayment: { firstSeq: 11, lastSeq: 11, principal: 1769_00n, interest: 215_00n } });
+    expect(await resched({ installments: "6", firstDueOn: "2027-03-10", extraCharge: "" })).toMatchObject({ ok: true, reschedule: { no: 2, extraCharge: 0n } });
+    const again = (await s.t.run((ctx) => getLoan(ctx, loanId)))!;
+    expect(again.schedule).toHaveLength(28);
+    expect(again.summary.totalRepayable).toBe(24800_00n);
+
+    const sms = await s.t.run(({ tx }) => tx.select({ body: smsOutbox.body }).from(smsOutbox).where(sql`${smsOutbox.kind} = 'loan_reschedule'`));
+    expect(sms[0]?.body).toContain("rescheduled: 12 installments of Tk 1,984, first due 10/02/2027");
+    await expect(s.t.run(({ tx }) => tx.update(loanReschedule).set({ reason: "changed" }))).rejects.toThrow();
   });
 });

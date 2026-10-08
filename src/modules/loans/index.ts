@@ -1,4 +1,4 @@
-export { canApplyForLoans, canApproveLoans, canDisburseLoans, canManageLoanProducts, canViewLoans, repaymentChannel } from "./permissions";
+export { canApplyForLoans, canApproveLoans, canDisburseLoans, canManageLoanProducts, canRescheduleLoans, canViewLoans, repaymentChannel } from "./permissions";
 export {
   allocate,
   installmentStatus,
@@ -22,7 +22,7 @@ export {
   type RepaymentResult,
   type RepaymentView,
 } from "./repayments";
-export { buildSchedule, dueDate, summarize, PERIODS_PER_YEAR, type LoanFrequency, type LoanMethod, type ScheduledInstallment, type ScheduleSummary } from "./schedule";
+export { buildSchedule, dueDate, rescheduleRows, summarize, PERIODS_PER_YEAR, type LoanFrequency, type LoanMethod, type ScheduledInstallment, type ScheduleSummary } from "./schedule";
 export {
   ALLOCATIONS,
   CHARGE_LABELS,
@@ -67,3 +67,4 @@ export {
   type TermsPreview,
 } from "./loans";
 export { AGE_BANDS, ageBand, overdueCount, overdueLoans, type AgeBand, type OverdueLoan, type OverdueSummary } from "./overdue";
+export { listReschedules, rescheduleLoan, type RescheduleError, type RescheduleErrors, type RescheduleForm, type RescheduleView } from "./reschedule";

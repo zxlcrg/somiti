@@ -1484,7 +1484,8 @@
         "part": "Part paid",
         "overdue": "Overdue",
         "due": "Due today",
-        "upcoming": "Upcoming"
+        "upcoming": "Upcoming",
+        "moved": "Rescheduled"
       },
       "partPaid": "Part paid, {amount}"
     },
@@ -1687,6 +1688,42 @@
       "installments": "{count, plural, one {{n} installment} other {{n} installments}}",
       "since": "since {date}",
       "howFines": "When a member pays a late installment, its late fine is added on top. The cashier can waive it; a collector cannot."
+    },
+    "reschedule": {
+      "title": "Reschedule",
+      "lead": "{count, plural, one {# installment} other {# installments}} still open, {amount} owed in all. A new schedule spreads it over new installments.",
+      "open": "Make a new schedule",
+      "installments": "New installments",
+      "firstDueOn": "First one due on",
+      "extraCharge": "Extra {charge} for the longer term",
+      "extraHint": "Optional. Leave empty to keep what the member owes the same.",
+      "reason": "Reason",
+      "reasonHint": "For the record, e.g. crop failure or illness. The member gets an SMS with the new schedule.",
+      "preview": "New schedule",
+      "each": "{count, plural, one {# installment of} other {# installments of}}",
+      "firstLast": "First and last due",
+      "last": "Last installment",
+      "total": "Total to repay from now",
+      "note": "No money moves and nothing is posted. The old installments stay on record, marked rescheduled.",
+      "submit": "Save new schedule",
+      "banner": "Loan rescheduled: {count, plural, one {# installment} other {# installments}} from {date}. The member has been sent an SMS.",
+      "divider": "New schedule from {date}",
+      "extraShort": "extra {charge} {amount}"
+    },
+    "rescheduleErrors": {
+      "required": "Fill this in.",
+      "invalid_installments": "Enter a number from 1 to 520.",
+      "invalid_date": "Enter a valid date.",
+      "date_past": "Pick a date after today.",
+      "date_too_far": "Pick a date within a year.",
+      "invalid_amount": "Enter an amount of zero or more.",
+      "reason_length": "Write a reason of 3 to 300 characters.",
+      "too_many_installments": "That is too many installments for what is owed.",
+      "not_found": "This loan was not found.",
+      "not_running": "Only a running loan can be rescheduled.",
+      "nothing_owed": "Nothing is left to pay on this loan.",
+      "forbidden": "Only the president, secretary or admin can reschedule a loan.",
+      "server": "Something went wrong. Try again."
     }
   }
 }

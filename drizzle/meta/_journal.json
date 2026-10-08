@@ -267,6 +267,20 @@
       "when": 1791480737568,
       "tag": "0037_loan_settlement_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791481461649,
+      "tag": "0038_loan_reschedule",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791481484809,
+      "tag": "0039_loan_reschedule_rls",
+      "breakpoints": true
     }
   ]
 }
