@@ -170,6 +170,7 @@ export async function applyForLoan(ctx: TenantTx, input: LoanApplicationInput, a
       processingFee,
       allocation: product.allocation,
       lateFine: product.lateFine,
+      settlementRebateBp: product.settlementRebateBp,
       purpose,
       appliedBy: actor.userId,
       appliedOn: await businessDate(ctx),
@@ -374,6 +375,7 @@ export interface LoanView {
   allocation: Allocation;
   /** Fine per late installment; null for none. */
   lateFine: bigint | null;
+  settlementRebateBp: number;
   purpose: string | null;
   appliedOn: string;
   createdAt: Date;
@@ -422,6 +424,7 @@ function loanQuery(ctx: TenantTx) {
       processingFee: loan.processingFee,
       allocation: loan.allocation,
       lateFine: loan.lateFine,
+      settlementRebateBp: loan.settlementRebateBp,
       closedOn: loan.closedOn,
       paidPrincipal: sql<string>`(select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id})`.mapWith(
         (v: string | number) => BigInt(v),
@@ -475,6 +478,7 @@ function view(r: LoanRow): LoanView {
     processingFee: r.processingFee,
     allocation: r.allocation,
     lateFine: r.lateFine,
+    settlementRebateBp: r.settlementRebateBp,
     purpose: r.purpose,
     appliedOn: r.appliedOn,
     createdAt: r.createdAt,
@@ -535,6 +539,7 @@ export async function scheduleState(ctx: TenantTx, loanId: string): Promise<Inst
       seq: loanRepaymentLine.seq,
       principal: sql<string>`sum(${loanRepaymentLine.principal})`.as("paid_principal"),
       interest: sql<string>`sum(${loanRepaymentLine.interest})`.as("paid_interest"),
+      rebated: sql<string>`sum(${loanRepaymentLine.rebate})`.as("rebated"),
     })
     .from(loanRepaymentLine)
     .where(and(eq(loanRepaymentLine.tenantId, tenantId), eq(loanRepaymentLine.loanId, loanId)))
@@ -548,12 +553,18 @@ export async function scheduleState(ctx: TenantTx, loanId: string): Promise<Inst
       interest: loanInstallment.interest,
       paidPrincipal: paid.principal,
       paidInterest: paid.interest,
+      rebated: paid.rebated,
     })
     .from(loanInstallment)
     .leftJoin(paid, eq(paid.seq, loanInstallment.seq))
     .where(and(eq(loanInstallment.tenantId, tenantId), eq(loanInstallment.loanId, loanId)))
     .orderBy(asc(loanInstallment.seq));
-  return rows.map((r) => ({ ...r, paidPrincipal: BigInt(r.paidPrincipal ?? 0), paidInterest: BigInt(r.paidInterest ?? 0) }));
+  return rows.map((r) => ({
+    ...r,
+    paidPrincipal: BigInt(r.paidPrincipal ?? 0),
+    paidInterest: BigInt(r.paidInterest ?? 0),
+    rebated: BigInt(r.rebated ?? 0),
+  }));
 }
 
 export async function listLoans(

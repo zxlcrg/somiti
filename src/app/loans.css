@@ -1598,3 +1598,38 @@
 .head-actions .btn {
   gap: 0.4rem;
 }
+
+/* ---------- Early settlement ---------- */
+
+.chip-btn[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+}
+
+.chip-btn.settle-chip {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent-3) 60%, var(--line));
+}
+
+.chip-btn.settle-chip.on {
+  border-style: solid;
+  border-color: var(--accent-3);
+  background: color-mix(in srgb, var(--accent-3) 16%, var(--card));
+}
+
+.settle-note {
+  color: color-mix(in srgb, var(--accent-3) 60%, var(--fg));
+}
+
+.example-rows .rebate-row dd {
+  color: color-mix(in srgb, var(--accent-3) 70%, var(--fg));
+  font-weight: 700;
+}
+
+.settle-tag {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-3) 16%, transparent);
+  color: color-mix(in srgb, var(--accent-3) 70%, var(--fg));
+  font-weight: 600;
+}

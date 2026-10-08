@@ -19,7 +19,7 @@ const FREQUENCIES: { key: LoanFrequency; icon: string }[] = [
   { key: "monthly", icon: "🌙" },
 ];
 
-type Field = "code" | "nameEn" | "nameBn" | "rate" | "minAmount" | "maxAmount" | "maxInstallments" | "fee" | "method" | "frequency" | "chargeLabel" | "allocation" | "lateFine";
+type Field = "code" | "nameEn" | "nameBn" | "rate" | "minAmount" | "maxAmount" | "maxInstallments" | "fee" | "method" | "frequency" | "chargeLabel" | "allocation" | "lateFine" | "rebate";
 
 export function LoanProductForm() {
   const t = useTranslations("loans");
@@ -36,6 +36,7 @@ export function LoanProductForm() {
     maxInstallments: "",
     fee: "",
     lateFine: "",
+    rebate: "",
     method: "flat",
     frequency: "monthly",
     chargeLabel: "service_charge",
@@ -163,6 +164,7 @@ export function LoanProductForm() {
           {text("maxInstallments", { placeholder: v.frequency === "weekly" ? "46" : "12", hint: t(`productForm.installmentsHint.${v.frequency as "weekly"}`) })}
           {text("fee", { placeholder: "1", suffix: "%", hint: t("productForm.feeHint") })}
           {text("lateFine", { placeholder: "50", money: true, hint: t("productForm.lateFineHint") })}
+          {text("rebate", { placeholder: "50", suffix: "%", hint: t("productForm.rebateHint", { charge: charge.toLowerCase() }) })}
         </section>
       </div>
 

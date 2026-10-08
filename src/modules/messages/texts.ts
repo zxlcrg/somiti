@@ -56,6 +56,8 @@ export interface LoanRepaymentText {
   amount: bigint;
   stillOwed: bigint;
   fine?: bigint;
+  /** Charge let off for settling early. */
+  rebate?: bigint;
 }
 
 export function loanRepaymentText(m: LoanRepaymentText, locale: Locale): string {
@@ -64,12 +66,14 @@ export function loanRepaymentText(m: LoanRepaymentText, locale: Locale): string 
     return (
       `${m.somiti}: ${m.productCode} ঋণ ${n(m.loanNo)}-এ ৳${amount(m.amount, "bn")} কিস্তি জমা, রসিদ ${n(m.entryNo)}।` +
       (m.fine ? ` জরিমানা ৳${amount(m.fine, "bn")}।` : "") +
+      (m.rebate ? ` আগাম পরিশোধে ছাড় ৳${amount(m.rebate, "bn")}।` : "") +
       (m.stillOwed > 0n ? ` বাকি ৳${amount(m.stillOwed, "bn")}।` : " ঋণ সম্পূর্ণ পরিশোধ হয়েছে।")
     );
   }
   return (
     `${m.somiti}: Tk ${amount(m.amount, "en")} paid on ${m.productCode} loan ${m.loanNo}, receipt ${m.entryNo}.` +
       (m.fine ? ` Late fine Tk ${amount(m.fine, "en")}.` : "") +
+      (m.rebate ? ` Early settlement rebate Tk ${amount(m.rebate, "en")}.` : "") +
     (m.stillOwed > 0n ? ` Still owed Tk ${amount(m.stillOwed, "en")}.` : " Loan fully repaid.")
   );
 }

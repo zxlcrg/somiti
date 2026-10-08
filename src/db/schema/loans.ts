@@ -50,6 +50,8 @@ export const loanProduct = pgTable(
     allocation: loanAllocationEnum("allocation").notNull().default("interest_first"),
     /** Fine per installment paid after its due date, in paisa; null means no fines. */
     lateFine: bigint("late_fine", { mode: "bigint" }),
+    /** Share of the charge on installments not yet due that is let off when a loan is settled early, in basis points. */
+    settlementRebateBp: integer("settlement_rebate_bp").notNull().default(0),
     active: boolean("active").notNull().default(true),
     createdBy: uuid("created_by").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -65,6 +67,7 @@ export const loanProduct = pgTable(
     check("loan_product_installments", sql`${t.maxInstallments} BETWEEN 1 AND 520`),
     check("loan_product_fee", sql`${t.processingFeeBp} BETWEEN 0 AND 1000`),
     check("loan_product_late_fine", sql`${t.lateFine} IS NULL OR ${t.lateFine} > 0`),
+    check("loan_product_settlement_rebate", sql`${t.settlementRebateBp} BETWEEN 0 AND 10000`),
   ],
 );
 
@@ -91,6 +94,7 @@ export const loan = pgTable(
     processingFee: bigint("processing_fee", { mode: "bigint" }).notNull(),
     allocation: loanAllocationEnum("allocation").notNull().default("interest_first"),
     lateFine: bigint("late_fine", { mode: "bigint" }),
+    settlementRebateBp: integer("settlement_rebate_bp").notNull().default(0),
     purpose: text("purpose"),
     status: loanStatusEnum("status").notNull().default("applied"),
     appliedBy: uuid("applied_by").notNull(),
@@ -128,6 +132,7 @@ export const loan = pgTable(
     check("loan_principal", sql`${t.principal} > 0`),
     check("loan_rate", sql`${t.rateBp} BETWEEN 0 AND 10000`),
     check("loan_installments", sql`${t.installments} BETWEEN 1 AND 520`),
+    check("loan_settlement_rebate", sql`${t.settlementRebateBp} BETWEEN 0 AND 10000`),
     check("loan_fee", sql`${t.processingFee} >= 0 AND ${t.processingFee} < ${t.principal}`),
     // Maker-checker is a different person, not a different role (architecture review).
     check(
@@ -192,6 +197,10 @@ export const loanRepayment = pgTable(
     interest: bigint("interest", { mode: "bigint" }).notNull(),
     /** Late fine taken on top of the amount, booked to Fine income. */
     fine: bigint("fine", { mode: "bigint" }).notNull().default(sql`0`),
+    /** Charge let off by an early settlement; never posted (charges are income only when paid). */
+    rebate: bigint("rebate", { mode: "bigint" }).notNull().default(sql`0`),
+    /** True when this payment settled the loan early, at the settlement figure. */
+    settlement: boolean("settlement").notNull().default(false),
     channel: depositChannelEnum("channel").notNull(),
     paymentMethod: paymentMethodEnum("payment_method").notNull(),
     paymentRef: text("payment_ref"),
@@ -208,7 +217,8 @@ export const loanRepayment = pgTable(
     foreignKey({ name: "loan_repayment_loan_fk", columns: [t.tenantId, t.loanId], foreignColumns: [loan.tenantId, loan.id] }),
     foreignKey({ name: "loan_repayment_entry_fk", columns: [t.tenantId, t.journalEntryId], foreignColumns: [journalEntry.tenantId, journalEntry.id] }),
     foreignKey({ name: "loan_repayment_created_by_fk", columns: [t.tenantId, t.createdBy], foreignColumns: [appUser.tenantId, appUser.id] }),
-    check("loan_repayment_amounts", sql`${t.amount} > 0 AND ${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.fine} >= 0 AND ${t.amount} = ${t.principal} + ${t.interest}`),
+    check("loan_repayment_amounts", sql`${t.amount} > 0 AND ${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.fine} >= 0 AND ${t.rebate} >= 0 AND ${t.amount} = ${t.principal} + ${t.interest}`),
+    check("loan_repayment_rebate", sql`${t.rebate} = 0 OR ${t.settlement}`),
     check("loan_repayment_collector_cash", sql`${t.channel} = 'office' OR ${t.paymentMethod} = 'cash'`),
   ],
 );
@@ -225,6 +235,8 @@ export const loanRepaymentLine = pgTable(
     seq: integer("seq").notNull(),
     principal: bigint("principal", { mode: "bigint" }).notNull(),
     interest: bigint("interest", { mode: "bigint" }).notNull(),
+    /** Charge on this installment let off by an early settlement. */
+    rebate: bigint("rebate", { mode: "bigint" }).notNull().default(sql`0`),
   },
   (t) => [
     unique("loan_repayment_line_seq").on(t.tenantId, t.repaymentId, t.seq),
@@ -235,7 +247,7 @@ export const loanRepaymentLine = pgTable(
       columns: [t.tenantId, t.loanId, t.seq],
       foreignColumns: [loanInstallment.tenantId, loanInstallment.loanId, loanInstallment.seq],
     }),
-    check("loan_repayment_line_amounts", sql`${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.principal} + ${t.interest} > 0`),
+    check("loan_repayment_line_amounts", sql`${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.rebate} >= 0 AND ${t.principal} + ${t.interest} + ${t.rebate} > 0`),
   ],
 );
 

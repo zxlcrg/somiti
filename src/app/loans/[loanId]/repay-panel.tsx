@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { formatInteger, formatTaka } from "@/lib/format";
 import { parseTaka } from "@/lib/money";
-import { allocate, lateFineFor, outstanding, standing, type Allocation, type InstallmentState } from "@/modules/loans/allocate";
+import { allocate, lateFineFor, outstanding, settlementQuote, standing, type Allocation, type InstallmentState } from "@/modules/loans/allocate";
 import { repayLoanAction, type RepayState } from "../actions";
 import { METHOD_ICON } from "../ui-client";
 
@@ -16,6 +16,7 @@ export interface SerialRow {
   interest: string;
   paidPrincipal: string;
   paidInterest: string;
+  rebated: string;
 }
 
 /** The cashier's (or a collector's) repayment form, with the split it will post. */
@@ -28,6 +29,7 @@ export function RepayPanel({
   charge,
   lateFine: lateFineRaw,
   fined,
+  rebateBp,
 }: {
   loanId: string;
   rows: SerialRow[];
@@ -37,6 +39,7 @@ export function RepayPanel({
   charge: string;
   lateFine: string | null;
   fined: number[];
+  rebateBp: number;
 }) {
   const t = useTranslations("loans");
   const l = useLocale();
@@ -48,6 +51,7 @@ export function RepayPanel({
   const [confirming, setConfirming] = useState(false);
   const [edited, setEdited] = useState(false);
   const [waive, setWaive] = useState(false);
+  const [settle, setSettle] = useState(false);
   const [seen, setSeen] = useState(state);
   if (seen !== state) {
     setSeen(state);
@@ -64,6 +68,7 @@ export function RepayPanel({
         interest: BigInt(r.interest),
         paidPrincipal: BigInt(r.paidPrincipal),
         paidInterest: BigInt(r.paidInterest),
+        rebated: BigInt(r.rebated),
       })),
     [raw],
   );
@@ -74,20 +79,30 @@ export function RepayPanel({
   const digits = (s: string) => (locale === "bn" ? s.replace(/[0-9]/g, (d) => "০১২৩৪৫৬৭৮৯"[Number(d)]!) : s);
   const asTyped = (p: bigint) => digits(p % 100n === 0n ? String(p / 100n) : `${p / 100n}.${String(p % 100n).padStart(2, "0")}`);
 
-  const paisa = parseTaka(amount);
-  const lines = paisa !== null ? allocate(rows, paisa, allocation) : null;
+  // Settling early only pays off something when the product lets charge off and some installments are still to come.
+  const quote = channel === "office" && rebateBp > 0 ? settlementQuote(rows, today, rebateBp) : null;
+  const canSettle = quote !== null && quote.rebate > 0n;
+  const settling = settle && canSettle;
+  const paisa = settling ? quote.total : parseTaka(amount);
+  const lines = settling ? quote.lines : paisa !== null ? allocate(rows, paisa, allocation) : null;
   const split = lines
     ? { principal: lines.reduce((s, x) => s + x.principal, 0n), interest: lines.reduce((s, x) => s + x.interest, 0n), first: lines[0]!.seq, last: lines.at(-1)!.seq }
     : null;
   const late = lines ? lateFineFor(rows, lines, today, lateFineRaw ? BigInt(lateFineRaw) : null, fined) : { seqs: [], fine: 0n };
   const fine = waive && channel === "office" ? 0n : late.fine;
   const takeIn = paisa !== null && split ? paisa + fine : null;
-  const tooMuch = paisa !== null && paisa > owed.total;
+  const tooMuch = !settling && paisa !== null && paisa > owed.total;
 
   const quick: { key: string; label: string; value: bigint }[] = [];
   if (st.dueNow > 0n) quick.push({ key: "due", label: t("repay.quick.due"), value: st.dueNow });
   if (st.next && st.next.amount !== st.dueNow) quick.push({ key: "next", label: t("repay.quick.next", { n: num(st.next.seq) }), value: st.next.amount });
   if (!quick.some((q) => q.value === owed.total)) quick.push({ key: "all", label: t("repay.quick.all"), value: owed.total });
+  const pick = (value: string) => {
+    setAmount(value);
+    setSettle(false);
+    setEdited(true);
+    setConfirming(false);
+  };
 
   const e = state.errors ?? {};
   const fieldErr = !edited && e.amount ? t(`repayErrors.${e.amount}`, { owed: taka(BigInt(state.owed ?? "0")) }) : null;
@@ -122,6 +137,7 @@ export function RepayPanel({
         <input type="hidden" name="idempotencyKey" value={key} />
         <input type="hidden" name="method" value={method} />
         {waive && late.fine > 0n && <input type="hidden" name="waiveFine" value="1" />}
+        {settling && <input type="hidden" name="settle" value="1" />}
         <div className={`field${fieldErr || tooMuch ? " has-error" : ""}`}>
           <label htmlFor="repayAmount">{t("repay.amount")}</label>
           <span className="money-input big">
@@ -131,16 +147,14 @@ export function RepayPanel({
               name="amount"
               inputMode="decimal"
               autoComplete="off"
-              value={amount}
-              onChange={(ev) => {
-                setAmount(ev.target.value);
-                setEdited(true);
-                setConfirming(false);
-              }}
+              value={settling ? asTyped(quote.total) : amount}
+              onChange={(ev) => pick(ev.target.value)}
               aria-invalid={fieldErr || tooMuch ? true : undefined}
             />
           </span>
-          {tooMuch ? (
+          {settling ? (
+            <small className="settle-note">{t("repay.settleNote", { percent: `${digits(String(rebateBp / 100))}%`, charge: charge.toLowerCase() })}</small>
+          ) : tooMuch ? (
             <small className="field-error">{t("repayErrors.too_much", { owed: taka(owed.total) })}</small>
           ) : fieldErr ? (
             <small className="field-error">{fieldErr}</small>
@@ -151,15 +165,26 @@ export function RepayPanel({
                 key={q.key}
                 type="button"
                 className="chip-btn"
-                onClick={() => {
-                  setAmount(asTyped(q.value));
-                  setEdited(true);
-                  setConfirming(false);
-                }}
+                aria-pressed={!settling && paisa === q.value}
+                onClick={() => pick(asTyped(q.value))}
               >
                 {q.label} · {taka(q.value)}
               </button>
             ))}
+            {canSettle && (
+              <button
+                type="button"
+                className={`chip-btn settle-chip${settling ? " on" : ""}`}
+                aria-pressed={settling}
+                onClick={() => {
+                  setSettle(!settling);
+                  setEdited(true);
+                  setConfirming(false);
+                }}
+              >
+                <span aria-hidden="true">🏁</span> {t("repay.quick.settle")} · {taka(quote.total)}
+              </button>
+            )}
           </div>
         </div>
 
@@ -212,9 +237,17 @@ export function RepayPanel({
                 <dt>{split.first === split.last ? t("repay.covers.one", { n: num(split.first) }) : t("repay.covers.many", { a: num(split.first), b: num(split.last) })}</dt>
                 <dd />
               </div>
+              {settling && (
+                <div className="rebate-row">
+                  <dt>
+                    <span aria-hidden="true">🎁</span> {t("repay.rebate", { charge: charge.toLowerCase() })}
+                  </dt>
+                  <dd>− {taka(quote.rebate)}</dd>
+                </div>
+              )}
               <div className="hand">
-                <dt>{paisa === owed.total ? t("repay.closes") : t("repay.after")}</dt>
-                <dd>{paisa === owed.total ? "🎉" : taka(owed.total - paisa!)}</dd>
+                <dt>{settling || paisa === owed.total ? t("repay.closes") : t("repay.after")}</dt>
+                <dd>{settling || paisa === owed.total ? "🎉" : taka(owed.total - paisa!)}</dd>
               </div>
             </dl>
             {late.fine > 0n && (
