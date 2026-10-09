@@ -16,6 +16,7 @@ import {
   overdueLoans,
   repaymentsOn,
 } from "@/modules/loans";
+import { canImportOpening } from "@/modules/opening";
 import { requireUser } from "../auth";
 import { pageLocale } from "../books";
 import { MemberAvatar } from "../members/member-avatar";
@@ -27,12 +28,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("title") };
 }
 
-export default async function LoansPage({ searchParams }: { searchParams: Promise<{ created?: string }> }) {
+export default async function LoansPage({ searchParams }: { searchParams: Promise<{ created?: string; imported?: string; from?: string; to?: string }> }) {
   const user = await requireUser();
   const t = await getTranslations("loans");
   if (!canViewLoans(user.roles)) return <p className="notice">{t("noAccess")}</p>;
   const locale = await pageLocale();
-  const { created } = await searchParams;
+  const { created, imported, from, to } = await searchParams;
+  const importedCount = Number(imported) || 0;
   const { stats, products, applied, approved, recent, repaidToday, overdue } = await withTenant(getAppDb(), user.tenantId, async (ctx) => ({
     stats: await loanStats(ctx),
     overdue: await overdueLoans(ctx),
@@ -93,6 +95,11 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
             <span aria-hidden="true">⏰</span> {t("overdue.link")}
             {overdue.loans.length > 0 && <span className="count-badge">{num(overdue.loans.length)}</span>}
           </Link>
+          {canImportOpening(user.roles) && (
+            <Link href="/loans/import" className="btn ghost">
+              <span aria-hidden="true">📥</span> {t("importLink")}
+            </Link>
+          )}
           {manage && (
             <Link href="/loans/products/new" className="btn primary">
               <span aria-hidden="true">＋</span> {t("newProduct")}
@@ -100,6 +107,12 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
           )}
         </div>
       </header>
+
+      {importedCount > 0 && (
+        <p className="celebrate" role="status">
+          <span aria-hidden="true">🎉</span> {t("imported", { count: importedCount, n: num(importedCount), from: num(Number(from) || 0), to: num(Number(to) || 0) })}
+        </p>
+      )}
 
       {fresh && (
         <p className="celebrate" role="status">

@@ -68,3 +68,18 @@ export {
 } from "./loans";
 export { AGE_BANDS, ageBand, overdueCount, overdueLoans, type AgeBand, type OverdueLoan, type OverdueSummary } from "./overdue";
 export { listReschedules, rescheduleLoan, type RescheduleError, type RescheduleErrors, type RescheduleForm, type RescheduleView } from "./reschedule";
+export {
+  importLoans,
+  LOAN_IMPORT_COLUMNS,
+  loanImportTemplate,
+  MAX_LOAN_IMPORT_ROWS,
+  previewLoanImport,
+  type LoanImportError,
+  type LoanImportErrorCode,
+  type LoanImportHeaderError,
+  type LoanImportPreview,
+  type LoanImportResult,
+  type LoanImportRow,
+  type LoanImportRowError,
+  type LoanImportSummary,
+} from "./import";

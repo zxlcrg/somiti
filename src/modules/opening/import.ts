@@ -1,14 +1,15 @@
 import { createHash, randomUUID } from "node:crypto";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import type { TenantTx } from "@/db/client";
-import { branch, idempotencyKey, ledgerAccount, member, savingsTransaction, shareTransaction, tenant } from "@/db/schema";
+import { branch, idempotencyKey, member, savingsTransaction, shareTransaction, tenant } from "@/db/schema";
 import { parseTaka } from "@/lib/money";
 import { recordAudit } from "@/modules/audit/log";
-import { accountIdsByKey, DEFAULT_CHART, postEntry } from "@/modules/ledger";
+import { accountIdsByKey, postEntry } from "@/modules/ledger";
 import { admitMember } from "@/modules/members/service";
 import { sharePrice } from "@/modules/members/shares";
 import { openAccount } from "@/modules/savings/accounts";
 import { listProducts } from "@/modules/savings/products";
+import { ensureOpeningEquity } from "./equity";
 import { MAX_OPENING_AMOUNT, parseOpeningSheet, type OpeningPreview } from "./parse";
 
 /** Setting up the books is the admin's job, done once when the somiti starts using the app. */
@@ -44,26 +45,6 @@ export async function previewOpening(ctx: TenantTx, csv: string): Promise<Openin
   return { ...preview, existingPhones, sharePrice: sheet.sharePrice };
 }
 
-/** Somitis created before the import existed lack account 3900; add it from the default chart. */
-async function ensureOpeningEquity(ctx: TenantTx): Promise<void> {
-  const spec = DEFAULT_CHART.find((a) => a.systemKey === "opening_balance_equity")!;
-  const [parent] = await ctx.tx
-    .select({ id: ledgerAccount.id })
-    .from(ledgerAccount)
-    .where(and(eq(ledgerAccount.tenantId, ctx.tenantId), eq(ledgerAccount.code, spec.parent!)));
-  await ctx.tx
-    .insert(ledgerAccount)
-    .values({
-      tenantId: ctx.tenantId,
-      code: spec.code,
-      nameEn: spec.nameEn,
-      nameBn: spec.nameBn,
-      type: spec.type,
-      parentId: parent?.id ?? null,
-      systemKey: spec.systemKey,
-    })
-    .onConflictDoNothing();
-}
 
 export type OpeningImportError = "has_errors" | "invalid_cash" | "invalid_bank" | "already_used";
 

@@ -170,6 +170,17 @@
   --tone: #e5484d;
 }
 
+.tone-warn {
+  --tone: #c27f00;
+}
+
+.guide-codes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.8rem;
+  margin-top: 0.3rem;
+}
+
 .opening-card {
   padding: 1.1rem 1.25rem;
   border: 1px solid var(--line);

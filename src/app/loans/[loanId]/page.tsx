@@ -192,7 +192,7 @@ export default async function LoanPage({
               </div>
               <div>
                 <dt>{t("apply.handedOver")}</dt>
-                <dd>{taka(l.principal - l.processingFee)}</dd>
+                <dd>{taka(l.imported ? l.imported.originalPrincipal : l.principal - l.processingFee)}</dd>
               </div>
               <div>
                 <dt>{t("detail.lateFine")}</dt>
@@ -227,7 +227,22 @@ export default async function LoanPage({
                   </dd>
                 </div>
               )}
-              {l.decisionNote && (
+              {l.imported && (
+                <div className="wide">
+                  <dt>
+                    <span aria-hidden="true">📥</span> {t("detail.imported")}
+                  </dt>
+                  <dd>
+                    {t("detail.importedNote", {
+                      on: formatDate(l.imported.on, locale),
+                      amount: taka(l.imported.originalPrincipal),
+                      n: num(l.imported.originalInstallments),
+                      paid: taka(l.imported.paidBefore),
+                    })}
+                  </dd>
+                </div>
+              )}
+              {l.decisionNote && !l.imported && (
                 <div className="wide">
                   <dt>{t(l.status === "rejected" ? "detail.rejectReason" : l.status === "cancelled" ? "detail.cancelReason" : "detail.note")}</dt>
                   <dd>{l.decisionNote}</dd>
