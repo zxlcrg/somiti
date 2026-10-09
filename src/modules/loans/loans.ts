@@ -393,6 +393,8 @@ export interface LoanView {
   /** Repaid so far. */
   paidPrincipal: bigint;
   paidInterest: bigint;
+  /** Set when the loan was brought in from the paper books while running; principal and schedule are then what was left. */
+  imported: { on: string; originalPrincipal: bigint; originalInstallments: number; paidBefore: bigint } | null;
 }
 
 const applicant = alias(appUser, "applicant");
@@ -426,6 +428,10 @@ function loanQuery(ctx: TenantTx) {
       lateFine: loan.lateFine,
       settlementRebateBp: loan.settlementRebateBp,
       closedOn: loan.closedOn,
+      importedOn: loan.importedOn,
+      originalPrincipal: loan.originalPrincipal,
+      originalInstallments: loan.originalInstallments,
+      paidBefore: loan.paidBefore,
       paidPrincipal: sql<string>`(select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id})`.mapWith(
         (v: string | number) => BigInt(v),
       ),
@@ -495,6 +501,9 @@ function view(r: LoanRow): LoanView {
     closedOn: r.closedOn,
     paidPrincipal: r.paidPrincipal,
     paidInterest: r.paidInterest,
+    imported: r.importedOn
+      ? { on: r.importedOn, originalPrincipal: r.originalPrincipal!, originalInstallments: r.originalInstallments!, paidBefore: r.paidBefore! }
+      : null,
   };
 }
 
@@ -520,7 +529,18 @@ export async function getLoan(ctx: TenantTx, loanId: string): Promise<LoanDetail
     projected = true;
   }
   const fined = v.disbursedOn ? await finedSeqs(ctx, v.id) : [];
-  return { ...v, schedule, projected, fined, summary: effectiveSummary(schedule) };
+  const summary = effectiveSummary(schedule);
+  // An imported loan starts mid-way: its first installment may be part-paid, so the regular one is the most common amount.
+  if (v.imported && schedule.every((r) => !r.scheduleNo)) summary.installment = commonInstallment(schedule);
+  return { ...v, schedule, projected, fined, summary };
+}
+
+function commonInstallment(rows: readonly InstallmentState[]): bigint {
+  const seen = new Map<bigint, number>();
+  for (const r of rows) seen.set(r.principal + r.interest, (seen.get(r.principal + r.interest) ?? 0) + 1);
+  let best = rows[0]!.principal + rows[0]!.interest;
+  for (const [amount, n] of seen) if (n > seen.get(best)!) best = amount;
+  return best;
 }
 
 /**
@@ -644,7 +664,7 @@ export async function loanStats(ctx: TenantTx): Promise<LoanStats> {
            coalesce(sum(l.principal), 0)::text as amount,
            count(l.id)::int as count
       from generate_series(date_trunc('month', ${today}::date) - interval '5 months', date_trunc('month', ${today}::date), interval '1 month') m
-      left join loan l on l.tenant_id = ${tenantId} and l.disbursed_on >= m and l.disbursed_on < m + interval '1 month'
+      left join loan l on l.tenant_id = ${tenantId} and l.imported_on is null and l.disbursed_on >= m and l.disbursed_on < m + interval '1 month'
      group by m order by m`);
   return {
     applied: c!.applied,

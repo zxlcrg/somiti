@@ -114,6 +114,16 @@ export const loan = pgTable(
     entryId: uuid("entry_id"),
     /** The business day the last of it was repaid. */
     closedOn: date("closed_on", { mode: "string" }),
+    /**
+     * Set on a loan brought in from the paper books while already running:
+     * the business day it was imported. Such a loan's principal and schedule
+     * are what was still owed that day; the originals are kept beside them.
+     */
+    importedOn: date("imported_on", { mode: "string" }),
+    originalPrincipal: bigint("original_principal", { mode: "bigint" }),
+    originalInstallments: integer("original_installments"),
+    /** Principal and charge repaid on paper before the import. */
+    paidBefore: bigint("paid_before", { mode: "bigint" }),
   },
   (t) => [
     unique("loan_tenant_id").on(t.tenantId, t.id),
@@ -135,9 +145,17 @@ export const loan = pgTable(
     check("loan_settlement_rebate", sql`${t.settlementRebateBp} BETWEEN 0 AND 10000`),
     check("loan_fee", sql`${t.processingFee} >= 0 AND ${t.processingFee} < ${t.principal}`),
     // Maker-checker is a different person, not a different role (architecture review).
+    // An imported loan was decided on paper long ago; the admin who brings it in is its only officer here.
     check(
       "loan_checker_not_maker",
-      sql`${t.status} NOT IN ('approved', 'rejected', 'disbursed', 'closed') OR ${t.decidedBy} <> ${t.appliedBy}`,
+      sql`${t.importedOn} IS NOT NULL OR ${t.status} NOT IN ('approved', 'rejected', 'disbursed', 'closed') OR ${t.decidedBy} <> ${t.appliedBy}`,
+    ),
+    check(
+      "loan_imported",
+      sql`(${t.importedOn} IS NULL) = (${t.originalPrincipal} IS NULL)
+          AND (${t.importedOn} IS NULL) = (${t.originalInstallments} IS NULL)
+          AND (${t.importedOn} IS NULL) = (${t.paidBefore} IS NULL)
+          AND (${t.importedOn} IS NULL OR (${t.originalPrincipal} >= ${t.principal} AND ${t.paidBefore} >= 0))`,
     ),
     check(
       "loan_decided",
@@ -150,7 +168,7 @@ export const loan = pgTable(
       sql`(${t.status} IN ('disbursed', 'closed')) = (${t.entryId} IS NOT NULL)
           AND (${t.entryId} IS NULL) = (${t.disbursedOn} IS NULL)
           AND (${t.entryId} IS NULL) = (${t.disbursedBy} IS NULL)
-          AND (${t.entryId} IS NULL) = (${t.paymentMethod} IS NULL)`,
+          AND (${t.importedOn} IS NOT NULL OR (${t.entryId} IS NULL) = (${t.paymentMethod} IS NULL))`,
     ),
   ],
 );
