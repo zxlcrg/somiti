@@ -30,7 +30,8 @@
     "expenses": "Expenses",
     "cashBook": "Cash book",
     "trialBalance": "Trial balance",
-    "dayEnd": "Day end"
+    "dayEnd": "Day end",
+    "sheet": "Collection sheet"
   },
   "home": {
     "badge": "Foundation release",
@@ -260,6 +261,7 @@
       "behind": "Behind",
       "lateSince": "Late since {date}",
       "dueToday": "Due today",
+      "openSheet": "Open the collection sheet →",
       "more": "{count, plural, one {# more} other {# more}} · {amount} in all",
       "takenNone": "Nothing taken yet today"
     }
@@ -1829,5 +1831,87 @@
       "forbidden": "Only the president, secretary or admin can reschedule a loan.",
       "server": "Something went wrong. Try again."
     }
+  },
+  "sheet": {
+    "title": "Collection sheet",
+    "subtitle": "What members owe on {date}, and what is already taken",
+    "print": "Print sheet",
+    "printCollector": "Collector:",
+    "noAccess": "Only somiti staff can see the collection sheet.",
+    "recorded": "{count, plural, one {# payment recorded} other {# payments recorded}}, {amount} in all.",
+    "recordedFines": "Late fines taken on top: {fines}.",
+    "summary": "Today's sheet",
+    "dueToday": "Due today",
+    "plusFines": "+ {fines} late fines if paid in full",
+    "noFines": "No late fines",
+    "takenToday": "Taken today",
+    "finesIncluded": "Fines included",
+    "toVisit": "Members to see",
+    "lines": "{count, plural, one {# line due} other {# lines due}}",
+    "progress": "{pct}% of today's sheet taken",
+    "none": "Nothing is due today.",
+    "noneHint": "Every running loan and scheduled savings account is paid up to today.",
+    "howItWorks": "Savings dues come from each product's schedule and loan dues from installments fallen due. Late fines are added on top, as at the counter. A filled sheet is recorded as cash taken by you, all lines together: if one line is refused, nothing is recorded.",
+    "filterLabel": "Show",
+    "filter": {
+      "due": "Still due",
+      "loan": "Loans",
+      "savings": "Savings",
+      "all": "Everything"
+    },
+    "fillAll": "Fill every due amount",
+    "noneInFilter": "Nothing to show here.",
+    "memberNo": "No. {no}",
+    "call": "Call {name}",
+    "loan": "Loan",
+    "savings": "Savings",
+    "loanNo": "Loan {no}",
+    "accountNo": "A/C {no}",
+    "installment": "{amount} each",
+    "late": "Late",
+    "today": "Due today",
+    "fine": "fine {amount}",
+    "paidUp": "Paid up",
+    "paidToday": "Taken today: {amount}",
+    "amountFor": "Amount taken for {what}",
+    "fillOne": "Fill the amount due",
+    "fill": "Fill",
+    "errors": {
+      "invalid_amount": "Enter an amount in taka.",
+      "too_large": "That is too much for one payment.",
+      "below_minimum": "Below this product's smallest deposit.",
+      "invalid_method": "Cash only on the sheet.",
+      "collector_cash_only": "Cash only on the sheet.",
+      "ref_required": "Cash only on the sheet.",
+      "ref_too_long": "Cash only on the sheet.",
+      "account_closed": "This account is closed.",
+      "member_inactive": "This member is no longer active.",
+      "not_found": "Not found; reload the sheet.",
+      "too_much": "More than is owed on this loan.",
+      "not_running": "This loan is no longer running.",
+      "settle_office_only": "Settle early from the loan's page.",
+      "quote_changed": "Settle early from the loan's page.",
+      "nothing_to_settle": "Nothing is owed on this loan."
+    },
+    "barTotal": "{count, plural, one {# payment} other {# payments}} · {amount}",
+    "barEmpty": "Type what each member paid, or tap Fill.",
+    "barFines": "Plus {fines} late fines: {cash} cash in all",
+    "barWhere": {
+      "office": "Cash taken at the office",
+      "collector": "Cash goes into your bag until you hand it over"
+    },
+    "formErrors": {
+      "empty": "Type at least one amount.",
+      "too_many": "Too many lines for one sheet; record it in two parts.",
+      "forbidden": "Only a cashier or field collector can record payments.",
+      "DAY_CLOSED": "Today's business day is closed. Nothing was recorded.",
+      "NO_OPEN_PERIOD": "The fiscal year is not open. Nothing was recorded.",
+      "server": "Something went wrong. Nothing was recorded; try again."
+    },
+    "lineRefused": "A line was refused, so nothing was recorded. Fix the marked line and record again.",
+    "back": "Back",
+    "confirm": "Record {amount} cash",
+    "recordEmpty": "Record",
+    "record": "Record {count, plural, one {{n} payment} other {{n} payments}}"
   }
 }

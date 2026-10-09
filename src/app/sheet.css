@@ -1,0 +1,557 @@
+/* ---------- Collection sheet ---------- */
+
+.sheet-page {
+  --in: #0b9b6c;
+  --out: #c27f00;
+  --late: #b52f4f;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-bottom: 7rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sheet-page {
+    --in: #1fae79;
+    --out: #b47e0c;
+    --late: #e45a76;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+/* Summary tiles */
+
+.sheet-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.sum-tile {
+  position: relative;
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 1rem 1.1rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  container-type: inline-size;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.sum-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: var(--tone, var(--accent));
+}
+
+.sum-tile:hover {
+  transform: translateY(-2px);
+}
+
+.sum-tile.s-due {
+  --tone: var(--out);
+}
+
+.sum-tile.s-taken {
+  --tone: var(--in);
+}
+
+.sum-tile.s-people {
+  --tone: var(--accent-3);
+}
+
+.sum-tile > span {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.sum-tile > strong {
+  font-size: min(1.6rem, 12cqi) !important;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.sum-tile > small {
+  color: var(--muted);
+}
+
+.sheet-progress {
+  grid-column: 1 / -1;
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.sheet-progress::before {
+  content: "";
+  grid-area: 1 / 1;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 8%, var(--card));
+}
+
+.sheet-progress > span {
+  grid-area: 1 / 1;
+  height: 0.6rem;
+  min-width: 0.6rem;
+  max-width: 100%;
+  border-radius: 999px;
+  background: var(--debit);
+  transition: width 0.6s ease;
+}
+
+.sheet-progress > small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* Tools */
+
+.sheet-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.sheet-filter button .n {
+  display: inline-block;
+  min-width: 1.4rem;
+  margin-left: 0.2rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.sheet-filter button.on .n {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--fg);
+}
+
+.sheet-tools .btn {
+  gap: 0.4rem;
+}
+
+.sheet-filter {
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.sheet-filter button {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Members and lines */
+
+.sheet-list {
+  display: grid;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sheet-member {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  animation: sheet-in 0.35s ease both;
+  animation-delay: calc(min(var(--i, 0), 12) * 30ms);
+  transition: box-shadow 0.2s ease;
+}
+
+.sheet-member:hover {
+  box-shadow:
+    var(--shadow),
+    0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-member {
+    animation: none;
+  }
+}
+
+.sheet-member > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: color-mix(in srgb, var(--accent) 5%, var(--card));
+  border-bottom: 1px solid var(--line);
+}
+
+.sheet-member .who {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.sheet-member .who > span {
+  display: grid;
+  min-width: 0;
+}
+
+.sheet-member .who strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-member .who:hover strong {
+  color: var(--accent);
+}
+
+.sheet-member .call {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, var(--card));
+  text-decoration: none;
+  transition: transform 0.15s ease;
+}
+
+.sheet-member .call:hover {
+  transform: scale(1.08);
+}
+
+.sheet-member > ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sheet-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(9rem, 12rem);
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem 0.75rem 1.15rem;
+  border-left: 4px solid var(--kind);
+  transition: background 0.15s ease;
+}
+
+.sheet-line + .sheet-line {
+  border-top: 1px dashed var(--line);
+}
+
+.sheet-line:hover {
+  background: color-mix(in srgb, var(--kind) 5%, var(--card));
+}
+
+.sheet-line.k-loan {
+  --kind: var(--out);
+}
+
+.sheet-line.k-savings {
+  --kind: var(--in);
+}
+
+.sheet-line.done {
+  opacity: 0.75;
+}
+
+.sheet-line .what {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.sheet-line .what strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-line .what:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.kind-chip {
+  justify-self: start;
+  padding: 0.05rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--kind) 14%, var(--card));
+  color: var(--fg);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.kind-chip::before {
+  content: "";
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.35rem;
+  border-radius: 999px;
+  background: var(--kind);
+  vertical-align: 0.05rem;
+}
+
+.sheet-line .due {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  text-align: right;
+}
+
+.sheet-line .due strong {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.late-note {
+  color: var(--late);
+  font-weight: 700;
+}
+
+.late-note::before {
+  content: "⏰ ";
+}
+
+.paid-chip {
+  justify-self: end;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--in) 15%, var(--card));
+  font-weight: 700;
+}
+
+.paid-note {
+  color: var(--in);
+  font-weight: 600;
+}
+
+.sheet-line .take {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sheet-line .take .money-input {
+  flex: 1 1 6rem;
+}
+
+.sheet-line .take .money-input:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.sheet-line.has-error .money-input {
+  border-color: #e5484d;
+}
+
+.sheet-line .take .field-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.sheet-line .fill {
+  min-height: 2.75rem;
+  padding: 0 0.7rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--accent) 8%, var(--card));
+  color: var(--fg);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.sheet-line .fill:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--card));
+  transform: translateY(-1px);
+}
+
+/* Sticky bar */
+
+.sheet-bar {
+  position: sticky;
+  bottom: 0.75rem;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  backdrop-filter: blur(14px);
+  box-shadow: var(--shadow);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.sheet-bar.active {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  box-shadow:
+    var(--shadow),
+    0 0 0 4px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.bar-sum {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.bar-sum small {
+  color: var(--muted);
+}
+
+.bar-sum .field-error {
+  margin: 0;
+}
+
+.bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@media (max-width: 760px) {
+  .sheet-filter button {
+    padding: 0.4rem 0.6rem;
+  }
+
+  .sheet-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sum-tile.s-people {
+    grid-column: 1 / -1;
+  }
+
+  .sheet-line {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .sheet-line .take {
+    grid-column: 1 / -1;
+  }
+
+  .sheet-bar .btn {
+    flex: 1 1 auto;
+  }
+
+  .bar-actions {
+    width: 100%;
+  }
+}
+
+/* Printed sheet: names, dues and a blank to write in what was taken. */
+
+@media print {
+  .sheet-page .no-print,
+  .sheet-page .page-head {
+    display: none !important;
+  }
+
+  .sheet-page {
+    padding: 0;
+    color: #000;
+  }
+
+  .sheet-page .print-only {
+    display: block;
+  }
+
+  .print-head {
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #000;
+  }
+
+  .sheet-list {
+    gap: 0;
+  }
+
+  .sheet-member {
+    border: 0;
+    border-bottom: 1px solid #999;
+    border-radius: 0;
+    box-shadow: none;
+    background: none;
+    animation: none;
+    break-inside: avoid;
+  }
+
+  .sheet-member:hover {
+    box-shadow: none;
+  }
+
+  .sheet-member > header {
+    padding: 0.4rem 0;
+    background: none;
+    border: 0;
+  }
+
+  .sheet-member .member-avatar {
+    display: none !important;
+  }
+
+  .sheet-line {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 9rem;
+    padding: 0.3rem 0 0.3rem 0.5rem;
+    border-left-width: 3px;
+  }
+
+  .sheet-line .print-blank {
+    display: block;
+    height: 1.6rem;
+    border-bottom: 1px solid #000;
+  }
+
+  .kind-chip {
+    border: 1px solid #999;
+  }
+}

@@ -127,11 +127,13 @@ export default async function DashboardPage() {
               </li>
             ))}
           </ul>
-          {due.total > due.rows.length && (
-            <p className="card-foot">
-              <Link href="/loans/overdue">{t("collect.more", { count: due.total - due.rows.length, n: num(due.total - due.rows.length), amount: taka(due.amount) })}</Link>
-            </p>
-          )}
+          <p className="card-foot">
+            <Link href="/collection-sheet">
+              {due.total > due.rows.length
+                ? t("collect.more", { count: due.total - due.rows.length, n: num(due.total - due.rows.length), amount: taka(due.amount) })
+                : t("collect.openSheet")}
+            </Link>
+          </p>
         </>
       )}
     </section>
