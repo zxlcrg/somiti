@@ -13,6 +13,7 @@ export {
   type SavingsProductView,
 } from "./products";
 export {
+  activeAccounts,
   deposit,
   DEPOSIT_METHODS,
   getAccount,

@@ -26,6 +26,7 @@ import "./opening.css";
 import "./loans.css";
 import "./exit.css";
 import "./dashboard.css";
+import "./sheet.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
@@ -148,6 +149,7 @@ function sideGroups(roles: readonly string[], c: Counts, t: Awaited<ReturnType<t
   const badge = (n: number, label: string, tone?: "late") => (n > 0 ? { text: num(n), label, tone } : undefined);
   const main: SideItem[] = [{ href: "/dashboard", icon: "dashboard", label: t("nav.dashboard") }];
   if (canViewMembers(roles)) {
+    main.push({ href: "/collection-sheet", icon: "sheet", label: t("nav.sheet") });
     main.push({ href: "/members", icon: "members", label: t("nav.members"), badge: badge(c.exits, t("nav.exitsWaiting", { count: c.exits })) });
     main.push({
       href: "/savings",

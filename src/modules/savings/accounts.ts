@@ -196,6 +196,11 @@ async function accountRows(ctx: TenantTx, where: ReturnType<typeof and>): Promis
   }));
 }
 
+/** Every open account in the somiti with what it is due, for the collection sheet. */
+export async function activeAccounts(ctx: TenantTx): Promise<SavingsAccountView[]> {
+  return accountRows(ctx, and(eq(savingsAccount.tenantId, ctx.tenantId), eq(savingsAccount.status, "active")));
+}
+
 export async function memberAccounts(ctx: TenantTx, memberId: string): Promise<SavingsAccountView[]> {
   return accountRows(ctx, and(eq(savingsAccount.tenantId, ctx.tenantId), eq(savingsAccount.memberId, memberId)));
 }
