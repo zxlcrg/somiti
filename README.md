@@ -189,6 +189,28 @@ Tests need a Postgres superuser to create the `somiti_test` database
 pnpm test
 ```
 
+## Settings
+
+`/settings`, for admins only, under "Admin" in the menu.
+
+- **Somiti:** names in English and Bangla, the default language new people
+  start in, and the share price (new purchases only; past ones keep their
+  price). It also shows the somiti code staff type at sign-in, the business
+  date and the fiscal year.
+- **Staff:** everyone who can sign in, with their roles. An admin can add
+  people (name, mobile number, one or more roles), change them, and switch
+  their access off or back on. Switching someone off ends their sessions at
+  once; their past work stays theirs in the books.
+- A somiti can't lock itself out: you can't remove your own admin role or
+  switch yourself off, and the last active admin always stays. Staff changes
+  take turns (an advisory lock), so two admins can't remove each other at
+  the same moment.
+- Every change goes to the audit log (`settings.somiti.update`,
+  `settings.staff.*`).
+
+Code: `src/modules/tenancy/settings.ts`, page in `src/app/settings/`, tests in
+`tests/settings.test.ts`.
+
 ## Layout
 
 ```
@@ -196,7 +218,7 @@ drizzle/                     migrations (0001 holds triggers, RLS and grants)
 messages/                    en and bn UI strings
 src/db/                      schema, withTenant, migration runner
 src/modules/ledger/          posting service, reversals, periods, trial balance, default chart
-src/modules/tenancy/         new somiti setup
+src/modules/tenancy/         new somiti setup, somiti settings and staff
 src/modules/auth/            SMS-code sign-in and sessions
 src/modules/members/         admission, KYC, search, nominees, photos, shares
 src/modules/audit/           append-only audit log

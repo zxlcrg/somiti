@@ -1,0 +1,607 @@
+/* ---------- Settings: somiti details and staff ---------- */
+
+.settings {
+  display: grid;
+  gap: 1.4rem;
+  max-width: 68rem;
+}
+
+.settings-gear {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gear-spin 6s linear infinite;
+}
+
+@keyframes gear-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-gear,
+  .staff-person {
+    animation: none !important;
+  }
+}
+
+.settings-card {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+/* Somiti card */
+
+.somiti-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.3rem 1.4rem;
+  background:
+    radial-gradient(circle at 90% -20%, var(--glow-2), transparent 55%),
+    radial-gradient(circle at 10% 120%, var(--glow-3), transparent 55%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, var(--card)), var(--card));
+  border-bottom: 1px solid var(--line);
+}
+
+.somiti-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  color: #fff;
+  font-size: 1.6rem;
+  font-weight: 800;
+  box-shadow: 0 10px 22px -10px var(--accent);
+}
+
+.somiti-banner-text h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.somiti-banner-text p {
+  margin: 0.15rem 0 0;
+  color: var(--muted);
+}
+
+.somiti-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.8rem;
+  margin: 0;
+  padding: 1rem 1.4rem;
+}
+
+.fact {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.8rem 0.95rem;
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--fact) 10%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--fact) 30%, var(--line));
+}
+
+.fact.code {
+  --fact: var(--accent);
+}
+
+.fact.date {
+  --fact: var(--accent-2);
+}
+
+.fact.fy {
+  --fact: var(--accent-3);
+}
+
+.fact dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.fact dd {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.fact small {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.fact code {
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.45rem;
+  background: var(--bg);
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+
+.copy-btn {
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, transform 0.15s;
+}
+
+.copy-btn:hover {
+  transform: translateY(-1px);
+}
+
+.copy-btn.done {
+  border-color: transparent;
+  background: var(--accent);
+  color: #fff;
+}
+
+.somiti-form {
+  display: grid;
+  gap: 1rem;
+  padding: 0.4rem 1.4rem 1.4rem;
+}
+
+.somiti-form .field > input,
+.staff-dialog .field > input {
+  height: 2.9rem;
+  font-size: 1rem;
+}
+
+.phone-input.money {
+  position: relative;
+  height: 2.9rem;
+}
+
+.phone-input.money input {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.price-preview {
+  flex: none;
+  margin-right: 0.6rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-2) 22%, transparent), color-mix(in srgb, var(--accent) 18%, transparent));
+  color: var(--fg);
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: pop-in 0.25s ease-out;
+}
+
+.lang-toggle span {
+  padding: 0.55rem 0.85rem;
+}
+
+.settings-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.settings-actions .celebrate {
+  margin: 0;
+}
+
+/* Staff */
+
+.staff-head {
+  padding: 1.2rem 1.4rem 0.4rem;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.staff-count {
+  display: inline-block;
+  margin-top: 0.25rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.staff-card > .staff-toast,
+.staff-card > .form-error {
+  margin: 0.6rem 1.4rem 0;
+}
+
+.staff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: 0.9rem;
+  margin: 0;
+  padding: 1rem 1.4rem 1.4rem;
+  list-style: none;
+}
+
+.staff-person {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, hsl(var(--h) 70% 45%) 25%, var(--line));
+  border-radius: 1rem;
+  background: linear-gradient(160deg, color-mix(in srgb, hsl(var(--h) 75% 50%) 8%, var(--card)), var(--card) 60%);
+  animation: pop-in 0.35s ease-out both;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s, filter 0.2s;
+}
+
+.staff-person:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.staff-person.me {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.staff-person.off {
+  filter: grayscale(0.85);
+  opacity: 0.72;
+}
+
+.staff-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.staff-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, hsl(var(--h) 70% 48%), hsl(calc(var(--h) + 40) 75% 52%));
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 800;
+  box-shadow: 0 8px 18px -8px hsl(var(--h) 70% 40%);
+}
+
+.staff-name {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+.staff-name strong {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.staff-name .muted,
+.staff-phone {
+  font-size: 0.85rem;
+}
+
+.staff-phone {
+  color: var(--muted);
+}
+
+.you-badge {
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-pill.on {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+
+.status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill.on .status-dot {
+  box-shadow: 0 0 0 0 currentColor;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 6px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Role colours, shared by the chips and the picker */
+.role-admin {
+  --role: #7c4dff;
+}
+.role-president {
+  --role: #e0a100;
+}
+.role-secretary {
+  --role: #1fa2b8;
+}
+.role-cashier {
+  --role: #0b9b6c;
+}
+.role-field_collector {
+  --role: #f26b3a;
+}
+
+.role-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.role-chip {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--role) 40%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--role) 13%, transparent);
+  color: color-mix(in srgb, var(--role) 75%, var(--fg));
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: help;
+}
+
+.staff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--line);
+}
+
+.staff-actions form {
+  display: contents;
+}
+
+.btn.danger-ghost {
+  color: #d93f44;
+}
+
+.btn.danger-ghost:hover {
+  background: color-mix(in srgb, #e5484d 10%, transparent);
+}
+
+/* Add/edit dialog */
+
+.staff-dialog {
+  width: min(40rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 1.3rem;
+  background: var(--card);
+  color: var(--fg);
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.45);
+  animation: dialog-in 0.25s ease-out;
+}
+
+.staff-dialog::backdrop {
+  background: rgba(10, 20, 16, 0.45);
+  backdrop-filter: blur(3px);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+}
+
+.staff-dialog form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.3rem;
+}
+
+.dialog-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.dialog-head h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.dialog-icon {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-3));
+  color: #fff;
+  font-weight: 800;
+}
+
+.dialog-x {
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dialog-x:hover {
+  color: var(--fg);
+}
+
+.role-picker {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.role-picker legend {
+  margin-bottom: 0.4rem;
+  font-weight: 600;
+}
+
+.role-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: 0.55rem;
+}
+
+.role-option {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 0.8rem;
+  border: 2px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--bg);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.role-option:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--role) 50%, var(--line));
+}
+
+.role-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.role-option:has(input:focus-visible) {
+  outline: 3px solid color-mix(in srgb, var(--role) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.role-option.on {
+  border-color: var(--role);
+  background: color-mix(in srgb, var(--role) 11%, var(--card));
+}
+
+.role-option-icon {
+  font-size: 1.3rem;
+  line-height: 1.2;
+}
+
+.role-option-text {
+  display: grid;
+  flex: 1;
+  gap: 0.15rem;
+}
+
+.role-option-text small {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.role-check {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  color: transparent;
+  font-size: 0.75rem;
+  font-weight: 900;
+  transition: all 0.2s;
+}
+
+.role-option.on .role-check {
+  border-color: var(--role);
+  background: var(--role);
+  color: #fff;
+  transform: scale(1.08);
+}
+
+.dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding-top: 0.4rem;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+@media (max-width: 640px) {
+  .staff-head {
+    flex-direction: column;
+  }
+
+  .somiti-form,
+  .somiti-facts,
+  .staff-grid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

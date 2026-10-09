@@ -10,6 +10,7 @@ import { canApproveVouchers, canViewBooks, pendingForChecker } from "@/modules/l
 import { canManageMembers, canViewMembers, exitsForChecker } from "@/modules/members";
 import { canApproveLoans, canDisburseLoans, canViewLoans, loansWaitingFor, overdueCount } from "@/modules/loans";
 import { canApproveWithdrawals, withdrawalsForChecker } from "@/modules/savings";
+import { canManageSettings } from "@/modules/tenancy";
 import { getCurrentUser } from "./auth";
 import { SideNav, type SideGroup, type SideItem } from "./side-nav";
 import { LanguageSwitcher } from "./language-switcher";
@@ -27,6 +28,7 @@ import "./loans.css";
 import "./exit.css";
 import "./dashboard.css";
 import "./sheet.css";
+import "./settings.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
@@ -182,5 +184,6 @@ function sideGroups(roles: readonly string[], c: Counts, t: Awaited<ReturnType<t
         { href: "/day-end", icon: "dayEnd", label: t("nav.dayEnd") },
       ],
     });
+  if (canManageSettings(roles)) groups.push({ label: t("nav.admin"), items: [{ href: "/settings", icon: "settings", label: t("nav.settings") }] });
   return groups;
 }
