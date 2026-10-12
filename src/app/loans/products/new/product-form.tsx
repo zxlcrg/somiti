@@ -19,7 +19,7 @@ const FREQUENCIES: { key: LoanFrequency; icon: string }[] = [
   { key: "monthly", icon: "🌙" },
 ];
 
-type Field = "code" | "nameEn" | "nameBn" | "rate" | "minAmount" | "maxAmount" | "maxInstallments" | "fee" | "method" | "frequency" | "chargeLabel" | "allocation" | "lateFine" | "rebate";
+type Field = "code" | "nameEn" | "nameBn" | "rate" | "minAmount" | "maxAmount" | "maxInstallments" | "fee" | "method" | "frequency" | "chargeLabel" | "allocation" | "lateFine" | "rebate" | "guarantors";
 
 export function LoanProductForm() {
   const t = useTranslations("loans");
@@ -37,6 +37,7 @@ export function LoanProductForm() {
     fee: "",
     lateFine: "",
     rebate: "",
+    guarantors: "1",
     method: "flat",
     frequency: "monthly",
     chargeLabel: "service_charge",
@@ -128,6 +129,7 @@ export function LoanProductForm() {
       <input type="hidden" name="frequency" value={v.frequency} />
       <input type="hidden" name="chargeLabel" value={v.chargeLabel} />
       <input type="hidden" name="allocation" value={v.allocation} />
+      <input type="hidden" name="guarantors" value={v.guarantors} />
       <div className="lpf-main">
         <section className="loan-card">
           {tiles("method", METHODS, t("productForm.method"), "method")}
@@ -152,6 +154,17 @@ export function LoanProductForm() {
               ))}
             </div>
             <small className="muted">{t("productForm.allocationHint")}</small>
+          </div>
+          <div className="choice-group">
+            <span className="label">{t("productForm.guarantors")}</span>
+            <div className="seg" role="radiogroup" aria-label={t("productForm.guarantors")}>
+              {(["0", "1", "2", "3"] as const).map((g) => (
+                <button key={g} type="button" role="radio" aria-checked={v.guarantors === g} className={v.guarantors === g ? "on" : undefined} onClick={() => set("guarantors", g)}>
+                  {g === "0" ? t("productForm.noGuarantors") : formatInteger(Number(g), locale)}
+                </button>
+              ))}
+            </div>
+            {err("guarantors") ? <small className="field-error">{err("guarantors")}</small> : <small className="muted">{t("productForm.guarantorsHint")}</small>}
           </div>
         </section>
         <section className="loan-card form-grid">

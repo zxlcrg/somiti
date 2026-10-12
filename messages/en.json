@@ -590,7 +590,8 @@
         "not_active": "This member is no longer active.",
         "pending_withdrawal": "A savings withdrawal is still waiting for a decision. Approve or reject it first.",
         "open_loan": "This member has a loan that is open or waiting. It must be repaid, turned down or withdrawn first.",
-        "negative_balance": "A savings account is overdrawn. Sort it out before the member leaves."
+        "negative_balance": "A savings account is overdrawn. Sort it out before the member leaves.",
+        "guarantor": "This member stands guarantor for a loan that is open or waiting. It must be repaid, turned down or withdrawn first."
       },
       "loansNote": "Loans arrive later; once they do, a member with an unpaid loan or an active guarantee can't leave.",
       "form": {
@@ -631,7 +632,8 @@
         "forbidden": "Your role can't handle member exits.",
         "DAY_CLOSED": "Today's business day is already closed.",
         "NO_OPEN_PERIOD": "There is no open fiscal year for today's date.",
-        "server": "Something went wrong on our side. Nothing was paid out. Please try again."
+        "server": "Something went wrong on our side. Nothing was paid out. Please try again.",
+        "guarantor": "This member stands guarantor for a loan that is open or waiting."
       }
     }
   },
@@ -1516,7 +1518,10 @@
       "lateFineHint": "Taken once for each installment paid after its date. Leave empty for no fine.",
       "lateFineEach": "Late fine, each installment",
       "rebate": "Rebate for settling early",
-      "rebateHint": "Share of the {charge} on installments not yet due that is let off when a member pays the loan off early. Leave empty for none."
+      "rebateHint": "Share of the {charge} on installments not yet due that is let off when a member pays the loan off early. Leave empty for none.",
+      "guarantors": "Guarantors needed",
+      "noGuarantors": "None",
+      "guarantorsHint": "Members who must stand guarantor before an application is accepted. A guarantor can't leave the somiti while the loan runs."
     },
     "productErrors": {
       "required": "Fill this in.",
@@ -1533,7 +1538,8 @@
       "forbidden": "Only the admin, president or secretary can set up loan products.",
       "server": "Something went wrong. Try again.",
       "invalid_late_fine": "Enter a fine above zero and up to 1,00,000, or leave it empty.",
-      "invalid_rebate": "Enter a percent from 0 to 100, or leave it empty."
+      "invalid_rebate": "Enter a percent from 0 to 100, or leave it empty.",
+      "invalid_guarantors": "Choose 0 to 3 guarantors."
     },
     "apply": {
       "title": "Loan application",
@@ -1580,7 +1586,13 @@
       "already_open": "This member already has an open loan in this product.",
       "not_found": "That member wasn't found.",
       "forbidden": "Your role can't take loan applications.",
-      "server": "Something went wrong. Nothing was saved; try again."
+      "server": "Something went wrong. Nothing was saved; try again.",
+      "guarantors_needed": "Name all the guarantors this loan needs.",
+      "too_many_guarantors": "A loan can have at most 3 guarantors.",
+      "guarantor_self": "A member can't guarantee their own loan.",
+      "guarantor_duplicate": "The same member is named twice.",
+      "guarantor_unknown": "One of the guarantors isn't a member of this somiti.",
+      "guarantor_inactive": "One of the guarantors has left the somiti."
     },
     "schedule": {
       "due": "Due",
@@ -1642,7 +1654,9 @@
       "noLateFine": "None",
       "rebate": "Settling early",
       "rebateShare": "{percent} of the {charge} not yet due is let off",
-      "noRebate": "No rebate"
+      "noRebate": "No rebate",
+      "importedNote": "Brought in from the paper books on {on}. Given as {amount} over {n} installments; {paid} had been paid back before.",
+      "imported": "From the paper books"
     },
     "steps": {
       "decideTitle": "Your decision",
@@ -1832,7 +1846,145 @@
       "nothing_owed": "Nothing is left to pay on this loan.",
       "forbidden": "Only the president, secretary or admin can reschedule a loan.",
       "server": "Something went wrong. Try again."
+    },
+    "imported": "{count, plural, one {{n} running loan was} other {{n} running loans were}} brought in (loan numbers {from}–{to}).",
+    "importLink": "Bring in running loans",
+    "guarantors": {
+      "title": "Guarantors",
+      "countOf": "{n} of {of}",
+      "optional": "Optional",
+      "needed": "{count, plural, one {{n} member must stand guarantor for this loan.} other {{n} members must stand guarantor for this loan.}}",
+      "none": "This loan product doesn't need a guarantor, but you can name up to 3.",
+      "memberNo": "Member #{no}",
+      "already": "{count, plural, one {{n} loan guaranteed already} other {{n} loans guaranteed already}}",
+      "remove": "Remove {name}",
+      "search": "Add a guarantor",
+      "searchPlaceholder": "Name, member number or phone",
+      "noMatch": "No active member matches.",
+      "hint": "They can't leave the somiti until this loan is repaid.",
+      "left": "Has left",
+      "standsFor": "{count, plural, one {{n} loan they guarantee} other {{n} loans they guarantee}}",
+      "owed": "still owed",
+      "asked": "applied for",
+      "named": "{n} named"
     }
+  },
+  "loanImport": {
+    "title": "Bring in running loans",
+    "subtitle": "Loans given on paper that members are still paying back, with what is left on each.",
+    "backToLoans": "Loans",
+    "noAccess": "Only the admin can bring in running loans.",
+    "steps": {
+      "download": "Download the sheet",
+      "downloadBody": "One row per loan that is still running. Members must already be in the app.",
+      "fill": "Copy each loan from the register",
+      "fillBody": "Who took it, which loan product, the date it was given, the amount, the number of installments and how much has been paid back so far.",
+      "upload": "Upload and check",
+      "uploadBody": "We rebuild each schedule and work out what is left. You see every loan first; nothing is posted until you confirm."
+    },
+    "template": "Download template",
+    "guide": {
+      "title": "What goes in each column",
+      "column": "Column",
+      "what": "What to put",
+      "example": "Example",
+      "member_no": "The member's number in the app. You can leave it blank if you give the phone.",
+      "member_noExample": "12",
+      "phone": "The member's mobile number. Blank is fine if you give the member number.",
+      "phoneExample": "01711-000001",
+      "product": "The loan product's code:",
+      "productExample": "GL",
+      "disbursed_on": "The date the loan was given, day first.",
+      "disbursed_onExample": "01/05/2026",
+      "amount": "The amount given, in taka.",
+      "amountExample": "20,000",
+      "installments": "How many installments it was given over.",
+      "installmentsExample": "10",
+      "paid": "Everything paid back so far, interest included. Leave out late fines.",
+      "paidExample": "6,600"
+    },
+    "drop": "Choose the filled-in CSV file, or drop it here",
+    "dropHint": "In Excel: File › Save As › CSV UTF-8. Up to 2,000 loans.",
+    "dropAgain": "Fixed something? Choose the file again to re-check.",
+    "checking": "Checking the sheet…",
+    "uploadErrors": {
+      "forbidden": "Only the admin can do this.",
+      "no_file": "Choose a file first.",
+      "too_big": "That file is over 1 MB. Split it into two sheets.",
+      "not_csv": "That isn't a CSV file. In Excel, use Save As › CSV UTF-8.",
+      "server": "Something went wrong reading the file. Try again."
+    },
+    "headerProblems": "The sheet's columns need fixing before it can be read",
+    "headerErrors": {
+      "empty_file": "The sheet has no loans in it.",
+      "too_many_rows": "The sheet has more than {max} loans. Split it into smaller sheets.",
+      "missing_column": "A “{column}” column is missing. Start from the downloaded template.",
+      "unknown_column": "“{column}” isn't a column we know. Use the template's headings, or remove the column.",
+      "duplicate_column": "“{column}” appears twice."
+    },
+    "summary": "What the sheet holds",
+    "tiles": {
+      "loans": "Running loans",
+      "principalLeft": "Principal still owed",
+      "chargeLeft": "Service charge still due",
+      "late": "Already late",
+      "problems": "Problems"
+    },
+    "rowProblems": "{count, plural, one {{n} problem to fix} other {{n} problems to fix}}",
+    "rowProblemsBody": "Fix these in Excel, save, and choose the file again. Nothing is posted while any remain.",
+    "line": "Row {n}",
+    "rowErrors": {
+      "member_required": "needs a member number or phone.",
+      "unknown_member": "matches no member. Add the member first.",
+      "member_mismatch": "belongs to a different member than the other column.",
+      "member_inactive": "is a member who has left.",
+      "unknown_product": "isn't one of your loan products.",
+      "inactive_product": "is a loan product that is switched off.",
+      "invalid_date": "isn't a date. Write it day first, like 01/05/2026.",
+      "date_after_business_date": "is after today's business date.",
+      "invalid_amount": "should be an amount in taka above zero.",
+      "amount_too_large": "is too large for one loan.",
+      "invalid_installments": "should be a whole number from 1 to 520.",
+      "invalid_paid": "should be an amount in taka, 0 or more.",
+      "already_repaid": "covers the whole loan, so there is nothing left to bring in.",
+      "only_charge_left": "leaves only service charge owing. Collect it as income instead.",
+      "already_open": "This member already has a running loan of this product.",
+      "duplicate_loan": "This member's loan of this product is on the sheet twice.",
+      "nothing_to_import": "The sheet has no loans to bring in."
+    },
+    "rowsTitle": "Loans to bring in",
+    "rowsBody": "Installments already paid are left out. The rest keep their original due dates.",
+    "cols": {
+      "line": "Row",
+      "member": "Member",
+      "loan": "Loan",
+      "paid": "Paid so far",
+      "left": "Principal left",
+      "next": "Next due"
+    },
+    "memberNo": "Member #{no}",
+    "given": "Given {date} over {n} installments",
+    "leftNote": "{count, plural, one {{n} installment left} other {{n} installments left}}, plus {charge} charge",
+    "lateChip": "{count, plural, one {{n} late} other {{n} late}}",
+    "moreRows": "and {n} more rows, all checked.",
+    "postTitle": "What gets posted",
+    "postBody": "{amount} goes into loans receivable against opening balance equity, dated {date}. Service charge is counted as income when it is paid.",
+    "lateNote": "Installments whose due date has passed count as late straight away, so the product's late fine applies when they are paid. You can waive it at the counter.",
+    "back": "Back",
+    "confirm": "Yes, import",
+    "importing": "Importing…",
+    "confirmTitle": "Bring in {loans}?",
+    "confirmBody": "They are posted on {date} and can't be undone from here.",
+    "import": "Import {loans}",
+    "importErrors": {
+      "has_errors": "The sheet changed or has problems. Choose the file again.",
+      "already_used": "This check was already used for a different import. Choose the file again.",
+      "forbidden": "Only the admin can do this.",
+      "server": "Something went wrong. Nothing was imported; try again.",
+      "DAY_CLOSED": "Today's business day is closed. Nothing was imported.",
+      "NO_OPEN_PERIOD": "No open fiscal year covers today. Nothing was imported."
+    },
+    "loanCount": "{count, plural, one {{n} loan} other {{n} loans}}"
   },
   "sheet": {
     "title": "Collection sheet",

@@ -17,6 +17,7 @@ import {
   canViewLoans,
   getLoan,
   installmentStatus,
+  loanGuarantors,
   listRepayments,
   listReschedules,
   repaymentChannel,
@@ -52,11 +53,11 @@ export default async function LoanPage({
     const l = await getLoan(ctx, loanId);
     const [somiti] = await ctx.tx.select({ d: tenant.businessDate }).from(tenant).where(eq(tenant.id, ctx.tenantId));
     return l
-      ? { l, today: somiti!.d, repayments: l.disbursedOn ? await listRepayments(ctx, l.id) : [], reschedules: l.disbursedOn ? await listReschedules(ctx, l.id) : [] }
+      ? { l, today: somiti!.d, guarantors: await loanGuarantors(ctx, l.id), repayments: l.disbursedOn ? await listRepayments(ctx, l.id) : [], reschedules: l.disbursedOn ? await listReschedules(ctx, l.id) : [] }
       : null;
   });
   if (!data) notFound();
-  const { l, today, repayments, reschedules } = data;
+  const { l, today, guarantors, repayments, reschedules } = data;
   const locale = await pageLocale();
   const taka = (p: bigint) => formatTaka(p, locale);
   const num = (n: number | bigint) => formatInteger(n, locale);
@@ -192,7 +193,7 @@ export default async function LoanPage({
               </div>
               <div>
                 <dt>{t("apply.handedOver")}</dt>
-                <dd>{taka(l.principal - l.processingFee)}</dd>
+                <dd>{taka(l.imported ? l.imported.originalPrincipal : l.principal - l.processingFee)}</dd>
               </div>
               <div>
                 <dt>{t("detail.lateFine")}</dt>
@@ -227,7 +228,22 @@ export default async function LoanPage({
                   </dd>
                 </div>
               )}
-              {l.decisionNote && (
+              {l.imported && (
+                <div className="wide">
+                  <dt>
+                    <span aria-hidden="true">📥</span> {t("detail.imported")}
+                  </dt>
+                  <dd>
+                    {t("detail.importedNote", {
+                      on: formatDate(l.imported.on, locale),
+                      amount: taka(l.imported.originalPrincipal),
+                      n: num(l.imported.originalInstallments),
+                      paid: taka(l.imported.paidBefore),
+                    })}
+                  </dd>
+                </div>
+              )}
+              {l.decisionNote && !l.imported && (
                 <div className="wide">
                   <dt>{t(l.status === "rejected" ? "detail.rejectReason" : l.status === "cancelled" ? "detail.cancelReason" : "detail.note")}</dt>
                   <dd>{l.decisionNote}</dd>
@@ -235,6 +251,29 @@ export default async function LoanPage({
               )}
             </dl>
           </section>
+
+          {guarantors.length > 0 && (
+            <section className="loan-card guarantor-card">
+              <h2>
+                <span aria-hidden="true">🤝</span> {t("guarantors.title")}
+              </h2>
+              <ol className="guarantor-list">
+                {guarantors.map((g) => (
+                  <li key={g.memberId}>
+                    <span className="g-pos">{num(g.position)}</span>
+                    <MemberAvatar member={{ ...g, id: g.memberId }} locale={locale} />
+                    <Link href={`/members/${g.memberId}`} className="g-who">
+                      <strong>{primaryName(g, locale)}</strong>
+                      <small className="muted">
+                        {t("guarantors.memberNo", { no: num(g.memberNo) })} · {formatBdPhone(g.phone)}
+                      </small>
+                    </Link>
+                    {g.status !== "active" && <span className="chip warn">{t("guarantors.left")}</span>}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
           <section className="loan-card">
             <h2>

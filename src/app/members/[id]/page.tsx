@@ -22,7 +22,7 @@ import {
   shareHolding,
   sharePrice,
 } from "@/modules/members";
-import { canApplyForLoans, canViewLoans, listLoans, type LoanView } from "@/modules/loans";
+import { canApplyForLoans, canViewLoans, listLoans, memberGuarantees, type GuaranteeView, type LoanView } from "@/modules/loans";
 import { canManageSavings, canTakeDeposits, listProducts, memberAccounts } from "@/modules/savings";
 import { requireUser } from "../../auth";
 import { MemberAvatar, memberHue } from "../member-avatar";
@@ -48,6 +48,7 @@ async function load(id: string) {
     settlement: null,
     blockers: [],
     loans: [] as LoanView[],
+    guarantees: [] as GuaranteeView[],
   };
   if (!canViewMembers(user.roles)) return none;
   return withTenant(getAppDb(), user.tenantId, async (ctx) => {
@@ -67,6 +68,7 @@ async function load(id: string) {
       accounts: await memberAccounts(ctx, member.id),
       hasProducts: (await listProducts(ctx, { activeOnly: true })).length > 0,
       loans: canViewLoans(user.roles) ? await listLoans(ctx, { memberId: member.id }) : [],
+      guarantees: canViewLoans(user.roles) ? await memberGuarantees(ctx, member.id) : [],
       exits: await memberExits(ctx, member.id),
       settlement: await exitSettlement(ctx, member.id),
       blockers: await exitBlockers(ctx, member.id),
@@ -95,7 +97,7 @@ export default async function MemberPage({
   searchParams: Promise<{ admitted?: string; nominees?: string; bought?: string; exit?: string }>;
 }) {
   const t = await getTranslations("members");
-  const { user, member, addedBy, nominees, holding, price, accounts, hasProducts, exits, settlement, blockers, loans } = await load(
+  const { user, member, addedBy, nominees, holding, price, accounts, hasProducts, exits, settlement, blockers, loans, guarantees } = await load(
     (await params).id,
   );
   if (!canViewMembers(user.roles)) return <p className="notice">{t("noAccess")}</p>;
@@ -193,6 +195,7 @@ export default async function MemberPage({
       {canViewLoans(user.roles) && (
         <LoansPanel
           loans={loans}
+          guarantees={guarantees}
           memberId={member.id}
           memberName={name}
           locale={locale}

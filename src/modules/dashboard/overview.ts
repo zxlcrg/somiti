@@ -112,7 +112,7 @@ export async function dashboardOverview(ctx: TenantTx): Promise<DashboardOvervie
         where p.tenant_id = ${tenantId} and p.business_date >= m and p.business_date < m + interval '1 month'
           and ${notReversed("p")})::text as repayments,
       (select coalesce(sum(l.principal), 0) from loan l
-        where l.tenant_id = ${tenantId} and l.disbursed_on >= m and l.disbursed_on < m + interval '1 month')::text as disbursed
+        where l.tenant_id = ${tenantId} and l.imported_on is null and l.disbursed_on >= m and l.disbursed_on < m + interval '1 month')::text as disbursed
     from generate_series(date_trunc('month', ${today}::date) - interval '5 months', date_trunc('month', ${today}::date), interval '1 month') m
     order by m`);
 

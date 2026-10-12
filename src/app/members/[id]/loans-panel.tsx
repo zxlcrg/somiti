@@ -2,18 +2,21 @@ import Link from "next/link";
 import { getTranslations } from "next-intl/server";
 import type { Locale } from "@/i18n/config";
 import { formatDate, formatInteger, formatTaka } from "@/lib/format";
-import type { LoanView } from "@/modules/loans";
+import { primaryName } from "@/lib/names";
+import type { GuaranteeView, LoanView } from "@/modules/loans";
 import { percent, STATUS_ICON } from "../../loans/ui";
 
 /** A member's loans on their profile, newest first, with the way to apply. */
 export async function LoansPanel({
   loans,
+  guarantees,
   memberId,
   memberName,
   locale,
   canApply,
 }: {
   loans: LoanView[];
+  guarantees: GuaranteeView[];
   memberId: string;
   memberName: string;
   locale: Locale;
@@ -68,6 +71,31 @@ export async function LoansPanel({
               </small>
             </Link>
           ))}
+        </div>
+      )}
+      {guarantees.length > 0 && (
+        <div className="guarantees">
+          <h3>
+            <span aria-hidden="true">🤝</span> {t("guarantors.standsFor", { count: guarantees.length, n: num(guarantees.length) })}
+          </h3>
+          <ul>
+            {guarantees.map((g) => (
+              <li key={g.loanId}>
+                <Link href={`/loans/${g.loanId}`}>
+                  <span className="g-who">
+                    <strong>{primaryName(g.borrower, locale)}</strong>
+                    <small className="muted">
+                      {g.productCode} · {t("loanNo", { no: num(g.loanNo) })} · {t(`status.${g.status}`)}
+                    </small>
+                  </span>
+                  <span className="g-amt">
+                    <strong>{taka(g.outstanding)}</strong>
+                    <small className="muted">{g.status === "disbursed" ? t("guarantors.owed") : t("guarantors.asked")}</small>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </section>

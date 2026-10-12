@@ -31,6 +31,8 @@ export interface LoanProductForm {
   lateFine?: string;
   /** Percent of the charge on installments not yet due let off on early settlement; blank for none. */
   rebate?: string;
+  /** Guarantors each application must name, 0 to 3; blank for none. */
+  guarantors?: string;
   /** Yearly rate as typed, in percent: "12" or "12.5". */
   rate: string;
   frequency: string;
@@ -54,7 +56,8 @@ export type LoanProductError =
   | "invalid_installments"
   | "invalid_fee"
   | "invalid_late_fine"
-  | "invalid_rebate";
+  | "invalid_rebate"
+  | "invalid_guarantors";
 
 export type LoanProductErrors = Partial<Record<keyof LoanProductForm, LoanProductError>>;
 
@@ -68,6 +71,7 @@ export interface LoanProductView {
   allocation: Allocation;
   lateFine: bigint | null;
   settlementRebateBp: number;
+  guarantors: number;
   rateBp: number;
   frequency: LoanFrequency;
   minAmount: bigint;
@@ -132,6 +136,9 @@ export function checkLoanProductForm(form: LoanProductForm):
   if (form.lateFine?.trim() && (lateFine === null || lateFine <= 0n || lateFine > 1_00_000_00n)) errors.lateFine = "invalid_late_fine";
   const rebate = form.rebate?.trim() ? parsePercent(form.rebate, 10_000) : 0;
   if (rebate === null) errors.rebate = "invalid_rebate";
+  const gText = toLatinDigits(form.guarantors?.trim() ?? "");
+  const guarantors = gText ? (/^[0-3]$/.test(gText) ? Number(gText) : null) : 0;
+  if (guarantors === null) errors.guarantors = "invalid_guarantors";
 
   if (Object.keys(errors).length) return { ok: false, errors };
   return {
@@ -145,6 +152,7 @@ export function checkLoanProductForm(form: LoanProductForm):
       allocation: allocation!,
       lateFine,
       settlementRebateBp: rebate!,
+      guarantors: guarantors!,
       rateBp: rateBp!,
       frequency: frequency!,
       minAmount: min as bigint,
@@ -217,6 +225,7 @@ export async function listLoanProducts({ tx, tenantId }: TenantTx, opts: { activ
       allocation: loanProduct.allocation,
       lateFine: loanProduct.lateFine,
       settlementRebateBp: loanProduct.settlementRebateBp,
+      guarantors: loanProduct.guarantors,
       rateBp: loanProduct.rateBp,
       frequency: loanProduct.frequency,
       minAmount: loanProduct.minAmount,
