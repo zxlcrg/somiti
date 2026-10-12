@@ -36,7 +36,7 @@ const loanCash = (user: ReturnType<typeof sql>, day?: string) => sql`
       ${day ? sql`and p.business_date = ${day}` : sql``} and ${notReversed("p")})`;
 
 /** Cash a collector holds right now, in paisa. */
-async function heldBy(ctx: TenantTx, collectorId: string): Promise<bigint> {
+export async function heldBy(ctx: TenantTx, collectorId: string): Promise<bigint> {
   const res = await ctx.tx.execute<{ held: string }>(sql`
     select
       (select coalesce(sum(${withFine}), 0) from savings_transaction t

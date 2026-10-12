@@ -94,7 +94,7 @@ export async function collectionSheet(ctx: TenantTx): Promise<CollectionSheet> {
     with paid as (
       select loan_id, seq, sum(amount) as paid
         from (select x.loan_id, x.seq, x.principal + x.interest + x.rebate as amount
-                from loan_repayment_line x where x.tenant_id = ${tenantId}
+                from loan_repayment_line x where x.tenant_id = ${tenantId} and not exists (select 1 from loan_repayment p0 join journal_entry r0 on r0.tenant_id = p0.tenant_id and r0.reverses_id = p0.journal_entry_id where p0.tenant_id = x.tenant_id and p0.id = x.repayment_id)
               union all
               select m.loan_id, m.seq, m.principal + m.interest
                 from loan_reschedule_line m where m.tenant_id = ${tenantId}) settled

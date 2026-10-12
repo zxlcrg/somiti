@@ -49,7 +49,7 @@ export async function overdueLoans(ctx: TenantTx): Promise<OverdueSummary> {
     with paid as (
       select loan_id, seq, sum(amount) as paid
         from (select x.loan_id, x.seq, x.principal + x.interest + x.rebate as amount
-                from loan_repayment_line x where x.tenant_id = ${tenantId}
+                from loan_repayment_line x where x.tenant_id = ${tenantId} and not exists (select 1 from loan_repayment p0 join journal_entry r0 on r0.tenant_id = p0.tenant_id and r0.reverses_id = p0.journal_entry_id where p0.tenant_id = x.tenant_id and p0.id = x.repayment_id)
               union all
               select m.loan_id, m.seq, m.principal + m.interest
                 from loan_reschedule_line m where m.tenant_id = ${tenantId}) settled
@@ -101,7 +101,7 @@ export async function overdueCount(ctx: TenantTx): Promise<number> {
           select 1 from loan_installment i
            where i.tenant_id = loan.tenant_id and i.loan_id = loan.id and i.due_on < ${day!.d}::date
              and i.principal + i.interest > coalesce((select sum(x.principal + x.interest + x.rebate) from loan_repayment_line x
-                                                       where x.tenant_id = i.tenant_id and x.loan_id = i.loan_id and x.seq = i.seq), 0)
+                                                       where x.tenant_id = i.tenant_id and x.loan_id = i.loan_id and x.seq = i.seq and not exists (select 1 from loan_repayment p0 join journal_entry r0 on r0.tenant_id = p0.tenant_id and r0.reverses_id = p0.journal_entry_id where p0.tenant_id = x.tenant_id and p0.id = x.repayment_id)), 0)
                                           + coalesce((select sum(m.principal + m.interest) from loan_reschedule_line m
                                                        where m.tenant_id = i.tenant_id and m.loan_id = i.loan_id and m.seq = i.seq), 0))`,
       ),

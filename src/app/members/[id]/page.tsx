@@ -32,6 +32,7 @@ import { NomineesPanel } from "./nominees-panel";
 import { PhotoDialog } from "./photo/photo-dialog";
 import { SavingsPanel } from "./savings-panel";
 import { SharesPanel } from "./shares-panel";
+import { canRequestCorrections } from "@/modules/corrections";
 
 async function load(id: string) {
   const user = await requireUser();
@@ -211,6 +212,7 @@ export default async function MemberPage({
           memberName={name}
           locale={locale}
           canBuy={canRecordPayments(user.roles) && member.status === "active"}
+          canCorrect={canRequestCorrections(user.roles) && member.status === "active"}
           boughtId={search.bought}
         />
       )}

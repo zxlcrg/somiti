@@ -29,7 +29,7 @@ async function lockAccount({ tx, tenantId }: TenantTx, accountId: string) {
 }
 
 /** Balance less what pending requests have already promised. */
-async function available(ctx: TenantTx, accountId: string, balance: bigint, exceptId?: string): Promise<bigint> {
+export async function available(ctx: TenantTx, accountId: string, balance: bigint, exceptId?: string): Promise<bigint> {
   const [row] = await ctx.tx
     .select({ held: sql<string>`coalesce(sum(${savingsWithdrawal.amount}), 0)` })
     .from(savingsWithdrawal)
