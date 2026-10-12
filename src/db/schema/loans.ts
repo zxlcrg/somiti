@@ -24,7 +24,7 @@ export const loanChargeLabelEnum = pgEnum("loan_charge_label", ["interest", "ser
  * once loans have them, always come first.
  */
 export const loanAllocationEnum = pgEnum("loan_allocation", ["interest_first", "principal_first"]);
-export const loanStatusEnum = pgEnum("loan_status", ["applied", "approved", "rejected", "cancelled", "disbursed", "closed"]);
+export const loanStatusEnum = pgEnum("loan_status", ["applied", "approved", "rejected", "cancelled", "disbursed", "closed", "written_off"]);
 
 /** A loan product is configuration, not code: method, yearly rate, installment rhythm and limits. */
 export const loanProduct = pgTable(
@@ -151,7 +151,7 @@ export const loan = pgTable(
     // An imported loan was decided on paper long ago; the admin who brings it in is its only officer here.
     check(
       "loan_checker_not_maker",
-      sql`${t.importedOn} IS NOT NULL OR ${t.status} NOT IN ('approved', 'rejected', 'disbursed', 'closed') OR ${t.decidedBy} <> ${t.appliedBy}`,
+      sql`${t.importedOn} IS NOT NULL OR ${t.status}::text NOT IN ('approved', 'rejected', 'disbursed', 'closed', 'written_off') OR ${t.decidedBy} <> ${t.appliedBy}`,
     ),
     check(
       "loan_imported",
@@ -168,7 +168,7 @@ export const loan = pgTable(
     check("loan_reject_note", sql`${t.status} <> 'rejected' OR length(trim(coalesce(${t.decisionNote}, ''))) > 0`),
     check(
       "loan_disbursed",
-      sql`(${t.status} IN ('disbursed', 'closed')) = (${t.entryId} IS NOT NULL)
+      sql`(${t.status}::text IN ('disbursed', 'closed', 'written_off')) = (${t.entryId} IS NOT NULL)
           AND (${t.entryId} IS NULL) = (${t.disbursedOn} IS NULL)
           AND (${t.entryId} IS NULL) = (${t.disbursedBy} IS NULL)
           AND (${t.importedOn} IS NOT NULL OR (${t.entryId} IS NULL) = (${t.paymentMethod} IS NULL))`,
@@ -399,5 +399,57 @@ export const loanGuarantor = pgTable(
     foreignKey({ name: "loan_guarantor_member_fk", columns: [t.tenantId, t.memberId], foreignColumns: [member.tenantId, member.id] }),
     foreignKey({ name: "loan_guarantor_created_by_fk", columns: [t.tenantId, t.createdBy], foreignColumns: [appUser.tenantId, appUser.id] }),
     check("loan_guarantor_position_range", sql`${t.position} BETWEEN 1 AND 3`),
+  ],
+);
+
+export const writeOffStatusEnum = pgEnum("write_off_status", ["pending", "approved", "rejected", "cancelled"]);
+
+/**
+ * Writing off a loan nobody expects to be repaid. One officer asks, with a
+ * reason; a different managing officer approves, and only approval posts:
+ * Dr bad debts written off, Cr loans receivable, for the principal still owed
+ * then. The loan becomes written_off and leaves every list of loans to collect.
+ */
+export const loanWriteOff = pgTable(
+  "loan_write_off",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    loanId: uuid("loan_id").notNull(),
+    status: writeOffStatusEnum("status").notNull().default("pending"),
+    reason: text("reason").notNull(),
+    requestedBy: uuid("requested_by").notNull(),
+    requestedOn: date("requested_on", { mode: "string" }).notNull(),
+    decidedBy: uuid("decided_by"),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    decisionNote: text("decision_note"),
+    /** Principal and charge still owed when approved; the principal is what gets posted. */
+    principal: bigint("principal", { mode: "bigint" }),
+    charge: bigint("charge", { mode: "bigint" }),
+    entryId: uuid("entry_id"),
+    submitKey: text("submit_key").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("loan_write_off_tenant_id").on(t.tenantId, t.id),
+    unique("loan_write_off_submit_key").on(t.tenantId, t.submitKey),
+    index("loan_write_off_loan_idx").on(t.tenantId, t.loanId),
+    foreignKey({ name: "loan_write_off_loan_fk", columns: [t.tenantId, t.loanId], foreignColumns: [loan.tenantId, loan.id] }),
+    foreignKey({ name: "loan_write_off_requested_by_fk", columns: [t.tenantId, t.requestedBy], foreignColumns: [appUser.tenantId, appUser.id] }),
+    foreignKey({ name: "loan_write_off_decided_by_fk", columns: [t.tenantId, t.decidedBy], foreignColumns: [appUser.tenantId, appUser.id] }),
+    foreignKey({ name: "loan_write_off_entry_fk", columns: [t.tenantId, t.entryId], foreignColumns: [journalEntry.tenantId, journalEntry.id] }),
+    check("loan_write_off_reason", sql`length(trim(${t.reason})) BETWEEN 3 AND 300`),
+    check("loan_write_off_checker_not_maker", sql`${t.decidedBy} IS NULL OR ${t.status} = 'cancelled' OR ${t.decidedBy} <> ${t.requestedBy}`),
+    check("loan_write_off_decided", sql`(${t.status} = 'pending') = (${t.decidedBy} IS NULL) AND (${t.decidedBy} IS NULL) = (${t.decidedAt} IS NULL)`),
+    check(
+      "loan_write_off_posted",
+      sql`(${t.status} = 'approved') = (${t.entryId} IS NOT NULL)
+          AND (${t.entryId} IS NULL) = (${t.principal} IS NULL)
+          AND (${t.entryId} IS NULL) = (${t.charge} IS NULL)
+          AND (${t.principal} IS NULL OR (${t.principal} > 0 AND ${t.charge} >= 0))`,
+    ),
+    check("loan_write_off_reject_note", sql`${t.status} <> 'rejected' OR length(trim(coalesce(${t.decisionNote}, ''))) > 0`),
   ],
 );

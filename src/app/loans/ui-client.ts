@@ -7,6 +7,7 @@ export const STATUS_ICON: Record<LoanStatus, string> = {
   cancelled: "↩️",
   disbursed: "💸",
   closed: "🏁",
+  written_off: "🗂️",
 };
 
 export const METHOD_ICON = { cash: "💵", bank: "🏦", mobile_wallet: "📱" } as const;

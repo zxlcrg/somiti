@@ -35,6 +35,11 @@ export function repaymentChannel(roles: readonly string[]): "office" | "collecto
   return null;
 }
 
+/** Writing a loan off is asked for by one managing officer and approved by another. */
+export function canWriteOffLoans(roles: readonly string[]): boolean {
+  return canApproveLoans(roles);
+}
+
 /** A new schedule is a credit decision, so it is made by the managing officers who approve loans. */
 export function canRescheduleLoans(roles: readonly string[]): boolean {
   return canApproveLoans(roles);

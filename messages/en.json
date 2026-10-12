@@ -1396,7 +1396,8 @@
       "rejected": "Turned down",
       "cancelled": "Withdrawn",
       "disbursed": "Running",
-      "closed": "Repaid"
+      "closed": "Repaid",
+      "written_off": "Written off"
     },
     "method": {
       "flat": "Flat",
@@ -1424,7 +1425,8 @@
       "go": "Open",
       "overdue": "{count, plural, one {{n} loan is overdue} other {{n} loans are overdue}}",
       "overdueOwing": "{amount} past its date",
-      "see": "See list"
+      "see": "See list",
+      "writeOff": "{count, plural, one {{n} write-off to decide} other {{n} write-offs to decide}}"
     },
     "stats": {
       "outstanding": "Principal still owed",
@@ -1628,7 +1630,8 @@
         "approved": "Approved",
         "rejected": "Turned down",
         "disbursed": "Paid out",
-        "closed": "Repaid"
+        "closed": "Repaid",
+        "written_off": "Written off"
       },
       "terms": "Terms",
       "fee": "Processing fee",
@@ -1867,6 +1870,55 @@
       "owed": "still owed",
       "asked": "applied for",
       "named": "{n} named"
+    },
+    "writeOff": {
+      "title": "Write off this loan",
+      "teaser": "For a loan nobody expects to be repaid.",
+      "principal": "Principal still owed",
+      "charge": "Service charge still due",
+      "explain": "Another managing officer must approve. Then the principal still owed goes to bad debts in the books, the loan leaves the overdue list and the collection sheet, and its guarantors are free to leave the somiti. The unpaid service charge was never counted as income, so nothing is posted for it.",
+      "reason": "Why write it off?",
+      "reasonPlaceholder": "For example: the member has moved away and can't be reached",
+      "reasonHint": "The approving officer and the books will see this.",
+      "ask": "Ask to write off",
+      "pendingTitle": "Write-off waiting for approval",
+      "askedBy": "Asked by {name} on {date}",
+      "waitingOther": "Another managing officer needs to approve or turn this down.",
+      "withdraw": "Withdraw the request",
+      "approveTab": "Approve",
+      "rejectTab": "Turn down",
+      "note": "Note (optional)",
+      "approve": "Approve write-off",
+      "confirmTitle": "Write off {amount}?",
+      "confirmBody": "This posts to bad debts today and can't be undone from here.",
+      "back": "Back",
+      "confirm": "Yes, write it off",
+      "rejectReason": "Why turn it down?",
+      "reject": "Turn down",
+      "writtenOff": "Written off on {date}: {amount} to bad debts.",
+      "writtenOffBody": "Service charge not collected: {charge}. Asked by {asker}, approved by {approver}. Voucher #{no}.",
+      "done": {
+        "request": "Write-off asked for. Another managing officer needs to approve it.",
+        "approve": "The loan is written off.",
+        "reject": "Write-off turned down. The loan carries on.",
+        "cancel": "Write-off request withdrawn."
+      },
+      "errors": {
+        "not_found": "That loan or request no longer exists.",
+        "not_running": "Only a loan that is paid out and still running can be written off.",
+        "nothing_owed": "No principal is owed on this loan any more.",
+        "already_pending": "A write-off for this loan is already waiting.",
+        "reason_required": "Say why, in a few words.",
+        "reason_too_long": "Keep the reason under 300 characters.",
+        "wrong_status": "This request was already decided.",
+        "self_decision": "Someone other than the officer who asked must decide.",
+        "note_required": "Say why it is turned down.",
+        "not_requester": "Only the officer who asked can withdraw it.",
+        "forbidden": "Only managing officers can write off loans.",
+        "server": "Something went wrong. Nothing was changed; try again.",
+        "DAY_CLOSED": "Today's business day is closed. Nothing was posted.",
+        "NO_OPEN_PERIOD": "No open fiscal year covers today. Nothing was posted."
+      }
     }
   },
   "loanImport": {

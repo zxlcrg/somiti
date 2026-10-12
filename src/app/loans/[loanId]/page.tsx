@@ -15,9 +15,12 @@ import {
   canDisburseLoans,
   canRescheduleLoans,
   canViewLoans,
+  canWriteOffLoans,
   getLoan,
   installmentStatus,
   loanGuarantors,
+  loanWriteOffs,
+  outstanding,
   listRepayments,
   listReschedules,
   repaymentChannel,
@@ -29,6 +32,7 @@ import { MemberAvatar } from "../../members/member-avatar";
 import { METHOD_ICON, percent, STATUS_ICON } from "../ui";
 import { RepayPanel } from "./repay-panel";
 import { ReschedulePanel } from "./reschedule-panel";
+import { WriteOffPanel } from "./write-off-panel";
 import { CancelPanel, DecidePanel, DisbursePanel } from "./step-panel";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -41,7 +45,7 @@ export default async function LoanPage({
   searchParams,
 }: {
   params: Promise<{ loanId: string }>;
-  searchParams: Promise<{ applied?: string; done?: string; paid?: string; closed?: string; rescheduled?: string }>;
+  searchParams: Promise<{ applied?: string; done?: string; paid?: string; closed?: string; rescheduled?: string; writeoff?: string }>;
 }) {
   const user = await requireUser();
   const t = await getTranslations("loans");
@@ -53,11 +57,11 @@ export default async function LoanPage({
     const l = await getLoan(ctx, loanId);
     const [somiti] = await ctx.tx.select({ d: tenant.businessDate }).from(tenant).where(eq(tenant.id, ctx.tenantId));
     return l
-      ? { l, today: somiti!.d, guarantors: await loanGuarantors(ctx, l.id), repayments: l.disbursedOn ? await listRepayments(ctx, l.id) : [], reschedules: l.disbursedOn ? await listReschedules(ctx, l.id) : [] }
+      ? { l, today: somiti!.d, guarantors: await loanGuarantors(ctx, l.id), writeOffs: l.disbursedOn ? await loanWriteOffs(ctx, l.id) : [], repayments: l.disbursedOn ? await listRepayments(ctx, l.id) : [], reschedules: l.disbursedOn ? await listReschedules(ctx, l.id) : [] }
       : null;
   });
   if (!data) notFound();
-  const { l, today, guarantors, repayments, reschedules } = data;
+  const { l, today, guarantors, writeOffs, repayments, reschedules } = data;
   const locale = await pageLocale();
   const taka = (p: bigint) => formatTaka(p, locale);
   const num = (n: number | bigint) => formatInteger(n, locale);
@@ -70,6 +74,11 @@ export default async function LoanPage({
   const channel = repaymentChannel(user.roles);
   const canRepay = l.status === "disbursed" && channel !== null;
   const canReschedule = l.status === "disbursed" && canRescheduleLoans(user.roles);
+  const canWriteOff = l.status === "disbursed" && canWriteOffLoans(user.roles);
+  const pendingWriteOff = writeOffs.find((w) => w.status === "pending") ?? null;
+  const writtenOff = writeOffs.find((w) => w.status === "approved") ?? null;
+  const left = outstanding(l.schedule);
+  const woDone = search.writeoff && ["request", "approve", "reject", "cancel"].includes(search.writeoff) ? search.writeoff : null;
   const running = l.status === "disbursed" || l.status === "closed";
   const owedTotal = l.summary.totalRepayable - l.paidPrincipal - l.paidInterest;
   const st = running ? standing(l.schedule, today) : null;
@@ -86,7 +95,14 @@ export default async function LoanPage({
       when: l.decidedAt && l.status !== "cancelled" ? formatDateTime(l.decidedAt, locale) : null,
     },
     { key: "disbursed", on: !!l.disbursedOn, who: l.disbursedBy ? primaryName(l.disbursedBy, locale) : null, when: l.disbursedOn ? formatDate(l.disbursedOn, locale) : null },
-    { key: "closed", on: !!l.closedOn, who: null, when: l.closedOn ? formatDate(l.closedOn, locale) : null },
+    writtenOff
+      ? {
+          key: "written_off",
+          on: true,
+          who: writtenOff.decidedBy ? primaryName(writtenOff.decidedBy, locale) : null,
+          when: writtenOff.writtenOn ? formatDate(writtenOff.writtenOn, locale) : null,
+        }
+      : { key: "closed", on: !!l.closedOn, who: null, when: l.closedOn ? formatDate(l.closedOn, locale) : null },
   ];
 
   return (
@@ -111,6 +127,33 @@ export default async function LoanPage({
           <span aria-hidden="true">🔁</span>{" "}
           {t("reschedule.banner", { n: num(reschedules.at(-1)!.installments), count: reschedules.at(-1)!.installments, date: formatDate(reschedules.at(-1)!.firstDueOn, locale) })}
         </p>
+      )}
+      {woDone && (
+        <p className={`celebrate${woDone === "approve" ? "" : " quiet"}`} role="status">
+          <span aria-hidden="true">{woDone === "approve" ? "🗂️" : woDone === "request" ? "📨" : "↩️"}</span> {t(`writeOff.done.${woDone}`)}
+        </p>
+      )}
+      {writtenOff && (
+        <section className="write-off-banner" role="note">
+          <span aria-hidden="true">🗂️</span>
+          <div>
+            <strong>
+              {t("writeOff.writtenOff", {
+                date: writtenOff.writtenOn ? formatDate(writtenOff.writtenOn, locale) : "",
+                amount: taka(writtenOff.principal ?? 0n),
+              })}
+            </strong>
+            <p>
+              {t("writeOff.writtenOffBody", {
+                charge: taka(writtenOff.charge ?? 0n),
+                asker: primaryName(writtenOff.requestedBy, locale),
+                approver: writtenOff.decidedBy ? primaryName(writtenOff.decidedBy, locale) : "",
+                no: num(writtenOff.entryNo ?? 0n),
+              })}
+            </p>
+            <p className="muted">“{writtenOff.reason}”</p>
+          </div>
+        </section>
       )}
       {done && (
         <p className={`celebrate${done === "reject" || done === "cancel" ? " quiet" : ""}`} role="status">
@@ -381,7 +424,7 @@ export default async function LoanPage({
           )}
         </div>
 
-        {(canDecide || canPay || ownWaiting || canCancel || canRepay || canReschedule) && (
+        {(canDecide || canPay || ownWaiting || canCancel || canRepay || canReschedule || canWriteOff) && (
           <aside className="loan-side">
             {canRepay && (
               <RepayPanel
@@ -423,6 +466,22 @@ export default async function LoanPage({
                 today={today}
                 frequency={l.frequency}
                 charge={charge}
+              />
+            )}
+            {canWriteOff && (
+              <WriteOffPanel
+                loanId={l.id}
+                principal={left.principal.toString()}
+                charge={left.interest.toString()}
+                pending={
+                  pendingWriteOff && {
+                    id: pendingWriteOff.id,
+                    reason: pendingWriteOff.reason,
+                    askedBy: primaryName(pendingWriteOff.requestedBy, locale),
+                    askedOn: formatDate(pendingWriteOff.requestedOn, locale),
+                    mine: pendingWriteOff.requestedBy.id === user.userId,
+                  }
+                }
               />
             )}
             {canDecide && <DecidePanel loanId={l.id} today={today} />}

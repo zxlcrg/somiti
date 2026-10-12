@@ -21,7 +21,7 @@ import { buildSchedule, summarize, type LoanFrequency, type LoanMethod, type Sch
  * fee kept back from the money handed over.
  */
 
-export type LoanStatus = "applied" | "approved" | "rejected" | "cancelled" | "disbursed" | "closed";
+export type LoanStatus = "applied" | "approved" | "rejected" | "cancelled" | "disbursed" | "closed" | "written_off";
 export const PAYMENT_METHODS = ["cash", "bank", "mobile_wallet"] as const;
 export type LoanPaymentMethod = (typeof PAYMENT_METHODS)[number];
 export const MAX_PURPOSE = 300;
