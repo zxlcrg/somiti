@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { TenantTx } from "@/db/client";
-import { appUser, loan, loanFine, loanInstallment, loanProduct, loanRepaymentLine, loanRescheduleLine, member, tenant } from "@/db/schema";
+import { appUser, loan, loanFine, loanGuarantor, loanInstallment, loanProduct, loanRepaymentLine, loanRescheduleLine, member, tenant } from "@/db/schema";
 import { toLatinDigits } from "@/lib/digits";
 import { applyBasisPoints, parseTaka } from "@/lib/money";
 import { recordAudit } from "@/modules/audit/log";
@@ -66,6 +66,8 @@ export interface LoanApplicationInput {
   amount: string;
   installments: string;
   purpose?: string;
+  /** Members standing guarantor, in order; the product says how many are needed. */
+  guarantorIds?: string[];
   /** Generated once per form, so a double submit makes one application. */
   submitKey: string;
 }
@@ -82,9 +84,18 @@ export type LoanApplicationError =
   | "product_inactive"
   | "member_inactive"
   | "already_open"
-  | "not_found";
+  | "not_found"
+  | "guarantors_needed"
+  | "too_many_guarantors"
+  | "guarantor_self"
+  | "guarantor_duplicate"
+  | "guarantor_unknown"
+  | "guarantor_inactive";
 
-export type LoanApplicationErrors = Partial<Record<"amount" | "installments" | "purpose" | "productId" | "form", LoanApplicationError>>;
+export const MAX_GUARANTORS = 3;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export type LoanApplicationErrors = Partial<Record<"amount" | "installments" | "purpose" | "productId" | "guarantors" | "form", LoanApplicationError>>;
 
 export type LoanApplicationResult = { ok: true; loanId: string; loanNo: number; replayed: boolean } | { ok: false; errors: LoanApplicationErrors };
 
@@ -125,6 +136,21 @@ export async function applyForLoan(ctx: TenantTx, input: LoanApplicationInput, a
   else if (principal && principal > 0n && principal / BigInt(n) < 100n) errors.installments = "installment_too_small";
   const purpose = input.purpose?.trim() || null;
   if (purpose && purpose.length > MAX_PURPOSE) errors.purpose = "purpose_too_long";
+  const guarantorIds = (input.guarantorIds ?? []).filter((id) => id);
+  if (guarantorIds.length > MAX_GUARANTORS) errors.guarantors = "too_many_guarantors";
+  else if (guarantorIds.includes(input.memberId)) errors.guarantors = "guarantor_self";
+  else if (new Set(guarantorIds).size !== guarantorIds.length) errors.guarantors = "guarantor_duplicate";
+  else if (guarantorIds.length < product.guarantors) errors.guarantors = "guarantors_needed";
+  else if (guarantorIds.length) {
+    const found = guarantorIds.every((id) => UUID.test(id))
+      ? await tx
+          .select({ id: member.id, status: member.status })
+          .from(member)
+          .where(and(eq(member.tenantId, tenantId), inArray(member.id, guarantorIds)))
+      : [];
+    if (found.length !== guarantorIds.length) errors.guarantors = "guarantor_unknown";
+    else if (found.some((g) => g.status !== "active")) errors.guarantors = "guarantor_inactive";
+  }
   if (Object.keys(errors).length) return { ok: false, errors };
 
   const [owner] = await tx
@@ -177,12 +203,17 @@ export async function applyForLoan(ctx: TenantTx, input: LoanApplicationInput, a
       submitKey: input.submitKey,
     })
     .returning({ id: loan.id });
+  if (guarantorIds.length) {
+    await tx
+      .insert(loanGuarantor)
+      .values(guarantorIds.map((memberId, i) => ({ tenantId, loanId: row!.id, memberId, position: i + 1, createdBy: actor.userId })));
+  }
   await recordAudit(ctx, {
     actorUserId: actor.userId,
     action: "loan.apply",
     entityType: "loan",
     entityId: row!.id,
-    after: { loanNo, memberId: input.memberId, productCode: product.code, principal: principal!.toString(), installments: n, rateBp: product.rateBp, method: product.method, purpose },
+    after: { loanNo, memberId: input.memberId, productCode: product.code, principal: principal!.toString(), installments: n, rateBp: product.rateBp, method: product.method, purpose, guarantorIds },
     device: actor.device,
   });
   return { ok: true, loanId: row!.id, loanNo, replayed: false };

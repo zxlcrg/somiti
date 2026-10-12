@@ -7,7 +7,7 @@ import { getAppDb, withTenant } from "@/db/client";
 import { tenant } from "@/db/schema";
 import { primaryName } from "@/lib/names";
 import { getMember } from "@/modules/members";
-import { canApplyForLoans, listLoanProducts, listLoans } from "@/modules/loans";
+import { canApplyForLoans, guarantorCandidates, listLoanProducts, listLoans } from "@/modules/loans";
 import { requireUser } from "../../auth";
 import { pageLocale } from "../../books";
 import { MemberAvatar } from "../../members/member-avatar";
@@ -34,10 +34,11 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
       products: await listLoanProducts(ctx, { activeOnly: true }),
       open: await listLoans(ctx, { memberId, status: ["applied", "approved", "disbursed"] }),
       today: somiti!.d,
+      candidates: await guarantorCandidates(ctx, memberId),
     };
   });
   if (!data) notFound();
-  const { member, products, open, today } = data;
+  const { member, products, open, today, candidates } = data;
   const name = primaryName(member, locale);
 
   return (
@@ -61,6 +62,7 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
           memberId={member.id}
           today={today}
           openProductIds={open.map((l) => l.product.id)}
+          candidates={candidates}
           products={products.map((p) => ({
             id: p.id,
             code: p.code,
@@ -73,6 +75,7 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
             maxAmount: p.maxAmount.toString(),
             maxInstallments: p.maxInstallments,
             processingFeeBp: p.processingFeeBp,
+            guarantors: p.guarantors,
           }))}
         />
       )}

@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { TenantTx } from "@/db/client";
 import {
   loan,
+  loanGuarantor,
   member,
   memberExit,
   memberExitPayout,
@@ -27,8 +28,8 @@ import { PAYMENT_METHODS, shareHolding, type PaymentMethod } from "./shares";
  * line), closes the accounts and marks the member exited. Amounts are worked
  * out at approval, since deposits may arrive after the request.
  *
- * A loan that is applied for, approved or still running blocks the exit;
- * guarantees will join it once loans have guarantors.
+ * A loan that is applied for, approved or still running blocks the exit,
+ * and so does standing guarantor for someone else's.
  */
 
 export const MAX_EXIT_REASON = 500;
@@ -60,7 +61,7 @@ export async function exitSettlement(ctx: TenantTx, memberId: string): Promise<E
   return { shareRefund, shares: holding.shares, savings, savingsPayout, total: shareRefund + savingsPayout };
 }
 
-export type ExitBlocker = "not_active" | "pending_withdrawal" | "negative_balance" | "open_loan";
+export type ExitBlocker = "not_active" | "pending_withdrawal" | "negative_balance" | "open_loan" | "guarantor";
 
 /** Reasons a member can't leave yet. */
 export async function exitBlockers(ctx: TenantTx, memberId: string): Promise<ExitBlocker[]> {
@@ -81,6 +82,12 @@ export async function exitBlockers(ctx: TenantTx, memberId: string): Promise<Exi
     .from(loan)
     .where(and(eq(loan.tenantId, tenantId), eq(loan.memberId, memberId), inArray(loan.status, ["applied", "approved", "disbursed"])));
   if ((loans?.n ?? 0) > 0) blockers.push("open_loan");
+  const [guarantees] = await tx
+    .select({ n: sql<number>`count(*)::int` })
+    .from(loanGuarantor)
+    .innerJoin(loan, and(eq(loan.tenantId, loanGuarantor.tenantId), eq(loan.id, loanGuarantor.loanId)))
+    .where(and(eq(loanGuarantor.tenantId, tenantId), eq(loanGuarantor.memberId, memberId), inArray(loan.status, ["applied", "approved", "disbursed"])));
+  if ((guarantees?.n ?? 0) > 0) blockers.push("guarantor");
   return blockers;
 }
 

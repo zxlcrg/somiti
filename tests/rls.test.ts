@@ -109,9 +109,18 @@ beforeAll(async () => {
         { userId: t.adminUserId },
       );
       if (!loanProduct.ok) throw new Error("seed loan product");
+      const guarantor = await admitMember(ctx, { nameEn: "Seed guarantor", phone: "01733333333" }, { userId: t.adminUserId });
+      if (!guarantor.ok) throw new Error("seed guarantor");
       const applied = await applyForLoan(
         ctx,
-        { memberId: admitted.member.id, productId: loanProduct.id, amount: "600", installments: "6", submitKey: `seed-loan-${t.tenantId}` },
+        {
+          memberId: admitted.member.id,
+          productId: loanProduct.id,
+          amount: "600",
+          installments: "6",
+          guarantorIds: [guarantor.member.id],
+          submitKey: `seed-loan-${t.tenantId}`,
+        },
         { userId: t.adminUserId },
       );
       if (!applied.ok) throw new Error("seed loan");

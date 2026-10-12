@@ -1741,3 +1741,240 @@
   margin-left: auto;
   text-align: right;
 }
+
+/* ---------- Guarantors ---------- */
+
+.guarantor-card {
+  --g: #7c5cd6;
+  display: grid;
+  gap: 0.75rem;
+  border-top: 4px solid var(--g);
+}
+
+@media (prefers-color-scheme: dark) {
+  .guarantor-card {
+    --g: #9d84ec;
+  }
+}
+
+.guarantor-card.has-error {
+  border-color: #e5484d;
+}
+
+.guarantor-card h2 {
+  margin: 0;
+}
+
+.guarantor-card > p {
+  margin: 0;
+}
+
+.guarantor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.count-pill {
+  flex: none;
+  padding: 0.15rem 0.7rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--g) 14%, var(--card));
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.count-pill.ok {
+  background: color-mix(in srgb, var(--accent) 18%, var(--card));
+}
+
+.guarantor-list,
+.guarantor-matches {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guarantor-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--g) 5%, var(--card));
+  animation: g-in 0.25s ease both;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.guarantor-list li:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--g) 22%, transparent);
+}
+
+@keyframes g-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guarantor-list li {
+    animation: none;
+  }
+}
+
+.g-pos {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  background: var(--g);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.g-who {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.g-who strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+a.g-who:hover strong {
+  color: var(--accent);
+}
+
+.g-remove {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.g-remove:hover {
+  background: color-mix(in srgb, #e5484d 12%, var(--card));
+  color: #e5484d;
+}
+
+.guarantor-search {
+  position: relative;
+}
+
+.guarantor-matches {
+  gap: 0;
+  margin-top: 0.35rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.guarantor-matches li + li {
+  border-top: 1px solid var(--line);
+}
+
+.guarantor-matches button {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.guarantor-matches button:hover,
+.guarantor-matches button:focus-visible {
+  background: color-mix(in srgb, var(--g) 9%, var(--card));
+}
+
+.g-add {
+  flex: none;
+  color: var(--g);
+  font-weight: 800;
+}
+
+.g-empty {
+  padding: 0.75rem;
+}
+
+/* On the member's profile: loans they stand guarantor for. */
+
+.loans-panel .guarantees {
+  --g: #7c5cd6;
+  margin-top: 1rem;
+}
+
+.loans-panel .guarantees h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.loans-panel .guarantees ul {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.loans-panel .guarantees a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--g);
+  border-radius: 0.9rem;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease;
+}
+
+.loans-panel .guarantees a:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--g) 6%, var(--card));
+}
+
+.g-amt {
+  display: grid;
+  flex: none;
+  text-align: right;
+}

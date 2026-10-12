@@ -247,6 +247,10 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
                     <dt>{t("products.rebate")}</dt>
                     <dd>{p.settlementRebateBp ? percent(p.settlementRebateBp, locale) : t("products.noRebate")}</dd>
                   </div>
+                  <div>
+                    <dt>{t("guarantors.title")}</dt>
+                    <dd>{p.guarantors ? num(p.guarantors) : t("productForm.noGuarantors")}</dd>
+                  </div>
                 </dl>
                 <footer>
                   <span className="muted">

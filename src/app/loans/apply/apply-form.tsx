@@ -8,6 +8,7 @@ import { formatDate, formatInteger, formatTaka } from "@/lib/format";
 import { applyBasisPoints, parseTaka } from "@/lib/money";
 import { buildSchedule, summarize, type LoanFrequency, type LoanMethod } from "@/modules/loans/schedule";
 import { applyForLoanAction, type ApplyState } from "../actions";
+import { GuarantorPicker, type Candidate } from "./guarantor-picker";
 
 interface Product {
   id: string;
@@ -21,6 +22,7 @@ interface Product {
   maxAmount: string;
   maxInstallments: number;
   processingFeeBp: number;
+  guarantors: number;
 }
 
 const SHOWN_ROWS = 6;
@@ -30,7 +32,19 @@ function pct(bp: number, digits: (s: string) => string) {
   return `${digits(s)}%`;
 }
 
-export function ApplyForm({ memberId, products, openProductIds, today }: { memberId: string; products: Product[]; openProductIds: string[]; today: string }) {
+export function ApplyForm({
+  memberId,
+  products,
+  openProductIds,
+  today,
+  candidates,
+}: {
+  memberId: string;
+  products: Product[];
+  openProductIds: string[];
+  today: string;
+  candidates: Candidate[];
+}) {
   const t = useTranslations("loans");
   const raw = useLocale();
   const locale = isLocale(raw) ? raw : defaultLocale;
@@ -49,7 +63,7 @@ export function ApplyForm({ memberId, products, openProductIds, today }: { membe
   }
   const touch = (f: string) => setEdited((prev) => new Set(prev).add(f));
   const e = state.errors ?? {};
-  const err = (f: "amount" | "installments" | "purpose" | "productId") => (e[f] && !edited.has(f) ? t(`applyErrors.${e[f]}`) : undefined);
+  const err = (f: "amount" | "installments" | "purpose" | "productId" | "guarantors") => (e[f] && !edited.has(f) ? t(`applyErrors.${e[f]}`) : undefined);
 
   const taka = (p: bigint | string) => formatTaka(BigInt(p), locale);
   const num = (n: number) => formatInteger(n, locale);
@@ -191,6 +205,15 @@ export function ApplyForm({ memberId, products, openProductIds, today }: { membe
             {err("purpose") && <small className="field-error">{err("purpose")}</small>}
           </div>
         </section>
+
+        <GuarantorPicker
+          key={p.id}
+          candidates={candidates}
+          required={p.guarantors}
+          locale={locale}
+          error={err("guarantors")}
+          onChange={() => touch("guarantors")}
+        />
 
         {preview && (
           <section className="loan-card">

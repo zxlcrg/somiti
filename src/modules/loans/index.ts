@@ -49,6 +49,7 @@ export {
   listLoans,
   loanStats,
   loansWaitingFor,
+  MAX_GUARANTORS,
   MAX_PURPOSE,
   PAYMENT_METHODS,
   previewTerms,
@@ -83,3 +84,4 @@ export {
   type LoanImportRowError,
   type LoanImportSummary,
 } from "./import";
+export { GUARANTEED_STATUSES, guarantorCandidates, loanGuarantors, memberGuarantees, type GuaranteeView, type GuarantorCandidate, type GuarantorView } from "./guarantors";

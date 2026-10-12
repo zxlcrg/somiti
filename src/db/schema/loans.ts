@@ -52,6 +52,8 @@ export const loanProduct = pgTable(
     lateFine: bigint("late_fine", { mode: "bigint" }),
     /** Share of the charge on installments not yet due that is let off when a loan is settled early, in basis points. */
     settlementRebateBp: integer("settlement_rebate_bp").notNull().default(0),
+    /** Members who must stand guarantor before an application is accepted; 0 for none. */
+    guarantors: integer("guarantors").notNull().default(0),
     active: boolean("active").notNull().default(true),
     createdBy: uuid("created_by").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -68,6 +70,7 @@ export const loanProduct = pgTable(
     check("loan_product_fee", sql`${t.processingFeeBp} BETWEEN 0 AND 1000`),
     check("loan_product_late_fine", sql`${t.lateFine} IS NULL OR ${t.lateFine} > 0`),
     check("loan_product_settlement_rebate", sql`${t.settlementRebateBp} BETWEEN 0 AND 10000`),
+    check("loan_product_guarantors", sql`${t.guarantors} BETWEEN 0 AND 3`),
   ],
 );
 
@@ -365,5 +368,36 @@ export const loanRescheduleLine = pgTable(
       foreignColumns: [loanInstallment.tenantId, loanInstallment.loanId, loanInstallment.seq],
     }),
     check("loan_reschedule_line_amounts", sql`${t.principal} >= 0 AND ${t.interest} >= 0 AND ${t.principal} + ${t.interest} > 0`),
+  ],
+);
+
+/**
+ * A member who stands guarantor for a loan (review: "a member cannot exit
+ * with an outstanding loan or an active guarantee"). Named on the
+ * application and fixed from then on: a different set means a new
+ * application. The 0043 trigger keeps the borrower from guaranteeing their own loan.
+ */
+export const loanGuarantor = pgTable(
+  "loan_guarantor",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: uuid("tenant_id")
+      .notNull()
+      .references(() => tenant.id),
+    loanId: uuid("loan_id").notNull(),
+    memberId: uuid("member_id").notNull(),
+    /** 1, 2 or 3: the order they were named in. */
+    position: integer("position").notNull(),
+    createdBy: uuid("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("loan_guarantor_member").on(t.tenantId, t.loanId, t.memberId),
+    unique("loan_guarantor_position").on(t.tenantId, t.loanId, t.position),
+    index("loan_guarantor_member_idx").on(t.tenantId, t.memberId),
+    foreignKey({ name: "loan_guarantor_loan_fk", columns: [t.tenantId, t.loanId], foreignColumns: [loan.tenantId, loan.id] }),
+    foreignKey({ name: "loan_guarantor_member_fk", columns: [t.tenantId, t.memberId], foreignColumns: [member.tenantId, member.id] }),
+    foreignKey({ name: "loan_guarantor_created_by_fk", columns: [t.tenantId, t.createdBy], foreignColumns: [appUser.tenantId, appUser.id] }),
+    check("loan_guarantor_position_range", sql`${t.position} BETWEEN 1 AND 3`),
   ],
 );

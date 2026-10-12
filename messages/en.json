@@ -590,7 +590,8 @@
         "not_active": "This member is no longer active.",
         "pending_withdrawal": "A savings withdrawal is still waiting for a decision. Approve or reject it first.",
         "open_loan": "This member has a loan that is open or waiting. It must be repaid, turned down or withdrawn first.",
-        "negative_balance": "A savings account is overdrawn. Sort it out before the member leaves."
+        "negative_balance": "A savings account is overdrawn. Sort it out before the member leaves.",
+        "guarantor": "This member stands guarantor for a loan that is open or waiting. It must be repaid, turned down or withdrawn first."
       },
       "loansNote": "Loans arrive later; once they do, a member with an unpaid loan or an active guarantee can't leave.",
       "form": {
@@ -631,7 +632,8 @@
         "forbidden": "Your role can't handle member exits.",
         "DAY_CLOSED": "Today's business day is already closed.",
         "NO_OPEN_PERIOD": "There is no open fiscal year for today's date.",
-        "server": "Something went wrong on our side. Nothing was paid out. Please try again."
+        "server": "Something went wrong on our side. Nothing was paid out. Please try again.",
+        "guarantor": "This member stands guarantor for a loan that is open or waiting."
       }
     }
   },
@@ -1516,7 +1518,10 @@
       "lateFineHint": "Taken once for each installment paid after its date. Leave empty for no fine.",
       "lateFineEach": "Late fine, each installment",
       "rebate": "Rebate for settling early",
-      "rebateHint": "Share of the {charge} on installments not yet due that is let off when a member pays the loan off early. Leave empty for none."
+      "rebateHint": "Share of the {charge} on installments not yet due that is let off when a member pays the loan off early. Leave empty for none.",
+      "guarantors": "Guarantors needed",
+      "noGuarantors": "None",
+      "guarantorsHint": "Members who must stand guarantor before an application is accepted. A guarantor can't leave the somiti while the loan runs."
     },
     "productErrors": {
       "required": "Fill this in.",
@@ -1533,7 +1538,8 @@
       "forbidden": "Only the admin, president or secretary can set up loan products.",
       "server": "Something went wrong. Try again.",
       "invalid_late_fine": "Enter a fine above zero and up to 1,00,000, or leave it empty.",
-      "invalid_rebate": "Enter a percent from 0 to 100, or leave it empty."
+      "invalid_rebate": "Enter a percent from 0 to 100, or leave it empty.",
+      "invalid_guarantors": "Choose 0 to 3 guarantors."
     },
     "apply": {
       "title": "Loan application",
@@ -1580,7 +1586,13 @@
       "already_open": "This member already has an open loan in this product.",
       "not_found": "That member wasn't found.",
       "forbidden": "Your role can't take loan applications.",
-      "server": "Something went wrong. Nothing was saved; try again."
+      "server": "Something went wrong. Nothing was saved; try again.",
+      "guarantors_needed": "Name all the guarantors this loan needs.",
+      "too_many_guarantors": "A loan can have at most 3 guarantors.",
+      "guarantor_self": "A member can't guarantee their own loan.",
+      "guarantor_duplicate": "The same member is named twice.",
+      "guarantor_unknown": "One of the guarantors isn't a member of this somiti.",
+      "guarantor_inactive": "One of the guarantors has left the somiti."
     },
     "schedule": {
       "due": "Due",
@@ -1836,7 +1848,26 @@
       "server": "Something went wrong. Try again."
     },
     "imported": "{count, plural, one {{n} running loan was} other {{n} running loans were}} brought in (loan numbers {from}–{to}).",
-    "importLink": "Bring in running loans"
+    "importLink": "Bring in running loans",
+    "guarantors": {
+      "title": "Guarantors",
+      "countOf": "{n} of {of}",
+      "optional": "Optional",
+      "needed": "{count, plural, one {{n} member must stand guarantor for this loan.} other {{n} members must stand guarantor for this loan.}}",
+      "none": "This loan product doesn't need a guarantor, but you can name up to 3.",
+      "memberNo": "Member #{no}",
+      "already": "{count, plural, one {{n} loan guaranteed already} other {{n} loans guaranteed already}}",
+      "remove": "Remove {name}",
+      "search": "Add a guarantor",
+      "searchPlaceholder": "Name, member number or phone",
+      "noMatch": "No active member matches.",
+      "hint": "They can't leave the somiti until this loan is repaid.",
+      "left": "Has left",
+      "standsFor": "{count, plural, one {{n} loan they guarantee} other {{n} loans they guarantee}}",
+      "owed": "still owed",
+      "asked": "applied for",
+      "named": "{n} named"
+    }
   },
   "loanImport": {
     "title": "Bring in running loans",
