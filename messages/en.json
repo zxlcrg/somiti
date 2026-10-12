@@ -115,7 +115,8 @@
       "IDEMPOTENCY_CONFLICT": "This request was already sent with different details.",
       "SELF_APPROVAL": "You made this voucher, so another officer must approve or reject it.",
       "VOUCHER_DECIDED": "This voucher has already been decided.",
-      "NOT_MAKER": "Only the person who made this voucher can cancel it."
+      "NOT_MAKER": "Only the person who made this voucher can cancel it.",
+      "MEMBER_ACCOUNT": "This voucher uses a member account (savings, shares, loans or collectors' cash), which only changes through the member's own pages. Reject it and record the change there."
     }
   },
   "auth": {
@@ -721,8 +722,10 @@
         "unbalanced": "Debits and credits must be equal.",
         "one_account": "Use at least two different accounts.",
         "narration_required": "Write what this voucher is for.",
-        "narration_too_long": "Keep this under 1,000 characters."
-      }
+        "narration_too_long": "Keep this under 1,000 characters.",
+        "member_account": "Member savings, shares, loans and collectors' cash can't go on a voucher. Use the member's own page."
+      },
+      "memberAccountsNote": "Member savings, shares, loans and cash held by collectors aren't listed. They change only through the member's own pages, so the books always match each member's records."
     },
     "detail": {
       "title": "Voucher",
