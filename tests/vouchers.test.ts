@@ -248,6 +248,27 @@ describe("voucher records", () => {
     expect(await submit(t, form)).toEqual({ ok: false, errors: { lines: { 0: { accountId: "account" } } } });
   });
 
+  it("keeps member savings, shares, loans and collectors' cash off vouchers", async () => {
+    const t = await newTenant(DATE);
+    for (const key of ["member_savings", "share_capital", "loans_receivable", "cash_with_collector"] as const) {
+      const form = rent(t);
+      form.lines[1]!.accountId = t.accounts[key];
+      expect(await submit(t, form)).toEqual({ ok: false, errors: { lines: { 1: { accountId: "member_account" } } } });
+    }
+    // One sent before the rule existed is stopped at approval, and nothing posts.
+    const checker = await addUser(t, "secretary");
+    const id = randomUUID();
+    await t.run(async ({ tx, tenantId }) => {
+      await tx.insert(voucher).values({ id, tenantId, branchId: t.branchId, narration: "Old voucher", total: 10n, createdBy: t.adminUserId });
+      await tx.insert(voucherLine).values([
+        { tenantId, voucherId: id, lineNo: 1, accountId: t.accounts.cash_in_hand, debit: 10n },
+        { tenantId, voucherId: id, lineNo: 2, accountId: t.accounts.member_savings, credit: 10n },
+      ]);
+    });
+    await expect(t.run((ctx) => approveVoucher(ctx, { voucherId: id, userId: checker }))).rejects.toMatchObject({ code: "MEMBER_ACCOUNT" });
+    expect((await t.run((ctx) => getVoucher(ctx, id)))!.status).toBe("pending");
+  });
+
   it("keeps lines append-only and balanced in the database", async () => {
     const t = await newTenant(DATE);
     const id = await submitted(t);

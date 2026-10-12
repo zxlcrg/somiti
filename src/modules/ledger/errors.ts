@@ -14,7 +14,8 @@ export type LedgerErrorCode =
   | "IDEMPOTENCY_CONFLICT"
   | "SELF_APPROVAL"
   | "VOUCHER_DECIDED"
-  | "NOT_MAKER";
+  | "NOT_MAKER"
+  | "MEMBER_ACCOUNT";
 
 export class LedgerError extends Error {
   constructor(
