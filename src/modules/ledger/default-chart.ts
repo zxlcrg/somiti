@@ -49,4 +49,5 @@ export const DEFAULT_CHART: readonly ChartAccount[] = [
   { code: "5400", nameEn: "Bank charges", nameBn: "ব্যাংক চার্জ", type: "expense", parent: "5000", systemKey: "bank_charges" },
   { code: "5500", nameEn: "Cash over / short", nameBn: "নগদ উদ্বৃত্ত / ঘাটতি", type: "expense", parent: "5000", systemKey: "cash_over_short" },
   { code: "5600", nameEn: "Profit on savings", nameBn: "সঞ্চয়ের উপর মুনাফা", type: "expense", parent: "5000", systemKey: "savings_profit_expense" },
+  { code: "5700", nameEn: "Bad debts written off", nameBn: "অনাদায়ী ঋণ অবলোপন", type: "expense", parent: "5000", systemKey: "bad_debt_expense" },
 ];

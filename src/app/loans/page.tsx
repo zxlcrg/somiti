@@ -9,6 +9,8 @@ import {
   canDisburseLoans,
   canManageLoanProducts,
   canViewLoans,
+  canWriteOffLoans,
+  pendingWriteOffs,
   listLoanProducts,
   listLoans,
   loanStats,
@@ -35,14 +37,15 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
   const locale = await pageLocale();
   const { created, imported, from, to } = await searchParams;
   const importedCount = Number(imported) || 0;
-  const { stats, products, applied, approved, recent, repaidToday, overdue } = await withTenant(getAppDb(), user.tenantId, async (ctx) => ({
+  const { stats, products, applied, approved, recent, repaidToday, overdue, writeOffs } = await withTenant(getAppDb(), user.tenantId, async (ctx) => ({
     stats: await loanStats(ctx),
     overdue: await overdueLoans(ctx),
     repaidToday: await repaymentsOn(ctx),
     products: await listLoanProducts(ctx),
     applied: await listLoans(ctx, { status: "applied" }),
     approved: await listLoans(ctx, { status: "approved" }),
-    recent: await listLoans(ctx, { status: ["disbursed", "closed", "rejected", "cancelled"], limit: 12 }),
+    writeOffs: canWriteOffLoans(user.roles) ? await pendingWriteOffs(ctx) : [],
+    recent: await listLoans(ctx, { status: ["disbursed", "closed", "written_off", "rejected", "cancelled"], limit: 12 }),
   }));
   const taka = (p: bigint) => formatTaka(p, locale);
   const num = (n: number) => formatInteger(n, locale);
@@ -51,6 +54,7 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
   const mine = (l: LoanView) => l.appliedBy.id === user.userId;
   const decide = canApproveLoans(user.roles) ? applied.filter((l) => !mine(l)).length : 0;
   const pay = canDisburseLoans(user.roles) ? approved.length : 0;
+  const toWriteOff = writeOffs.filter((w) => w.requestedBy !== user.userId);
 
   const queue = (title: string, icon: string, rows: LoanView[], hint: (l: LoanView) => string, tone: string) => (
     <section className={`loan-card queue ${tone}`}>
@@ -120,7 +124,7 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
         </p>
       )}
 
-      {(decide > 0 || pay > 0 || overdue.loans.length > 0) && (
+      {(decide > 0 || pay > 0 || overdue.loans.length > 0 || toWriteOff.length > 0) && (
         <div className="loan-callouts">
           {overdue.loans.length > 0 && (
             <Link href="/loans/overdue" className="wd-callout late">
@@ -144,6 +148,17 @@ export default async function LoansPage({ searchParams }: { searchParams: Promis
               </span>
               <span className="wd-callout-go">{t("callout.go")} →</span>
             </a>
+          )}
+          {toWriteOff.length > 0 && (
+            <Link href={`/loans/${toWriteOff[0]!.loanId}`} className="wd-callout late">
+              <span className="wd-callout-icon" aria-hidden="true">
+                🗂️
+              </span>
+              <span>
+                <strong>{t("callout.writeOff", { count: toWriteOff.length, n: num(toWriteOff.length) })}</strong>
+              </span>
+              <span className="wd-callout-go">{t("callout.go")} →</span>
+            </Link>
           )}
           {pay > 0 && (
             <a href="#pay" className="wd-callout pay">

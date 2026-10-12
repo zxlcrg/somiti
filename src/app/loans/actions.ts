@@ -13,6 +13,12 @@ import {
   canDisburseLoans,
   canManageLoanProducts,
   canRescheduleLoans,
+  canWriteOffLoans,
+  approveWriteOff,
+  cancelWriteOff,
+  rejectWriteOff,
+  requestWriteOff,
+  type WriteOffError,
   cancelLoan,
   createLoanProduct,
   disburseLoan,
@@ -236,4 +242,44 @@ export async function rescheduleLoanAction(loanId: string, prev: RescheduleState
   await flushSms(user.tenantId);
   revalidatePath("/", "layout");
   redirect(`/loans/${loanId}?rescheduled=1`);
+}
+
+// ---------- Write-off ----------
+
+export interface WriteOffState {
+  error?: WriteOffError | "forbidden" | "server" | LedgerErrorCode;
+  attempt?: number;
+}
+
+export async function writeOffAction(
+  loanId: string,
+  step: "request" | "approve" | "reject" | "cancel",
+  prev: WriteOffState,
+  form: FormData,
+): Promise<WriteOffState> {
+  const attempt = (prev.attempt ?? 0) + 1;
+  const user = await signedIn();
+  if (!canWriteOffLoans(user.roles)) return { error: "forbidden", attempt };
+  const writeOffId = field(form, "writeOffId");
+  let result;
+  try {
+    const dev = await device();
+    const actor = { userId: user.userId, device: dev };
+    result = await withTenant(getAppDb(), user.tenantId, (ctx) =>
+      step === "request"
+        ? requestWriteOff(ctx, { loanId, reason: field(form, "reason"), submitKey: field(form, "submitKey") }, actor)
+        : step === "approve"
+          ? approveWriteOff(ctx, { writeOffId, note: field(form, "note"), ...actor })
+          : step === "reject"
+            ? rejectWriteOff(ctx, { writeOffId, note: field(form, "note"), ...actor })
+            : cancelWriteOff(ctx, { writeOffId, ...actor }),
+    );
+  } catch (err) {
+    if (err instanceof LedgerError && LEDGER_MESSAGES.has(err.code)) return { error: err.code, attempt };
+    console.error(err);
+    return { error: "server", attempt };
+  }
+  if (!result.ok) return { error: result.error, attempt };
+  revalidatePath("/", "layout");
+  redirect(`/loans/${loanId}?writeoff=${step}`);
 }

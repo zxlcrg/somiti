@@ -1,5 +1,6 @@
 export { accountIdsByKey } from "./accounts";
 export { DEFAULT_CHART, type ChartAccount } from "./default-chart";
+export { ensureChartAccount } from "./ensure";
 export { LedgerError, type LedgerErrorCode } from "./errors";
 export { closeBusinessDay, closeFiscalPeriod, openFiscalPeriod } from "./periods";
 export {

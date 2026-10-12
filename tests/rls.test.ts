@@ -6,7 +6,7 @@ import { appUser, loanFine, otpChallenge, savingsFine, tenant, userRole, userSes
 import { closeDay } from "../src/modules/dayend";
 import { admitMember, approveExit, buyShares, requestExit, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
-import { applyForLoan, approveLoan, createLoanProduct, disburseLoan, repayLoan, rescheduleLoan } from "../src/modules/loans";
+import { applyForLoan, approveLoan, createLoanProduct, disburseLoan, repayLoan, requestWriteOff, rescheduleLoan } from "../src/modules/loans";
 import { createProduct, deposit as depositSavings, openAccount, receiveHandover, requestWithdrawal } from "../src/modules/savings";
 import { app, deposit, newTenant, owner, type TestTenant } from "./helpers";
 
@@ -140,6 +140,8 @@ beforeAll(async () => {
         { userId: t.adminUserId },
       );
       if (!moved.ok) throw new Error("seed reschedule");
+      const writeOff = await requestWriteOff(ctx, { loanId: applied.loanId, reason: "Seed write-off", submitKey: `seed-write-off-${t.tenantId}` }, { userId: t.adminUserId });
+      if (!writeOff.ok) throw new Error("seed write-off");
       await ctx.tx.insert(loanFine).values({ tenantId: t.tenantId, loanId: applied.loanId, seq: 1, repaymentId: repaid.repayment.id, amount: 0n, waived: true });
       const leaver = await admitMember(ctx, { nameEn: "Seed leaver", phone: "01722222222" }, { userId: t.adminUserId });
       if (!leaver.ok) throw new Error("seed leaver");

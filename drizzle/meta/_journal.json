@@ -316,6 +316,20 @@
       "when": 1791830851962,
       "tag": "0044_loan_guarantors_rls",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1791832847168,
+      "tag": "0045_loan_write_off",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1791832848791,
+      "tag": "0046_loan_write_off_rls",
+      "breakpoints": true
     }
   ]
 }
