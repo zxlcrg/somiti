@@ -33,6 +33,7 @@ describe("translations", () => {
       SELF_APPROVAL: true,
       VOUCHER_DECIDED: true,
       NOT_MAKER: true,
+      MEMBER_ACCOUNT: true,
     };
     expect(Object.keys(en.ledger.errors).sort()).toEqual(Object.keys(codes).sort());
   });

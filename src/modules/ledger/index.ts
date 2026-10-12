@@ -25,6 +25,7 @@ export {
   getVoucher,
   listVouchers,
   MAX_VOUCHER_LINES,
+  MEMBER_LEDGER_KEYS,
   pendingForChecker,
   postableAccounts,
   rejectVoucher,

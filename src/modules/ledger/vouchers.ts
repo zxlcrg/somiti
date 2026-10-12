@@ -21,6 +21,14 @@ export type VoucherStatus = (typeof voucher.$inferSelect)["status"];
 export const VOUCHER_STATUSES = ["pending", "approved", "rejected", "cancelled"] as const;
 export const MAX_VOUCHER_LINES = 50;
 
+/**
+ * Accounts that each member's own records add up to: savings, shares, loans
+ * and the cash collectors hold. They change only through their own pages, so
+ * a voucher can't move the books away from the member records behind them.
+ */
+export const MEMBER_LEDGER_KEYS = ["member_savings", "share_capital", "loans_receivable", "cash_with_collector"] as const;
+const isMemberLedger = (key: string | null) => key !== null && (MEMBER_LEDGER_KEYS as readonly string[]).includes(key);
+
 const MAKERS = new Set(["admin", "president", "secretary", "cashier"]);
 const CHECKERS = new Set(["admin", "president", "secretary"]);
 
@@ -55,7 +63,7 @@ export interface VoucherForm {
   lines: VoucherLineForm[];
 }
 
-export type VoucherLineError = "account" | "amount" | "both_sides" | "no_amount" | "memo";
+export type VoucherLineError = "account" | "member_account" | "amount" | "both_sides" | "no_amount" | "memo";
 export type VoucherFormError = "narration" | "too_few_lines" | "too_many_lines" | "unbalanced" | "one_account";
 
 export interface VoucherFormErrors {
@@ -148,8 +156,8 @@ export async function submitVoucher(ctx: TenantTx, input: SubmitVoucherInput): P
   if (!checked.ok) return checked;
 
   const accountIds = [...new Set(checked.lines.map((l) => l.accountId))];
-  const postable = await ctx.tx
-    .select({ id: ledgerAccount.id })
+  const found = await ctx.tx
+    .select({ id: ledgerAccount.id, systemKey: ledgerAccount.systemKey })
     .from(ledgerAccount)
     .where(
       and(
@@ -159,11 +167,13 @@ export async function submitVoucher(ctx: TenantTx, input: SubmitVoucherInput): P
         eq(ledgerAccount.isActive, true),
       ),
     );
-  if (postable.length !== accountIds.length) {
-    const ok = new Set(postable.map((a) => a.id));
+  const memberLedger = new Set(found.filter((a) => isMemberLedger(a.systemKey)).map((a) => a.id));
+  if (found.length !== accountIds.length || memberLedger.size > 0) {
+    const ok = new Set(found.map((a) => a.id));
     const lines: NonNullable<VoucherFormErrors["lines"]> = {};
     input.lines.forEach((l, i) => {
-      if (l.accountId && !ok.has(l.accountId) && UUID.test(l.accountId)) lines[i] = { accountId: "account" };
+      if (l.accountId && memberLedger.has(l.accountId)) lines[i] = { accountId: "member_account" };
+      else if (l.accountId && !ok.has(l.accountId) && UUID.test(l.accountId)) lines[i] = { accountId: "account" };
     });
     return { ok: false, errors: { lines } };
   }
@@ -248,6 +258,14 @@ export async function approveVoucher(ctx: TenantTx, d: Decision): Promise<{ entr
     .from(voucherLine)
     .where(and(eq(voucherLine.tenantId, ctx.tenantId), eq(voucherLine.voucherId, v.id)))
     .orderBy(asc(voucherLine.lineNo));
+  // A voucher sent before member accounts were closed to vouchers is stopped here.
+  const keys = await ctx.tx
+    .select({ systemKey: ledgerAccount.systemKey })
+    .from(ledgerAccount)
+    .where(and(eq(ledgerAccount.tenantId, ctx.tenantId), inArray(ledgerAccount.id, lines.map((l) => l.accountId))));
+  if (keys.some((k) => isMemberLedger(k.systemKey))) {
+    throw new LedgerError("MEMBER_ACCOUNT", "Member accounts change only through their own pages, not vouchers");
+  }
 
   const posted = await postEntry(ctx, {
     branchId: v.branchId,
