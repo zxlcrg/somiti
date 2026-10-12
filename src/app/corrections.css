@@ -1,0 +1,224 @@
+/* ---------- Corrections ---------- */
+
+.corrections {
+  --cc: #6b5bd6;
+  display: grid;
+  gap: 1rem;
+  max-width: 60rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .corrections,
+  .correct-link {
+    --cc: #a99cf5;
+  }
+}
+
+.corrections .section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+}
+
+.how-card {
+  padding: 1rem 1.2rem;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cc) 10%, var(--card)), var(--card));
+  border: 1px solid color-mix(in srgb, var(--cc) 25%, var(--line));
+}
+
+.how-card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.how-card ol {
+  margin: 0;
+  padding-left: 1.3rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.correction-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.correction-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 4px solid color-mix(in srgb, var(--cc) 55%, var(--line));
+  box-shadow: var(--shadow);
+  min-width: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  animation: rise 0.4s ease-out both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+.correction-card:hover {
+  transform: translateY(-1px);
+}
+
+.correction-card.needs-you {
+  border-top-color: var(--cc);
+  box-shadow: var(--shadow), 0 0 0 2px color-mix(in srgb, var(--cc) 30%, transparent);
+}
+
+.correction-card.approved {
+  border-top-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+}
+
+.correction-card.rejected,
+.correction-card.cancelled {
+  border-top-color: var(--line);
+  opacity: 0.85;
+}
+
+.correction-card.fresh {
+  box-shadow: var(--shadow), 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+.cc-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cc-head > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+}
+
+.cc-head small {
+  overflow-wrap: anywhere;
+}
+
+.cc-icon {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--cc) 14%, var(--card));
+  font-size: 1.2rem;
+}
+
+.cc-amount {
+  font-weight: 700;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cc-reason {
+  margin: 0;
+  padding: 0.6rem 0.85rem;
+  border-left: 4px solid var(--cc);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--cc) 6%, var(--card));
+}
+
+.cc-reason p {
+  margin: 0 0 0.25rem;
+  overflow-wrap: anywhere;
+}
+
+.cc-outcome,
+.cc-why {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.cc-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.6rem 1rem;
+  margin: 0;
+}
+
+.cc-facts dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.cc-facts dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.correction-new {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.correction-new .ask h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 760px) {
+  .correction-new {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.empty-line {
+  margin: 0;
+}
+
+.correct-link {
+  --cc: #6b5bd6;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--cc) 35%, var(--line));
+  color: var(--cc);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.correct-link:hover {
+  background: color-mix(in srgb, var(--cc) 12%, transparent);
+}
+
+.repay-list li.reversed {
+  opacity: 0.6;
+}
+
+.repay-list li.reversed strong {
+  text-decoration: line-through;
+}
+
+.corrections .notice.warn {
+  margin: 0;
+  border-color: color-mix(in srgb, #f2a900 45%, var(--line));
+  background: color-mix(in srgb, #f2a900 10%, var(--card));
+}
+
+.corrections .correction-card a:not(.btn) {
+  color: var(--cc);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.corrections .correction-card a:not(.btn):hover {
+  text-decoration: underline;
+}

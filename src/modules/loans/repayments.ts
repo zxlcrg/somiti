@@ -78,6 +78,9 @@ export interface RepaymentView {
   /** The installments it went to, first and last. */
   firstSeq: number;
   lastSeq: number;
+  journalEntryId: string;
+  /** Undone by a correction; it no longer counts. */
+  reversed: boolean;
 }
 
 export type RepaymentResult =
@@ -106,6 +109,8 @@ function repaymentQuery(ctx: TenantTx) {
       byBn: appUser.nameBn,
       firstSeq: sql<number>`(select min(x.seq) from loan_repayment_line x where x.tenant_id = ${loanRepayment.tenantId} and x.repayment_id = ${loanRepayment.id})`,
       lastSeq: sql<number>`(select max(x.seq) from loan_repayment_line x where x.tenant_id = ${loanRepayment.tenantId} and x.repayment_id = ${loanRepayment.id})`,
+      journalEntryId: loanRepayment.journalEntryId,
+      reversed: sql<boolean>`exists (select 1 from journal_entry r0 where r0.tenant_id = ${loanRepayment.tenantId} and r0.reverses_id = ${loanRepayment.journalEntryId})`,
     })
     .from(loanRepayment)
     .innerJoin(appUser, and(eq(appUser.tenantId, loanRepayment.tenantId), eq(appUser.id, loanRepayment.createdBy)));
@@ -129,6 +134,8 @@ const toView = (r: Row): RepaymentView => ({
   createdBy: { nameEn: r.byEn, nameBn: r.byBn },
   firstSeq: Number(r.firstSeq),
   lastSeq: Number(r.lastSeq),
+  journalEntryId: r.journalEntryId,
+  reversed: r.reversed,
 });
 
 /** A loan's repayments, newest first. */
@@ -293,6 +300,6 @@ export async function repaymentsOn(ctx: TenantTx): Promise<{ count: number; amou
   const [row] = await tx
     .select({ count: sql<number>`count(*)::int`, amount: sql<string>`coalesce(sum(${loanRepayment.amount}), 0)` })
     .from(loanRepayment)
-    .where(and(eq(loanRepayment.tenantId, tenantId), eq(loanRepayment.businessDate, day!.d)));
+    .where(and(eq(loanRepayment.tenantId, tenantId), eq(loanRepayment.businessDate, day!.d), sql`not exists (select 1 from journal_entry r0 where r0.tenant_id = ${loanRepayment.tenantId} and r0.reverses_id = ${loanRepayment.journalEntryId})`));
   return { count: row?.count ?? 0, amount: BigInt(row?.amount ?? 0) };
 }

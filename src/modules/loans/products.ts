@@ -234,7 +234,7 @@ export async function listLoanProducts({ tx, tenantId }: TenantTx, opts: { activ
       processingFeeBp: loanProduct.processingFeeBp,
       active: loanProduct.active,
       liveLoans: sql<number>`(select count(*)::int from loan l where l.tenant_id = loan_product.tenant_id and l.product_id = loan_product.id and l.status = 'disbursed')`,
-      disbursed: sql<string>`(select coalesce(sum(l.principal - (select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = l.tenant_id and p.loan_id = l.id)), 0)
+      disbursed: sql<string>`(select coalesce(sum(l.principal - (select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = l.tenant_id and p.loan_id = l.id and not exists (select 1 from journal_entry r0 where r0.tenant_id = p.tenant_id and r0.reverses_id = p.journal_entry_id))), 0)
          from loan l where l.tenant_id = loan_product.tenant_id and l.product_id = loan_product.id and l.status = 'disbursed')`.mapWith(
         (v: string | number) => BigInt(v),
       ),

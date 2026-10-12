@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { CorrectLink } from "../../corrections/correct-link";
 import type { Locale } from "@/i18n/config";
 import { formatDate, formatInteger, formatTaka } from "@/lib/format";
 import type { ShareHolding } from "@/modules/members";
@@ -13,6 +14,7 @@ export async function SharesPanel({
   memberName,
   locale,
   canBuy,
+  canCorrect = false,
   boughtId,
 }: {
   holding: ShareHolding;
@@ -21,6 +23,8 @@ export async function SharesPanel({
   memberName: string;
   locale: Locale;
   canBuy: boolean;
+  /** May ask to undo a purchase recorded by mistake. */
+  canCorrect?: boolean;
   /** A purchase just made, to announce. */
   boughtId?: string;
 }) {
@@ -93,6 +97,7 @@ export async function SharesPanel({
                 </div>
                 <span className="share-history-amount">
                   {x.reversed && <span className="chip">{t("reversed")}</span>}
+                  {canCorrect && !x.reversed && x.kind === "purchase" && <CorrectLink entryId={x.journalEntryId} />}
                   {x.kind === "refund" && <span className="chip">{t("refund")}</span>}
                   {x.kind === "refund" ? `−${taka(x.amount)}` : taka(x.amount)}
                 </span>

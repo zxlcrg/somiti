@@ -3,6 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { withTenant } from "../src/db/client";
 import { appUser, loanFine, otpChallenge, savingsFine, tenant, userRole, userSession } from "../src/db/schema";
+import { requestCorrection } from "../src/modules/corrections";
 import { closeDay } from "../src/modules/dayend";
 import { admitMember, approveExit, buyShares, requestExit, saveNominees, setMemberPhoto } from "../src/modules/members";
 import { postEntry, reverseEntry, submitVoucher } from "../src/modules/ledger";
@@ -142,6 +143,18 @@ beforeAll(async () => {
       if (!moved.ok) throw new Error("seed reschedule");
       const writeOff = await requestWriteOff(ctx, { loanId: applied.loanId, reason: "Seed write-off", submitKey: `seed-write-off-${t.tenantId}` }, { userId: t.adminUserId });
       if (!writeOff.ok) throw new Error("seed write-off");
+      const extraShares = await buyShares(
+        ctx,
+        { memberId: admitted.member.id, shares: 1, method: "cash", idempotencyKey: `seed-correct-shares-${t.tenantId}` },
+        { userId: t.adminUserId },
+      );
+      if (!extraShares.ok) throw new Error("seed shares to correct");
+      const correction = await requestCorrection(
+        ctx,
+        { entryId: extraShares.purchase.journalEntryId, reason: "Seed correction", submitKey: `seed-correction-${t.tenantId}` },
+        { userId: t.adminUserId },
+      );
+      if (!correction.ok) throw new Error("seed correction");
       await ctx.tx.insert(loanFine).values({ tenantId: t.tenantId, loanId: applied.loanId, seq: 1, repaymentId: repaid.repayment.id, amount: 0n, waived: true });
       const leaver = await admitMember(ctx, { nameEn: "Seed leaver", phone: "01722222222" }, { userId: t.adminUserId });
       if (!leaver.ok) throw new Error("seed leaver");

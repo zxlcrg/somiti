@@ -60,7 +60,7 @@ export async function memberGuarantees({ tx, tenantId }: TenantTx, memberId: str
       status: loan.status,
       productCode: loanProduct.code,
       principal: loan.principal,
-      repaid: sql<string>`(select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id})`.mapWith(
+      repaid: sql<string>`(select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id} and not exists (select 1 from journal_entry r0 where r0.tenant_id = p.tenant_id and r0.reverses_id = p.journal_entry_id))`.mapWith(
         (v: string | number) => BigInt(v),
       ),
       borrowerId: borrower.id,

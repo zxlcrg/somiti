@@ -33,7 +33,9 @@
     "dayEnd": "Day end",
     "sheet": "Collection sheet",
     "admin": "Admin",
-    "settings": "Settings"
+    "settings": "Settings",
+    "corrections": "Corrections",
+    "correctionsWaiting": "{count, plural, one {# correction waits for you} other {# corrections wait for you}}"
   },
   "home": {
     "badge": "Foundation release",
@@ -1789,7 +1791,8 @@
       "none": "Nothing repaid yet.",
       "fine": "Late fine {amount}",
       "settled": "Settled early",
-      "settledRebate": "Settled early · rebate {amount}"
+      "settledRebate": "Settled early · rebate {amount}",
+      "reversed": "Undone"
     },
     "overdue": {
       "link": "Overdue",
@@ -2197,5 +2200,114 @@
       "forbidden": "Only an admin can change settings.",
       "server": "Something went wrong on our side. Please try again."
     }
+  },
+  "corrections": {
+    "title": "Corrections",
+    "subtitle": "Undo a deposit, withdrawal, share purchase or loan repayment that was recorded by mistake. A second officer approves each one.",
+    "noAccess": "Your role can't correct transactions.",
+    "new": {
+      "title": "Correct a mistake",
+      "subtitle": "Undoing a transaction takes it out of the member's records and the books. Nothing changes until a different officer approves.",
+      "notFound": "This transaction can't be found, or it isn't one that can be corrected here.",
+      "what": "What went wrong?",
+      "explain": "Once approved, the books get a reversing entry dated today. The original stays visible, marked as reversed. Then record the right transaction on its usual page."
+    },
+    "kind": {
+      "savings_deposit": "Savings deposit",
+      "savings_withdrawal": "Savings withdrawal",
+      "share_purchase": "Share purchase",
+      "loan_repayment": "Loan repayment"
+    },
+    "entryOn": "Entry {no}, {date}",
+    "member": "Member",
+    "loan": "Loan",
+    "account": "Account",
+    "recordedBy": "Recorded by",
+    "withFine": "Late fine taken with it",
+    "blocker": {
+      "not_correctable": "This kind of entry can't be corrected here.",
+      "already_reversed": "This transaction has already been corrected.",
+      "already_pending": "A correction for this transaction is already waiting for approval.",
+      "account_closed": "The savings account is closed, so this can't be undone.",
+      "balance_too_low": "The account no longer holds this much (money was withdrawn or is waiting to be withdrawn), so the deposit can't be taken back.",
+      "collector_handed_over": "The collector has already handed this cash in at the office, so it can't be taken back from them.",
+      "member_not_active": "The member has left the somiti, so the share purchase can't be undone.",
+      "loan_not_running": "The loan is no longer running (closed or written off), so its repayments can't be undone.",
+      "not_latest": "Only the latest repayment on a loan can be undone. Undo the later ones first.",
+      "has_fine": "This repayment took a late fine, and those can't be undone yet.",
+      "rescheduled_after": "The loan got a new schedule after this repayment, so it can't be undone.",
+      "write_off_pending": "A write-off is waiting on this loan. Decide that first."
+    },
+    "back": "Back",
+    "reason": "Reason",
+    "reasonPlaceholder": "e.g. Entered in Rahim's passbook instead of Karim's",
+    "reasonHint": "The approving officer reads this. 3 to 300 characters.",
+    "ask": "Send for approval",
+    "waitingOther": "Waiting for another officer to approve or turn this down.",
+    "waitingManager": "Waiting for a secretary, president or admin to decide.",
+    "withdraw": "Withdraw my request",
+    "approveTab": "Approve",
+    "rejectTab": "Turn down",
+    "note": "Note (optional)",
+    "confirmTitle": "Undo this {amount} transaction?",
+    "confirmBody": "A reversing entry is posted today and the member's records stop counting the original. This can't be taken back.",
+    "confirm": "Yes, undo it",
+    "approve": "Approve and undo",
+    "rejectReason": "Why not?",
+    "reject": "Turn down",
+    "errors": {
+      "not_correctable": "This kind of entry can't be corrected here.",
+      "already_reversed": "This transaction has already been corrected.",
+      "already_pending": "A correction for this transaction is already waiting for approval.",
+      "account_closed": "The savings account is closed, so this can't be undone.",
+      "balance_too_low": "The account no longer holds this much (money was withdrawn or is waiting to be withdrawn), so the deposit can't be taken back.",
+      "collector_handed_over": "The collector has already handed this cash in at the office, so it can't be taken back from them.",
+      "member_not_active": "The member has left the somiti, so the share purchase can't be undone.",
+      "loan_not_running": "The loan is no longer running (closed or written off), so its repayments can't be undone.",
+      "not_latest": "Only the latest repayment on a loan can be undone. Undo the later ones first.",
+      "has_fine": "This repayment took a late fine, and those can't be undone yet.",
+      "rescheduled_after": "The loan got a new schedule after this repayment, so it can't be undone.",
+      "write_off_pending": "A write-off is waiting on this loan. Decide that first.",
+      "not_found": "This request or transaction can't be found.",
+      "reason_required": "Write what went wrong (at least 3 characters).",
+      "reason_too_long": "Keep the reason under 300 characters.",
+      "wrong_status": "This request has already been decided.",
+      "self_decision": "You asked for this, so another officer must decide it.",
+      "note_required": "Say why you're turning it down.",
+      "not_requester": "Only the officer who asked can withdraw it.",
+      "forbidden": "Your role can't do this.",
+      "server": "Something went wrong. Please try again.",
+      "DAY_CLOSED": "Today's books are closed. Open the next day first.",
+      "NO_OPEN_PERIOD": "There's no open fiscal year for today."
+    },
+    "done": {
+      "request": "✓ Sent for approval. Another officer will check it.",
+      "approve": "🎉 Undone. The books got reversing entry {no}. Now record the right transaction on its page.",
+      "reject": "Turned down. The transaction stands.",
+      "cancel": "Request withdrawn."
+    },
+    "how": {
+      "title": "How it works",
+      "find": "Open the member's passbook, shares or loan and press Correct on the wrong row.",
+      "ask": "Say what went wrong.",
+      "approve": "A secretary, president or admin approves it here.",
+      "redo": "Record the right transaction on its usual page."
+    },
+    "pendingTitle": "Waiting for a decision",
+    "nonePending": "Nothing is waiting.",
+    "recentTitle": "Decided",
+    "askedBy": "Asked by {name} on {date}",
+    "status": {
+      "pending": "Waiting",
+      "approved": "Undone",
+      "rejected": "Turned down",
+      "cancelled": "Withdrawn"
+    },
+    "reversedAs": "Reversing entry {no}, approved by {name}",
+    "decidedBy": "{name}, {when}",
+    "reasonLabel": "Reason:",
+    "noteLabel": "Note:",
+    "rowLink": "Correct",
+    "rowLinkLabel": "Correct this transaction"
   }
 }

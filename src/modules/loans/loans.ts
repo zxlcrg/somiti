@@ -463,10 +463,10 @@ function loanQuery(ctx: TenantTx) {
       originalPrincipal: loan.originalPrincipal,
       originalInstallments: loan.originalInstallments,
       paidBefore: loan.paidBefore,
-      paidPrincipal: sql<string>`(select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id})`.mapWith(
+      paidPrincipal: sql<string>`(select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id} and not exists (select 1 from journal_entry r0 where r0.tenant_id = p.tenant_id and r0.reverses_id = p.journal_entry_id))`.mapWith(
         (v: string | number) => BigInt(v),
       ),
-      paidInterest: sql<string>`(select coalesce(sum(p.interest), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id})`.mapWith(
+      paidInterest: sql<string>`(select coalesce(sum(p.interest), 0) from loan_repayment p where p.tenant_id = ${loan.tenantId} and p.loan_id = ${loan.id} and not exists (select 1 from journal_entry r0 where r0.tenant_id = p.tenant_id and r0.reverses_id = p.journal_entry_id))`.mapWith(
         (v: string | number) => BigInt(v),
       ),
       purpose: loan.purpose,
@@ -608,7 +608,15 @@ export async function scheduleState(ctx: TenantTx, loanId: string): Promise<Inst
       rebated: sql<string>`sum(${loanRepaymentLine.rebate})`.as("rebated"),
     })
     .from(loanRepaymentLine)
-    .where(and(eq(loanRepaymentLine.tenantId, tenantId), eq(loanRepaymentLine.loanId, loanId)))
+    .where(
+      and(
+        eq(loanRepaymentLine.tenantId, tenantId),
+        eq(loanRepaymentLine.loanId, loanId),
+        // A repayment undone by a correction no longer counts against the schedule.
+        sql`not exists (select 1 from loan_repayment p0 join journal_entry r0 on r0.tenant_id = p0.tenant_id and r0.reverses_id = p0.journal_entry_id
+                         where p0.tenant_id = ${loanRepaymentLine.tenantId} and p0.id = ${loanRepaymentLine.repaymentId})`,
+      ),
+    )
     .groupBy(loanRepaymentLine.seq)
     .as("paid");
   const moved = tx
@@ -685,7 +693,7 @@ export async function loanStats(ctx: TenantTx): Promise<LoanStats> {
       applied: sql<number>`count(*) filter (where ${loan.status} = 'applied')::int`,
       approved: sql<number>`count(*) filter (where ${loan.status} = 'approved')::int`,
       live: sql<number>`count(*) filter (where ${loan.status} = 'disbursed')::int`,
-      outstanding: sql<string>`coalesce(sum(${loan.principal} - (select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = loan.tenant_id and p.loan_id = loan.id)) filter (where ${loan.status} = 'disbursed'), 0)`,
+      outstanding: sql<string>`coalesce(sum(${loan.principal} - (select coalesce(sum(p.principal), 0) from loan_repayment p where p.tenant_id = loan.tenant_id and p.loan_id = loan.id and not exists (select 1 from journal_entry r0 where r0.tenant_id = p.tenant_id and r0.reverses_id = p.journal_entry_id))) filter (where ${loan.status} = 'disbursed'), 0)`,
     })
     .from(loan)
     .where(eq(loan.tenantId, tenantId));

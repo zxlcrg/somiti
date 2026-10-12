@@ -6,6 +6,7 @@ import { getAppDb, withTenant } from "@/db/client";
 import { defaultLocale, isLocale } from "@/i18n/config";
 import { formatInteger } from "@/lib/format";
 import { primaryName } from "@/lib/names";
+import { canApproveCorrections, canRequestCorrections, pendingCorrectionsFor } from "@/modules/corrections";
 import { canApproveVouchers, canViewBooks, pendingForChecker } from "@/modules/ledger";
 import { canManageMembers, canViewMembers, exitsForChecker } from "@/modules/members";
 import { canApproveLoans, canDisburseLoans, canViewLoans, loansWaitingFor, overdueCount } from "@/modules/loans";
@@ -29,6 +30,7 @@ import "./exit.css";
 import "./dashboard.css";
 import "./sheet.css";
 import "./settings.css";
+import "./corrections.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
@@ -60,6 +62,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       ? await withTenant(getAppDb(), user.tenantId, (ctx) =>
           loansWaitingFor(ctx, user.userId, { decide: canApproveLoans(user.roles), pay: canDisburseLoans(user.roles) }),
         )
+      : 0;
+  // Corrections waiting for this officer, on the Corrections link.
+  const corrections =
+    user && canApproveCorrections(user.roles)
+      ? await withTenant(getAppDb(), user.tenantId, (ctx) => pendingCorrectionsFor(ctx, user.userId))
       : 0;
   // Running loans with an installment past its date, on the Overdue link.
   const overdue = user && canViewLoans(user.roles) ? await withTenant(getAppDb(), user.tenantId, (ctx) => overdueCount(ctx)) : 0;
@@ -97,10 +104,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <div className="shell">
               <SideNav
                 brand={brand}
-                groups={sideGroups(user.roles, { exits, withdrawals, loansWaiting, overdue, waiting }, t, (n) => formatInteger(n, isLocale(locale) ? locale : defaultLocale))}
+                groups={sideGroups(user.roles, { exits, withdrawals, loansWaiting, overdue, waiting, corrections }, t, (n) => formatInteger(n, isLocale(locale) ? locale : defaultLocale))}
                 menuLabel={t("nav.menu")}
                 closeLabel={t("nav.closeMenu")}
-                waiting={exits + withdrawals + loansWaiting + waiting > 0}
+                waiting={exits + withdrawals + loansWaiting + waiting + corrections > 0}
                 user={
                   <>
                     <span className="side-avatar" aria-hidden="true">
@@ -144,7 +151,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   );
 }
 
-type Counts = { exits: number; withdrawals: number; loansWaiting: number; overdue: number; waiting: number };
+type Counts = { exits: number; withdrawals: number; loansWaiting: number; overdue: number; waiting: number; corrections: number };
 
 /** The menu this officer's roles open, with what waits on them. */
 function sideGroups(roles: readonly string[], c: Counts, t: Awaited<ReturnType<typeof getTranslations>>, num: (n: number) => string): SideGroup[] {
@@ -179,6 +186,9 @@ function sideGroups(roles: readonly string[], c: Counts, t: Awaited<ReturnType<t
       items: [
         { href: "/vouchers", icon: "vouchers", label: t("nav.vouchers"), except: ["/vouchers/new"], badge: badge(c.waiting, t("nav.waiting", { count: c.waiting })) },
         { href: "/vouchers/new", icon: "expenses", label: t("nav.expenses") },
+        ...(canRequestCorrections(roles)
+          ? [{ href: "/corrections", icon: "corrections" as const, label: t("nav.corrections"), badge: badge(c.corrections, t("nav.correctionsWaiting", { count: c.corrections })) }]
+          : []),
         { href: "/cash-book", icon: "cashBook", label: t("nav.cashBook") },
         { href: "/trial-balance", icon: "trialBalance", label: t("nav.trialBalance") },
         { href: "/day-end", icon: "dayEnd", label: t("nav.dayEnd") },

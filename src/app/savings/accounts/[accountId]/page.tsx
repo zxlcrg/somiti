@@ -8,6 +8,8 @@ import { primaryName } from "@/lib/names";
 import { canViewMembers, getMember } from "@/modules/members";
 import { canApproveWithdrawals, canRequestWithdrawals, depositChannel, getAccount, listWithdrawals } from "@/modules/savings";
 import { requireUser } from "../../../auth";
+import { CorrectLink } from "../../../corrections/correct-link";
+import { canRequestCorrections } from "@/modules/corrections";
 import { pageLocale } from "../../../books";
 import { MemberAvatar } from "../../../members/member-avatar";
 import { FREQ_ICON, METHOD_ICON } from "../../ui";
@@ -49,6 +51,7 @@ export default async function PassbookPage({
   const channel = depositChannel(user.roles);
   const canDeposit = !!channel && a.status === "active" && member.status === "active";
   const canWithdraw = canRequestWithdrawals(user.roles) && a.status === "active";
+  const canCorrect = canRequestCorrections(user.roles) && a.status === "active";
   const viewer = { userId: user.userId, canApprove: canApproveWithdrawals(user.roles), canRequest: canRequestWithdrawals(user.roles) };
   const pendingWd = withdrawals.filter((w) => w.status === "pending");
   const held = pendingWd.reduce((s, w) => s + w.amount, 0n);
@@ -196,6 +199,7 @@ export default async function PassbookPage({
                         )}
                         {x.paymentRef ? ` · ${x.paymentRef}` : ""}
                         {x.reversed && <span className="chip">{t("passbook.reversed")}</span>}
+                        {canCorrect && !x.reversed && (x.kind === "deposit" || x.kind === "withdrawal") && <CorrectLink entryId={x.journalEntryId} />}
                         <small className="muted">
                           {x.kind === "withdrawal"
                             ? t("passbookExtra.paidOutBy", { name: primaryName(x.takenBy, locale) })

@@ -14,6 +14,7 @@ export const NAV_ICONS = {
   overdue: "M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
   vouchers: "M4 4h16v16l-3-2-3 2-2-2-2 2-3-2-3 2V4zm4 5h8M8 13h5",
   expenses: "M12 5v14M5 12h14",
+  corrections: "M9 14L4 9l5-5M4 9h11a5 5 0 0 1 0 10h-4",
   cashBook: "M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5zm0 14a2 2 0 0 1 2-2h13M9 7h6",
   trialBalance: "M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0L5 7zm14 0l-3 7a3 3 0 0 0 6 0l-3-7z",
   dayEnd: "M20 15.5A8.5 8.5 0 0 1 8.5 4a8.5 8.5 0 1 0 11.5 11.5z",

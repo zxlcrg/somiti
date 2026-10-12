@@ -34,6 +34,8 @@ import { RepayPanel } from "./repay-panel";
 import { ReschedulePanel } from "./reschedule-panel";
 import { WriteOffPanel } from "./write-off-panel";
 import { CancelPanel, DecidePanel, DisbursePanel } from "./step-panel";
+import { CorrectLink } from "../../corrections/correct-link";
+import { canRequestCorrections } from "@/modules/corrections";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("loans.detail");
@@ -75,6 +77,9 @@ export default async function LoanPage({
   const canRepay = l.status === "disbursed" && channel !== null;
   const canReschedule = l.status === "disbursed" && canRescheduleLoans(user.roles);
   const canWriteOff = l.status === "disbursed" && canWriteOffLoans(user.roles);
+  // Only the latest repayment still counting can be undone; the correction page explains any other block.
+  const canCorrect = l.status === "disbursed" && canRequestCorrections(user.roles);
+  const latestLive = repayments.find((r) => !r.reversed);
   const pendingWriteOff = writeOffs.find((w) => w.status === "pending") ?? null;
   const writtenOff = writeOffs.find((w) => w.status === "approved") ?? null;
   const left = outstanding(l.schedule);
@@ -395,7 +400,7 @@ export default async function LoanPage({
               ) : (
                 <ol className="repay-list">
                   {repayments.map((r) => (
-                    <li key={r.id}>
+                    <li key={r.id} className={r.reversed ? "reversed" : undefined}>
                       <span className="repay-icon" aria-hidden="true">
                         {r.channel === "collector" ? "👜" : METHOD_ICON[r.paymentMethod]}
                       </span>
@@ -415,6 +420,8 @@ export default async function LoanPage({
                         </small>
                         {r.fine > 0n && <small className="fine-tag">{t("history.fine", { amount: taka(r.fine) })}</small>}
                         {r.settlement && <small className="settle-tag">{r.rebate > 0n ? t("history.settledRebate", { amount: taka(r.rebate) }) : t("history.settled")}</small>}
+                        {r.reversed && <small className="chip">{t("history.reversed")}</small>}
+                        {canCorrect && r.id === latestLive?.id && r.fine === 0n && <CorrectLink entryId={r.journalEntryId} />}
                       </span>
                     </li>
                   ))}

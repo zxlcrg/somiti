@@ -24,7 +24,7 @@ const paidCte = (tenantId: string) => sql`
   paid as (
     select loan_id, seq, sum(amount) as paid
       from (select x.loan_id, x.seq, x.principal + x.interest + x.rebate as amount
-              from loan_repayment_line x where x.tenant_id = ${tenantId}
+              from loan_repayment_line x where x.tenant_id = ${tenantId} and not exists (select 1 from loan_repayment p0 join journal_entry r0 on r0.tenant_id = p0.tenant_id and r0.reverses_id = p0.journal_entry_id where p0.tenant_id = x.tenant_id and p0.id = x.repayment_id)
             union all
             select m.loan_id, m.seq, m.principal + m.interest
               from loan_reschedule_line m where m.tenant_id = ${tenantId}) settled
@@ -91,7 +91,7 @@ export async function dashboardOverview(ctx: TenantTx): Promise<DashboardOvervie
       (select count(*)::int from loan l where l.tenant_id = ${tenantId} and l.status = 'disbursed') as live,
       (select count(*)::int from loan l where l.tenant_id = ${tenantId} and l.status in ('applied', 'approved')) as waiting,
       (select coalesce(sum(l.principal - (select coalesce(sum(p.principal), 0) from loan_repayment p
-                                            where p.tenant_id = l.tenant_id and p.loan_id = l.id)), 0)::text
+                                            where p.tenant_id = l.tenant_id and p.loan_id = l.id and not exists (select 1 from journal_entry r0 where r0.tenant_id = p.tenant_id and r0.reverses_id = p.journal_entry_id))), 0)::text
          from loan l where l.tenant_id = ${tenantId} and l.status = 'disbursed') as outstanding,
       (select count(*)::int from savings_transaction t where t.tenant_id = ${tenantId} and t.kind = 'deposit'
           and t.business_date = ${today}::date and ${notReversed("t")})
@@ -127,7 +127,7 @@ export async function dashboardOverview(ctx: TenantTx): Promise<DashboardOvervie
        where i.tenant_id = ${tenantId}
     ), per_loan as (
       select l.id,
-             l.principal - (select coalesce(sum(r.principal), 0) from loan_repayment r where r.tenant_id = l.tenant_id and r.loan_id = l.id) as left_principal,
+             l.principal - (select coalesce(sum(r.principal), 0) from loan_repayment r where r.tenant_id = l.tenant_id and r.loan_id = l.id and not exists (select 1 from journal_entry r0 where r0.tenant_id = r.tenant_id and r0.reverses_id = r.journal_entry_id)) as left_principal,
              (select coalesce(sum(o.owing), 0) from open_inst o where o.loan_id = l.id and o.owing > 0 and o.due_on < ${today}::date) as late,
              exists (select 1 from open_inst o where o.loan_id = l.id and o.owing > 0 and o.due_on between ${today}::date and ${soon}::date) as soon
         from loan l
