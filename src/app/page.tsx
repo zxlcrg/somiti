@@ -1,9 +1,11 @@
+import { redirect } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { isLocale, defaultLocale } from "@/i18n/config";
 import { todayInDhaka } from "@/lib/dates";
 import { formatDate, formatInteger, formatTaka } from "@/lib/format";
 import { AmountPlayground } from "./home/amount-playground";
 import { BalanceDemo } from "./home/balance-demo";
+import { getCurrentUser } from "./auth";
 
 const icons = {
   ledger: "M4 5h16M4 10h16M4 15h10M4 20h7",
@@ -12,6 +14,8 @@ const icons = {
 };
 
 export default async function Home() {
+  // The landing page is for visitors; a signed-in officer goes straight to work.
+  if (await getCurrentUser()) redirect("/dashboard");
   const raw = await getLocale();
   const locale = isLocale(raw) ? raw : defaultLocale;
   const t = await getTranslations();
