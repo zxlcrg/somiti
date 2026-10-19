@@ -35,7 +35,9 @@
     "admin": "Admin",
     "settings": "Settings",
     "corrections": "Corrections",
-    "correctionsWaiting": "{count, plural, one {# correction waits for you} other {# corrections wait for you}}"
+    "correctionsWaiting": "{count, plural, one {# correction waits for you} other {# corrections wait for you}}",
+    "balanceSheet": "Balance sheet",
+    "incomeStatement": "Income statement"
   },
   "home": {
     "badge": "Foundation release",
@@ -649,7 +651,9 @@
       "vouchers": "Vouchers",
       "cashBook": "Cash book",
       "trialBalance": "Trial balance",
-      "dayEnd": "Day end"
+      "dayEnd": "Day end",
+      "balanceSheet": "Balance sheet",
+      "incomeStatement": "Income statement"
     },
     "vouchers": {
       "title": "Vouchers",
@@ -865,6 +869,55 @@
         "NO_OPEN_PERIOD": "There is no open fiscal year for this date."
       },
       "waiting": "Count the notes to compare with the books."
+    },
+    "statements": {
+      "show": "Show",
+      "print": "Print",
+      "empty": "Nothing posted yet",
+      "emptyBody": "Once vouchers, deposits and loans are posted, the statement fills in.",
+      "balanceSheet": {
+        "title": "Balance sheet",
+        "asOf": "As of {date}",
+        "asOfLabel": "As of",
+        "owns": "What the somiti owns",
+        "owes": "What it owes, and what belongs to members",
+        "assets": "Assets",
+        "liabilities": "Liabilities",
+        "equity": "Equity",
+        "unclosedSurplus": "Surplus this year (not yet closed)",
+        "unclosedDeficit": "Deficit this year (not yet closed)",
+        "totalAssets": "Total assets",
+        "totalLiabilities": "Total liabilities",
+        "totalEquity": "Total equity",
+        "totalClaims": "Total liabilities and equity",
+        "balanced": "Assets equal liabilities plus equity. The books balance.",
+        "notBalanced": "Assets and liabilities plus equity differ by {amount}. Tell the admin.",
+        "none": "None",
+        "mix": "How the assets are made up"
+      },
+      "income": {
+        "title": "Income statement",
+        "period": "{from} to {to}",
+        "from": "From",
+        "to": "To",
+        "presets": "Period",
+        "thisMonth": "This month",
+        "lastMonth": "Last month",
+        "yearToDate": "This fiscal year",
+        "lastYear": "Last fiscal year",
+        "income": "Income",
+        "expenses": "Expenses",
+        "totalIncome": "Total income",
+        "totalExpenses": "Total expenses",
+        "surplus": "Surplus",
+        "deficit": "Deficit",
+        "surplusBody": "Income was larger than expenses by {amount}.",
+        "deficitBody": "Expenses were larger than income by {amount}.",
+        "evenBody": "Income and expenses were equal.",
+        "margin": "{percent} of income kept",
+        "none": "None in this period",
+        "badRange": "The start date must be on or before the end date."
+      }
     }
   },
   "savings": {

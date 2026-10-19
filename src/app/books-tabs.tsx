@@ -5,6 +5,8 @@ const TABS = [
   { key: "vouchers", href: "/vouchers", icon: "M4 4h16v16l-3-2-3 2-2-2-2 2-3-2-3 2V4zm4 5h8M8 13h5" },
   { key: "cashBook", href: "/cash-book", icon: "M3 7h18v12H3zM3 7l3-3h12l3 3M7 12h4M15 15h2" },
   { key: "trialBalance", href: "/trial-balance", icon: "M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0L5 7zm14 0l-3 7a3 3 0 0 0 6 0l-3-7z" },
+  { key: "balanceSheet", href: "/balance-sheet", icon: "M4 20V10l8-6 8 6v10M4 20h16M9 20v-6h6v6" },
+  { key: "incomeStatement", href: "/income-statement", icon: "M4 19h16M6 16l4-5 3 3 5-7M15 7h3v3" },
   { key: "dayEnd", href: "/day-end", icon: "M6 11V8a6 6 0 0 1 12 0v3M5 11h14v10H5zM12 15v2" },
 ] as const;
 

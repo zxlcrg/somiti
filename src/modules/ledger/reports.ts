@@ -169,3 +169,110 @@ export async function cashBook(ctx: TenantTx, q: { accountId: string; from: stri
   });
   return { accountId: q.accountId, from: q.from, to: q.to, opening, receipts, payments, closing: balance, rows };
 }
+
+// ---------- Financial statements ----------
+
+type AccountType = TrialBalanceRow["type"];
+
+export interface StatementLine {
+  accountId: string;
+  code: string;
+  nameEn: string | null;
+  nameBn: string | null;
+  /** Balance on the account's normal side: debit for assets and expenses, credit for the rest. Negative when it runs the other way. */
+  amount: bigint;
+}
+
+/** Net balance per account for entries dated in [from, to]; `from` omitted means since the start. */
+async function accountNets(ctx: TenantTx, q: { from?: string; to: string; types: readonly AccountType[] }) {
+  const dated = q.from
+    ? and(gte(journalEntry.businessDate, q.from), lte(journalEntry.businessDate, q.to))
+    : lte(journalEntry.businessDate, q.to);
+  const rows = await ctx.tx
+    .select({
+      accountId: ledgerAccount.id,
+      code: ledgerAccount.code,
+      nameEn: ledgerAccount.nameEn,
+      nameBn: ledgerAccount.nameBn,
+      type: ledgerAccount.type,
+      net: sql<string>`sum(${journalLine.debit} - ${journalLine.credit})`,
+    })
+    .from(journalLine)
+    .innerJoin(journalEntry, and(eq(journalEntry.tenantId, journalLine.tenantId), eq(journalEntry.id, journalLine.entryId)))
+    .innerJoin(ledgerAccount, and(eq(ledgerAccount.tenantId, journalLine.tenantId), eq(ledgerAccount.id, journalLine.accountId)))
+    .where(and(eq(journalLine.tenantId, ctx.tenantId), dated, inArray(ledgerAccount.type, [...q.types])))
+    .groupBy(ledgerAccount.id)
+    .orderBy(asc(ledgerAccount.code));
+  const byType = new Map<AccountType, StatementLine[]>(q.types.map((t) => [t, []]));
+  for (const r of rows) {
+    const debitSide = BigInt(r.net);
+    if (debitSide === 0n) continue;
+    const amount = r.type === "asset" || r.type === "expense" ? debitSide : -debitSide;
+    byType.get(r.type)!.push({ accountId: r.accountId, code: r.code, nameEn: r.nameEn, nameBn: r.nameBn, amount });
+  }
+  return byType;
+}
+
+const total = (lines: StatementLine[]) => lines.reduce((s, l) => s + l.amount, 0n);
+
+export interface IncomeStatement {
+  from: string;
+  to: string;
+  income: StatementLine[];
+  expenses: StatementLine[];
+  totalIncome: bigint;
+  totalExpenses: bigint;
+  /** Income less expenses; negative is a deficit. */
+  surplus: bigint;
+}
+
+/** Income and expenses for business dates from..to (inclusive). */
+export async function incomeStatement(ctx: TenantTx, q: { from: string; to: string }): Promise<IncomeStatement> {
+  const nets = await accountNets(ctx, { from: q.from, to: q.to, types: ["income", "expense"] });
+  const income = nets.get("income")!;
+  const expenses = nets.get("expense")!;
+  const totalIncome = total(income);
+  const totalExpenses = total(expenses);
+  return { ...q, income, expenses, totalIncome, totalExpenses, surplus: totalIncome - totalExpenses };
+}
+
+export interface BalanceSheet {
+  asOf: string;
+  assets: StatementLine[];
+  liabilities: StatementLine[];
+  equity: StatementLine[];
+  /**
+   * Income less expenses still sitting in the income and expense accounts,
+   * i.e. not yet closed into the surplus account at year end. Shown under
+   * equity so the sheet balances before the year is closed.
+   */
+  unclosedSurplus: bigint;
+  totalAssets: bigint;
+  totalLiabilities: bigint;
+  totalEquity: bigint;
+  /** Liabilities + equity + unclosed surplus; equals totalAssets when the books balance. */
+  totalClaims: bigint;
+}
+
+/** Position on a business date, from every entry dated on or before it. */
+export async function balanceSheet(ctx: TenantTx, asOf: string): Promise<BalanceSheet> {
+  const nets = await accountNets(ctx, { to: asOf, types: ["asset", "liability", "equity", "income", "expense"] });
+  const assets = nets.get("asset")!;
+  const liabilities = nets.get("liability")!;
+  const equity = nets.get("equity")!;
+  const unclosedSurplus = total(nets.get("income")!) - total(nets.get("expense")!);
+  const totalAssets = total(assets);
+  const totalLiabilities = total(liabilities);
+  const totalEquity = total(equity) + unclosedSurplus;
+  return {
+    asOf,
+    assets,
+    liabilities,
+    equity,
+    unclosedSurplus,
+    totalAssets,
+    totalLiabilities,
+    totalEquity,
+    totalClaims: totalLiabilities + totalEquity,
+  };
+}

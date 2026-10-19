@@ -211,6 +211,25 @@ pnpm test
 Code: `src/modules/tenancy/settings.ts`, page in `src/app/settings/`, tests in
 `tests/settings.test.ts`.
 
+## Financial statements
+
+`/balance-sheet` and `/income-statement`, for officers who can see the
+books (under Accounts in the menu, and as tabs on the books pages). Both
+are worked out from journal lines, like the trial balance, so they always
+agree with it.
+
+- **Balance sheet** on any date: assets on one side, liabilities and equity
+  on the other, with a check that they are equal. Until the year is closed
+  (M5), the year's income less expenses shows under equity as "surplus this
+  year (not yet closed)". A bar shows how the assets are made up.
+- **Income statement** for any period, defaulting to the fiscal year so far,
+  with quick buttons for this month, last month, this and last fiscal year.
+  It shows income and expenses per account and the surplus or deficit.
+- Both print cleanly.
+
+Code: `balanceSheet` and `incomeStatement` in
+`src/modules/ledger/reports.ts`; tests in `tests/financial-statements.test.ts`.
+
 ## Layout
 
 ```

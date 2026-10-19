@@ -35,7 +35,9 @@
     "admin": "প্রশাসন",
     "settings": "সেটিংস",
     "corrections": "সংশোধন",
-    "correctionsWaiting": "{count, plural, other {# টি সংশোধন আপনার অপেক্ষায়}}"
+    "correctionsWaiting": "{count, plural, other {# টি সংশোধন আপনার অপেক্ষায়}}",
+    "balanceSheet": "উদ্বৃত্তপত্র",
+    "incomeStatement": "আয়-ব্যয় বিবরণী"
   },
   "home": {
     "badge": "প্রাথমিক সংস্করণ",
@@ -649,7 +651,9 @@
       "vouchers": "ভাউচার",
       "cashBook": "ক্যাশ বই",
       "trialBalance": "রেওয়ামিল",
-      "dayEnd": "দিন শেষ"
+      "dayEnd": "দিন শেষ",
+      "balanceSheet": "উদ্বৃত্তপত্র",
+      "incomeStatement": "আয়-ব্যয় বিবরণী"
     },
     "vouchers": {
       "title": "ভাউচার",
@@ -865,6 +869,55 @@
         "NO_OPEN_PERIOD": "এই তারিখের জন্য কোনো খোলা অর্থবছর নেই।"
       },
       "waiting": "হিসাবের সাথে মেলাতে নোট গুনুন।"
+    },
+    "statements": {
+      "show": "দেখুন",
+      "print": "প্রিন্ট",
+      "empty": "এখনও কিছু পোস্ট হয়নি",
+      "emptyBody": "ভাউচার, জমা ও ঋণ পোস্ট হলে বিবরণী পূর্ণ হবে।",
+      "balanceSheet": {
+        "title": "উদ্বৃত্তপত্র",
+        "asOf": "{date} তারিখ পর্যন্ত",
+        "asOfLabel": "তারিখ পর্যন্ত",
+        "owns": "সমিতির যা আছে",
+        "owes": "সমিতির দেনা ও সদস্যদের পাওনা মূলধন",
+        "assets": "সম্পদ",
+        "liabilities": "দায়",
+        "equity": "মূলধন",
+        "unclosedSurplus": "চলতি বছরের উদ্বৃত্ত (এখনও সমাপ্ত হয়নি)",
+        "unclosedDeficit": "চলতি বছরের ঘাটতি (এখনও সমাপ্ত হয়নি)",
+        "totalAssets": "মোট সম্পদ",
+        "totalLiabilities": "মোট দায়",
+        "totalEquity": "মোট মূলধন",
+        "totalClaims": "মোট দায় ও মূলধন",
+        "balanced": "সম্পদ = দায় + মূলধন। হিসাব মিলেছে।",
+        "notBalanced": "সম্পদ এবং দায় + মূলধনে {amount} পার্থক্য। অ্যাডমিনকে জানান।",
+        "none": "নেই",
+        "mix": "সম্পদের গঠন"
+      },
+      "income": {
+        "title": "আয়-ব্যয় বিবরণী",
+        "period": "{from} থেকে {to}",
+        "from": "শুরু",
+        "to": "শেষ",
+        "presets": "সময়কাল",
+        "thisMonth": "এই মাস",
+        "lastMonth": "গত মাস",
+        "yearToDate": "চলতি অর্থবছর",
+        "lastYear": "গত অর্থবছর",
+        "income": "আয়",
+        "expenses": "ব্যয়",
+        "totalIncome": "মোট আয়",
+        "totalExpenses": "মোট ব্যয়",
+        "surplus": "উদ্বৃত্ত",
+        "deficit": "ঘাটতি",
+        "surplusBody": "ব্যয়ের চেয়ে আয় {amount} বেশি।",
+        "deficitBody": "আয়ের চেয়ে ব্যয় {amount} বেশি।",
+        "evenBody": "আয় ও ব্যয় সমান।",
+        "margin": "আয়ের {percent} উদ্বৃত্ত",
+        "none": "এই সময়ে নেই",
+        "badRange": "শুরুর তারিখ শেষের তারিখের আগে বা একই দিন হতে হবে।"
+      }
     }
   },
   "savings": {
