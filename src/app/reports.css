@@ -1,0 +1,411 @@
+/* ---------- Reports: member statement, books check ---------- */
+
+.reports {
+  --rp: #2563eb;
+  --ok: #0b9b6c;
+  --off: #c2410c;
+  padding: 1.5rem 0 3rem;
+  display: grid;
+  gap: 1rem;
+  max-width: 72rem;
+  min-width: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+  .reports {
+    --rp: #7aa2ff;
+    --ok: #2fd398;
+    --off: #ff8a5c;
+  }
+}
+
+.reports .page-head {
+  margin-bottom: 0;
+}
+
+/* Member picker */
+
+.pick-card {
+  display: grid;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--rp) 8%, var(--card)), var(--card));
+  border: 1px solid color-mix(in srgb, var(--rp) 22%, var(--line));
+  box-shadow: var(--shadow);
+  max-width: 40rem;
+}
+
+.pick-search label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.pick-search > div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pick-search input {
+  flex: 1;
+  min-width: 0;
+}
+
+.pick-title {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.pick-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.pick-list li {
+  animation: rise 0.35s ease-out both;
+  animation-delay: calc(var(--i, 0) * 30ms);
+}
+
+.pick-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.8rem;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.pick-list a:hover,
+.pick-list a:focus-visible {
+  background: var(--card);
+  border-color: color-mix(in srgb, var(--rp) 35%, var(--line));
+  transform: translateX(2px);
+}
+
+.pick-list a > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.pick-go {
+  color: var(--rp);
+  font-weight: 700;
+}
+
+/* Statement */
+
+.statement-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.2rem;
+  border-radius: var(--radius);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--rp) 12%, var(--card)), var(--card) 60%);
+  border: 1px solid color-mix(in srgb, var(--rp) 25%, var(--line));
+  box-shadow: var(--shadow);
+}
+
+.statement-head h2 {
+  margin: 0.1rem 0;
+  font-size: 1.35rem;
+}
+
+.statement-head h2 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.statement-head h2 a:hover {
+  color: var(--rp);
+}
+
+.statement-head p {
+  margin: 0;
+}
+
+.statement-period {
+  margin-left: auto;
+  display: grid;
+  text-align: right;
+}
+
+.statement-tiles {
+  margin-bottom: 0;
+}
+
+.statement-tiles .stat-tile {
+  animation: rise 0.4s ease-out both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.statement-tiles .stat-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+.statement-table td:nth-child(3) {
+  min-width: 16rem;
+}
+
+.statement-table td,
+.statement-table th {
+  vertical-align: top;
+}
+
+.statement-table .row-detail {
+  display: block;
+  margin-top: 0.15rem;
+}
+
+.statement-table .kind-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  margin-right: 0.2rem;
+  background: var(--kc, var(--muted));
+}
+
+.statement-table tr.k-savings {
+  --kc: #0b9b6c;
+}
+
+.statement-table tr.k-share {
+  --kc: #8b5cf6;
+}
+
+.statement-table tr.k-loan {
+  --kc: #f2a900;
+}
+
+.statement-table tr.reversed td {
+  color: var(--muted);
+}
+
+.statement-table tr.reversed td.num {
+  text-decoration: line-through;
+}
+
+.statement-table tr.reversed .status-pill {
+  margin-left: 0.4rem;
+  font-size: 0.72rem;
+}
+
+.statement-table .carry-row th,
+.statement-table .carry-row td {
+  background: color-mix(in srgb, var(--rp) 6%, transparent);
+  font-weight: 600;
+}
+
+/* Books check */
+
+.check-verdict {
+  margin: 0;
+  padding: 0.85rem 1.1rem;
+  border-radius: var(--radius);
+  font-weight: 700;
+  animation: rise 0.35s ease-out both;
+}
+
+.check-verdict.ok {
+  background: color-mix(in srgb, var(--ok) 12%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--ok) 35%, var(--line));
+}
+
+.check-verdict.off {
+  background: color-mix(in srgb, var(--off) 12%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--off) 40%, var(--line));
+}
+
+.check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr));
+  gap: 0.9rem;
+}
+
+.check-card {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 4px solid var(--state);
+  box-shadow: var(--shadow);
+  min-width: 0;
+  animation: rise 0.4s ease-out both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+  transition: transform 0.15s ease;
+}
+
+.check-card:hover {
+  transform: translateY(-2px);
+}
+
+.check-card.ok {
+  --state: var(--ok);
+}
+
+.check-card.off {
+  --state: var(--off);
+}
+
+.check-head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.check-head > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.check-icon {
+  display: grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 0.8rem;
+  font-size: 1.2rem;
+  background: color-mix(in srgb, var(--state) 14%, var(--card));
+  flex: none;
+}
+
+.check-head .status-pill {
+  white-space: nowrap;
+}
+
+.check-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.check-figures div {
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--state) 6%, var(--bg));
+  min-width: 0;
+}
+
+.check-figures dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.check-figures dd {
+  margin: 0.1rem 0 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.check-figures dd.zero {
+  color: var(--ok);
+}
+
+.reports .bad {
+  color: var(--off);
+}
+
+.check-members summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--off);
+}
+
+.check-members table {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.check-how {
+  margin: 0;
+  max-width: 50rem;
+}
+
+.reports .notice.warn {
+  margin: 0;
+}
+
+@media (max-width: 720px) {
+  .statement-period {
+    margin-left: 0;
+    text-align: left;
+  }
+
+  .check-figures {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .reports .no-print,
+  .reports .page-head .btn {
+    display: none !important;
+  }
+
+  .reports .print-only {
+    display: block !important;
+  }
+
+  .reports {
+    padding: 0;
+    max-width: none;
+  }
+
+  .statement-head,
+  .check-card,
+  .stat-tile {
+    box-shadow: none !important;
+    animation: none !important;
+  }
+
+  .statement-table {
+    font-size: 0.8rem;
+  }
+}
+
+/* "Statement" on a member's coloured header */
+.profile-hero .profile-statement {
+  margin-left: auto;
+  align-self: flex-start;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(4px);
+}
+
+.profile-hero .profile-statement:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.statement-table td:first-child,
+.statement-table tfoot td:first-child,
+.statement-table .carry-row td:first-child {
+  white-space: nowrap;
+}
+
+.statement-somiti {
+  font-weight: 700;
+  color: var(--rp);
+}

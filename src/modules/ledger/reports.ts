@@ -169,3 +169,49 @@ export async function cashBook(ctx: TenantTx, q: { accountId: string; from: stri
   });
   return { accountId: q.accountId, from: q.from, to: q.to, opening, receipts, payments, closing: balance, rows };
 }
+
+export interface ControlBalance {
+  accountId: string;
+  /** Net balance, debit positive, as of the date. */
+  total: bigint;
+  /** Net balance per member the lines were tagged with. */
+  byMember: Map<string, bigint>;
+  /** Net balance of lines that name no member. */
+  untagged: bigint;
+}
+
+/**
+ * Balances of the accounts that hold member money, split by the member each
+ * journal line names, so they can be held up against the member records.
+ */
+export async function controlBalances<K extends string>(
+  ctx: TenantTx,
+  accounts: Record<K, string>,
+  asOf: string,
+): Promise<Record<K, ControlBalance>> {
+  const ids = Object.values<string>(accounts);
+  const rows = ids.length
+    ? await ctx.tx
+        .select({
+          accountId: journalLine.accountId,
+          memberId: journalLine.memberId,
+          net: sql<string>`sum(${journalLine.debit} - ${journalLine.credit})`,
+        })
+        .from(journalLine)
+        .innerJoin(journalEntry, and(eq(journalEntry.tenantId, journalLine.tenantId), eq(journalEntry.id, journalLine.entryId)))
+        .where(and(eq(journalLine.tenantId, ctx.tenantId), inArray(journalLine.accountId, ids), lte(journalEntry.businessDate, asOf)))
+        .groupBy(journalLine.accountId, journalLine.memberId)
+    : [];
+  const out = {} as Record<K, ControlBalance>;
+  for (const key of Object.keys(accounts) as K[]) {
+    const balance: ControlBalance = { accountId: accounts[key], total: 0n, byMember: new Map(), untagged: 0n };
+    for (const r of rows.filter((x) => x.accountId === accounts[key])) {
+      const net = BigInt(r.net);
+      balance.total += net;
+      if (r.memberId) balance.byMember.set(r.memberId, net);
+      else balance.untagged += net;
+    }
+    out[key] = balance;
+  }
+  return out;
+}

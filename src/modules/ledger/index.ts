@@ -6,9 +6,11 @@ export { closeBusinessDay, closeFiscalPeriod, openFiscalPeriod } from "./periods
 export {
   CASH_BOOK_KEYS,
   cashBook,
+  controlBalances,
   trialBalance,
   type CashBook,
   type CashBookRow,
+  type ControlBalance,
   type TrialBalance,
   type TrialBalanceRow,
 } from "./reports";
