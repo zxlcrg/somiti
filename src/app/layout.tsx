@@ -31,6 +31,7 @@ import "./dashboard.css";
 import "./sheet.css";
 import "./settings.css";
 import "./corrections.css";
+import "./statements.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
@@ -191,6 +192,8 @@ function sideGroups(roles: readonly string[], c: Counts, t: Awaited<ReturnType<t
           : []),
         { href: "/cash-book", icon: "cashBook", label: t("nav.cashBook") },
         { href: "/trial-balance", icon: "trialBalance", label: t("nav.trialBalance") },
+        { href: "/balance-sheet", icon: "balanceSheet", label: t("nav.balanceSheet") },
+        { href: "/income-statement", icon: "incomeStatement", label: t("nav.incomeStatement") },
         { href: "/day-end", icon: "dayEnd", label: t("nav.dayEnd") },
       ],
     });
