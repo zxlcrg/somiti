@@ -203,6 +203,7 @@ function sideGroups(roles: readonly string[], c: Counts, t: Awaited<ReturnType<t
         { href: "/balance-sheet", icon: "balanceSheet", label: t("nav.balanceSheet") },
         { href: "/income-statement", icon: "incomeStatement", label: t("nav.incomeStatement") },
         { href: "/reports/statement", icon: "statement", label: t("nav.statement") },
+        { href: "/reports/loan-aging", icon: "loanAging", label: t("nav.loanAging") },
         { href: "/reports/books-check", icon: "booksCheck", label: t("nav.booksCheck") },
       ],
     });

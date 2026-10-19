@@ -40,7 +40,8 @@
     "statement": "Member statement",
     "booksCheck": "Books check",
     "balanceSheet": "Balance sheet",
-    "incomeStatement": "Income statement"
+    "incomeStatement": "Income statement",
+    "loanAging": "Loan aging"
   },
   "home": {
     "badge": "Foundation release",
@@ -2451,6 +2452,42 @@
         "collectorCash": "Cash collectors took and haven't handed over"
       },
       "how": "Run this after day-end close and before the yearly accounts. When something is off, open the member and compare their passbook with the voucher shown in the cash book."
+    },
+    "aging": {
+      "title": "Loan aging",
+      "subtitle": "Running loans by how late their oldest unpaid installment is, as of {date}.",
+      "tiles": {
+        "book": "Principal on running loans",
+        "bookLoans": "{count, plural, one {# loan} other {# loans}}",
+        "par": "Portfolio at risk (over 30 days)",
+        "parAmount": "{amount} of principal",
+        "overdue": "Installments past due",
+        "onTime": "On time",
+        "onTimeLoans": "{count, plural, one {# loan} other {# loans}} with nothing late"
+      },
+      "band": {
+        "current": "On time"
+      },
+      "bandsTitle": "Principal by age",
+      "cols": {
+        "age": "Age",
+        "loans": "Loans",
+        "principal": "Principal owed",
+        "share": "Share",
+        "overdue": "Past due",
+        "product": "Product",
+        "atRisk": "At risk",
+        "par": "PAR 30",
+        "loan": "Loan",
+        "member": "Member",
+        "late": "Days late"
+      },
+      "productsTitle": "By loan product",
+      "lateTitle": "Late loans, most days late first",
+      "noneLate": "No running loan is late. Every installment due so far is paid.",
+      "noLoans": "No loans are running yet.",
+      "total": "Total",
+      "how": "Portfolio at risk is the principal still owed on loans with an installment more than 30 days late, as a share of all principal owed. Keep it under 5%. Late fines and how to follow up are on the Overdue page."
     }
   }
 }

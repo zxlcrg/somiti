@@ -409,3 +409,113 @@
   font-weight: 700;
   color: var(--rp);
 }
+
+/* Loan aging */
+
+.aging .ab-current {
+  --ab: #0b9b6c;
+}
+.aging .ab-d1_30 {
+  --ab: #e0a800;
+}
+.aging .ab-d31_90 {
+  --ab: #ea7a1f;
+}
+.aging .ab-d91_180 {
+  --ab: #d6453d;
+}
+.aging .ab-d181 {
+  --ab: #8f1d3a;
+}
+
+@media (prefers-color-scheme: dark) {
+  .aging .ab-current {
+    --ab: #2fd398;
+  }
+  .aging .ab-d1_30 {
+    --ab: #ffc23d;
+  }
+  .aging .ab-d31_90 {
+    --ab: #ff9a4d;
+  }
+  .aging .ab-d91_180 {
+    --ab: #ff6b63;
+  }
+  .aging .ab-d181 {
+    --ab: #e0577a;
+  }
+}
+
+.aging-card {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem 1.2rem;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  min-width: 0;
+  animation: rise 0.4s ease-out both;
+}
+
+.aging-card h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.aging-bar {
+  display: flex;
+  gap: 2px;
+  height: 1.1rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line);
+}
+
+.aging-bar span {
+  background: var(--ab);
+  min-width: 4px;
+  transition: filter 0.15s ease;
+}
+
+.aging-bar span:hover {
+  filter: brightness(1.12);
+}
+
+.band-dot {
+  display: inline-block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--ab);
+  margin-right: 0.25rem;
+}
+
+.band-pill {
+  display: inline-block;
+  min-width: 2.4rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ab);
+  background: color-mix(in srgb, var(--ab) 14%, var(--card));
+}
+
+.aging .ledger-table a {
+  color: inherit;
+  font-weight: 600;
+}
+
+.aging .ledger-table a:hover {
+  color: var(--rp);
+}
+
+.aging .stat-tile small a {
+  color: inherit;
+}
+
+.aging .ledger-table th,
+.aging .ledger-table td {
+  white-space: nowrap;
+}
