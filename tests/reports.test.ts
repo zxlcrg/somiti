@@ -1,11 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { appUser, userRole } from "../src/db/schema";
+import { eq } from "drizzle-orm";
+import { appUser, tenant, userRole } from "../src/db/schema";
 import { approveCorrection, requestCorrection } from "../src/modules/corrections";
 import { postEntry } from "../src/modules/ledger";
 import { applyForLoan, approveLoan, createLoanProduct, disburseLoan, repayLoan } from "../src/modules/loans";
 import { admitMember, buyShares } from "../src/modules/members";
-import { booksCheck, memberStatement } from "../src/modules/reports";
+import { booksCheck, loanAging, memberStatement } from "../src/modules/reports";
 import { createProduct, deposit, openAccount, receiveHandover } from "../src/modules/savings";
 import { newTenant, type TestTenant } from "./helpers";
 
@@ -128,5 +129,41 @@ describe("member statement", () => {
     expect(s.rows).toEqual([]);
     expect(s.opening).toEqual(s.closing);
     expect(s.opening.loan).toBe(11_000_00n);
+  });
+});
+
+describe("loan aging", () => {
+  it("splits the running book by lateness and works out PAR 30", async () => {
+    const t = await newTenant(DAY);
+    const actor = { userId: t.adminUserId };
+    const secretary = await addUser(t, "secretary", "Secretary");
+    const lp = await t.run((ctx) =>
+      createLoanProduct(ctx, { code: "GL", nameEn: "General", method: "flat", rate: "12", frequency: "monthly", minAmount: "1000", maxAmount: "100000", maxInstallments: "24", guarantors: "0" }, actor),
+    );
+    if (!lp.ok) throw new Error("loan product");
+    const lend = async (name: string, repayments: number) => {
+      const m = await t.run((ctx) => admitMember(ctx, { nameEn: name, phone: `017${Math.floor(1e7 + Math.random() * 8.9e7)}` }, actor));
+      if (!m.ok) throw new Error("admit");
+      const applied = await t.run((ctx) => applyForLoan(ctx, { memberId: m.member.id, productId: lp.id, amount: "12,000", installments: "12", submitKey: randomUUID() }, actor));
+      if (!applied.ok) throw new Error("apply");
+      await t.run((ctx) => approveLoan(ctx, { loanId: applied.loanId, userId: secretary }));
+      await t.run((ctx) => disburseLoan(ctx, { loanId: applied.loanId, method: "cash", userId: t.adminUserId }));
+      for (let i = 0; i < repayments; i++)
+        await t.run((ctx) => repayLoan(ctx, { loanId: applied.loanId, amount: "1,120", method: "cash", idempotencyKey: randomUUID() }, { userId: t.adminUserId, channel: "office" }));
+      return applied.loanId;
+    };
+    const behind = await lend("Behind", 0);
+    await lend("Ahead", 2);
+    // 75 days on: the first two installments of the unpaid loan are late, the oldest by 44 days.
+    await t.run(({ tx, tenantId }) => tx.update(tenant).set({ businessDate: "2026-12-26" }).where(eq(tenant.id, tenantId)));
+
+    const a = await t.run((ctx) => loanAging(ctx));
+    expect(a.total).toMatchObject({ count: 2, principal: 22_000_00n });
+    expect(a.bands.current).toMatchObject({ count: 1, principal: 10_000_00n, overdue: 0n });
+    expect(a.bands.d31_90).toMatchObject({ count: 1, principal: 12_000_00n, overdue: 2_240_00n });
+    expect(a.atRisk).toBe(12_000_00n);
+    expect(a.parBp).toBe(5454);
+    expect(a.products).toMatchObject([{ count: 2, principal: 22_000_00n, atRisk: 12_000_00n }]);
+    expect(a.late.map((l) => [l.loan.id, l.daysLate])).toEqual([[behind, 44]]);
   });
 });

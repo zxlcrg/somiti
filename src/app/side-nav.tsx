@@ -18,6 +18,7 @@ export const NAV_ICONS = {
   cashBook: "M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2V5zm0 14a2 2 0 0 1 2-2h13M9 7h6",
   trialBalance: "M12 3v18M5 7h14M5 7l-3 7a3 3 0 0 0 6 0L5 7zm14 0l-3 7a3 3 0 0 0 6 0l-3-7z",
   statement: "M7 3h7l5 5v13H7zM14 3v5h5M10 12h6M10 16h6",
+  loanAging: "M4 20h16M7 16v-5M12 16V8M17 16v-9",
   booksCheck: "M9 11l2 2 4-4M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z",
   balanceSheet: "M4 20V10l8-6 8 6v10M4 20h16M9 20v-6h6v6",
   incomeStatement: "M4 19h16M6 16l4-5 3 3 5-7M15 7h3v3",
