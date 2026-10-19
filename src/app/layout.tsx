@@ -32,6 +32,7 @@ import "./sheet.css";
 import "./settings.css";
 import "./corrections.css";
 import "./reports.css";
+import "./statements.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("app");
@@ -199,6 +200,8 @@ function sideGroups(roles: readonly string[], c: Counts, t: Awaited<ReturnType<t
     groups.push({
       label: t("nav.reports"),
       items: [
+        { href: "/balance-sheet", icon: "balanceSheet", label: t("nav.balanceSheet") },
+        { href: "/income-statement", icon: "incomeStatement", label: t("nav.incomeStatement") },
         { href: "/reports/statement", icon: "statement", label: t("nav.statement") },
         { href: "/reports/books-check", icon: "booksCheck", label: t("nav.booksCheck") },
       ],

@@ -4,10 +4,15 @@ export { ensureChartAccount } from "./ensure";
 export { LedgerError, type LedgerErrorCode } from "./errors";
 export { closeBusinessDay, closeFiscalPeriod, openFiscalPeriod } from "./periods";
 export {
+  balanceSheet,
   CASH_BOOK_KEYS,
   cashBook,
   controlBalances,
+  incomeStatement,
   trialBalance,
+  type BalanceSheet,
+  type IncomeStatement,
+  type StatementLine,
   type CashBook,
   type CashBookRow,
   type ControlBalance,
