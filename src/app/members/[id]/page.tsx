@@ -33,6 +33,7 @@ import { PhotoDialog } from "./photo/photo-dialog";
 import { SavingsPanel } from "./savings-panel";
 import { SharesPanel } from "./shares-panel";
 import { canRequestCorrections } from "@/modules/corrections";
+import { canViewBooks } from "@/modules/ledger";
 
 async function load(id: string) {
   const user = await requireUser();
@@ -172,6 +173,11 @@ export default async function MemberPage({
           <h1>{name}</h1>
           {second && <p className="profile-alt">{second}</p>}
         </div>
+        {canViewBooks(user.roles) && (
+          <Link href={`/reports/statement?member=${member.id}`} className="btn ghost small profile-statement">
+            <span aria-hidden="true">📄</span> {t("profile.statement")}
+          </Link>
+        )}
       </section>
 
       <dl className="profile-facts">

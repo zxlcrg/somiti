@@ -36,6 +36,9 @@
     "settings": "সেটিংস",
     "corrections": "সংশোধন",
     "correctionsWaiting": "{count, plural, other {# টি সংশোধন আপনার অপেক্ষায়}}",
+    "reports": "রিপোর্ট",
+    "statement": "সদস্য বিবরণী",
+    "booksCheck": "হিসাব যাচাই",
     "balanceSheet": "উদ্বৃত্তপত্র",
     "incomeStatement": "আয়-ব্যয় বিবরণী"
   },
@@ -372,7 +375,8 @@
       "soon": {
         "loans": "ঋণ",
         "loansBody": "আবেদন, কিস্তির তালিকা ও পরিশোধ।"
-      }
+      },
+      "statement": "বিবরণী"
     },
     "languages": {
       "en": "English",
@@ -2365,5 +2369,88 @@
     "noteLabel": "মন্তব্য:",
     "rowLink": "সংশোধন",
     "rowLinkLabel": "এই লেনদেন সংশোধন করুন"
+  },
+  "reports": {
+    "noAccess": "রিপোর্ট অফিস কর্মীদের জন্য।",
+    "print": "প্রিন্ট",
+    "show": "দেখুন",
+    "from": "থেকে",
+    "to": "পর্যন্ত",
+    "statement": {
+      "title": "সদস্য বিবরণী",
+      "subtitle": "একজন সদস্যের সঞ্চয়, শেয়ার ও ঋণের সব লেনদেন, পূর্ণ পাসবইয়ের মতো।",
+      "pick": "সদস্য খুঁজুন",
+      "searchPlaceholder": "নাম, সদস্য নম্বর বা ফোন",
+      "search": "খুঁজুন",
+      "noMatch": "“{q}” এর সাথে কোনো সদস্য মেলেনি।",
+      "recent": "নতুন সদস্যরা",
+      "period": "{from} থেকে {to}",
+      "printedOn": "প্রিন্টের তারিখ {date}",
+      "member": "সদস্য {no}",
+      "change": "অন্য সদস্য",
+      "tiles": {
+        "savings": "সঞ্চয়",
+        "shares": "শেয়ার",
+        "loan": "পাওনা ঋণের আসল",
+        "paid": "জমা",
+        "opening": "শুরুতে {amount}",
+        "shareCount": "{count, plural, other {#টি শেয়ার}}",
+        "paidOut": "প্রদান {out} · চার্জ ও জরিমানা {charges}"
+      },
+      "cols": {
+        "date": "তারিখ",
+        "voucher": "ভাউচার",
+        "details": "বিবরণ",
+        "paidIn": "জমা",
+        "paidOut": "প্রদান",
+        "savings": "সঞ্চয়",
+        "loan": "ঋণ পাওনা"
+      },
+      "openingRow": "প্রারম্ভিক জের",
+      "closingRow": "সমাপনী জের",
+      "empty": "এই সময়ে কোনো লেনদেন হয়নি।",
+      "reversed": "সংশোধনে বাতিল",
+      "kind": {
+        "savings_opening": "আগের সঞ্চয় জের · হিসাব {no}",
+        "savings_deposit": "সঞ্চয় জমা · হিসাব {no}",
+        "savings_withdrawal": "সঞ্চয় উত্তোলন · হিসাব {no}",
+        "share_opening": "আগের শেয়ার জের · {ref, plural, other {#টি শেয়ার}}",
+        "share_purchase": "শেয়ার ক্রয় · {ref, plural, other {#টি শেয়ার}}",
+        "share_refund": "শেয়ারের টাকা ফেরত · {ref, plural, other {#টি শেয়ার}}",
+        "loan_opening": "চলমান ঋণের জের · ঋণ {no}",
+        "loan_disbursement": "ঋণ বিতরণ · ঋণ {no}",
+        "loan_repayment": "ঋণের কিস্তি · ঋণ {no}",
+        "loan_write_off": "ঋণ অবলোপন · ঋণ {no}"
+      },
+      "detail": {
+        "principal": "আসল {amount}",
+        "charge": "সার্ভিস চার্জ {amount}",
+        "fine": "বিলম্ব জরিমানা {amount}",
+        "fee": "ফি {amount}",
+        "shares": "শেয়ার মূলধন {amount}"
+      },
+      "badRange": "শুরুর তারিখ শেষের তারিখের আগে বা একই দিন হতে হবে।"
+    },
+    "check": {
+      "title": "হিসাব যাচাই",
+      "subtitle": "{date} তারিখে সদস্যদের রেকর্ড আর সদস্যের টাকার হিসাবগুলো মিলিয়ে দেখা।",
+      "allGood": "সব মিলে গেছে। প্রত্যেক সদস্যের রেকর্ড হিসাবের সাথে মেলে।",
+      "problems": "কিছু অঙ্ক মিলছে না। নিচের সারিগুলোতে কোথায় দেখতে হবে তা আছে।",
+      "books": "হিসাব বইয়ে",
+      "records": "সদস্যদের রেকর্ডে",
+      "difference": "পার্থক্য",
+      "match": "মিলেছে",
+      "mismatch": "{amount} পার্থক্য",
+      "untagged": "এই হিসাবের {amount} এমন লেনদেনে আছে যাতে কোনো সদস্যের নাম নেই।",
+      "membersOff": "{count, plural, other {#জন সদস্যের হিসাব মিলছে না}}",
+      "member": "সদস্য",
+      "what": {
+        "savings": "সব সদস্যের সঞ্চয় পাসবই",
+        "shares": "সদস্যদের হাতে থাকা শেয়ার",
+        "loans": "ঋণের বাকি আসল",
+        "collectorCash": "মাঠকর্মীর আদায় করা কিন্তু জমা না দেওয়া নগদ"
+      },
+      "how": "দিন শেষ বন্ধের পরে এবং বার্ষিক হিসাবের আগে এটি চালান। কিছু না মিললে সদস্যের পাসবই খুলে ক্যাশ বইয়ের ভাউচারের সাথে মিলিয়ে দেখুন।"
+    }
   }
 }

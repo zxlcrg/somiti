@@ -36,6 +36,9 @@
     "settings": "Settings",
     "corrections": "Corrections",
     "correctionsWaiting": "{count, plural, one {# correction waits for you} other {# corrections wait for you}}",
+    "reports": "Reports",
+    "statement": "Member statement",
+    "booksCheck": "Books check",
     "balanceSheet": "Balance sheet",
     "incomeStatement": "Income statement"
   },
@@ -372,7 +375,8 @@
       "soon": {
         "loans": "Loans",
         "loansBody": "Applications, schedules and repayments."
-      }
+      },
+      "statement": "Statement"
     },
     "languages": {
       "en": "English",
@@ -2365,5 +2369,88 @@
     "noteLabel": "Note:",
     "rowLink": "Correct",
     "rowLinkLabel": "Correct this transaction"
+  },
+  "reports": {
+    "noAccess": "Reports are for office staff.",
+    "print": "Print",
+    "show": "Show",
+    "from": "From",
+    "to": "To",
+    "statement": {
+      "title": "Member statement",
+      "subtitle": "Everything that moved a member's savings, shares and loans, like a full passbook.",
+      "pick": "Find a member",
+      "searchPlaceholder": "Name, member number or phone",
+      "search": "Search",
+      "noMatch": "No member matches “{q}”.",
+      "recent": "Newest members",
+      "period": "{from} to {to}",
+      "printedOn": "Printed on {date}",
+      "member": "Member {no}",
+      "change": "Another member",
+      "tiles": {
+        "savings": "Savings",
+        "shares": "Shares",
+        "loan": "Loan principal owed",
+        "paid": "Paid in",
+        "opening": "Opening {amount}",
+        "shareCount": "{count, plural, one {# share} other {# shares}}",
+        "paidOut": "Paid out {out} · charges and fines {charges}"
+      },
+      "cols": {
+        "date": "Date",
+        "voucher": "Voucher",
+        "details": "Details",
+        "paidIn": "Paid in",
+        "paidOut": "Paid out",
+        "savings": "Savings",
+        "loan": "Loan owed"
+      },
+      "openingRow": "Opening balance",
+      "closingRow": "Closing balance",
+      "empty": "Nothing moved in this period.",
+      "reversed": "Undone by a correction",
+      "kind": {
+        "savings_opening": "Savings brought forward · account {no}",
+        "savings_deposit": "Savings deposit · account {no}",
+        "savings_withdrawal": "Savings withdrawal · account {no}",
+        "share_opening": "Shares brought forward · {ref, plural, one {# share} other {# shares}}",
+        "share_purchase": "Shares bought · {ref, plural, one {# share} other {# shares}}",
+        "share_refund": "Shares paid back · {ref, plural, one {# share} other {# shares}}",
+        "loan_opening": "Running loan brought forward · loan {no}",
+        "loan_disbursement": "Loan paid out · loan {no}",
+        "loan_repayment": "Loan repayment · loan {no}",
+        "loan_write_off": "Loan written off · loan {no}"
+      },
+      "detail": {
+        "principal": "principal {amount}",
+        "charge": "charge {amount}",
+        "fine": "late fine {amount}",
+        "fee": "fee {amount}",
+        "shares": "share capital {amount}"
+      },
+      "badRange": "The start date must be on or before the end date."
+    },
+    "check": {
+      "title": "Books check",
+      "subtitle": "Member records held up against the accounts that hold member money, as of {date}.",
+      "allGood": "Everything agrees. Every member's records match the books.",
+      "problems": "Some figures don't agree. The rows below show where to look.",
+      "books": "In the books",
+      "records": "In member records",
+      "difference": "Difference",
+      "match": "Matches",
+      "mismatch": "Off by {amount}",
+      "untagged": "{amount} of this account is on postings that name no member.",
+      "membersOff": "{count, plural, one {# member doesn't match} other {# members don't match}}",
+      "member": "Member",
+      "what": {
+        "savings": "Savings passbooks of every member",
+        "shares": "Shares every member holds",
+        "loans": "Principal still owed on loans",
+        "collectorCash": "Cash collectors took and haven't handed over"
+      },
+      "how": "Run this after day-end close and before the yearly accounts. When something is off, open the member and compare their passbook with the voucher shown in the cash book."
+    }
   }
 }

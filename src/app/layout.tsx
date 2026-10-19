@@ -31,6 +31,7 @@ import "./dashboard.css";
 import "./sheet.css";
 import "./settings.css";
 import "./corrections.css";
+import "./reports.css";
 import "./statements.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -192,9 +193,17 @@ function sideGroups(roles: readonly string[], c: Counts, t: Awaited<ReturnType<t
           : []),
         { href: "/cash-book", icon: "cashBook", label: t("nav.cashBook") },
         { href: "/trial-balance", icon: "trialBalance", label: t("nav.trialBalance") },
+        { href: "/day-end", icon: "dayEnd", label: t("nav.dayEnd") },
+      ],
+    });
+  if (canViewBooks(roles))
+    groups.push({
+      label: t("nav.reports"),
+      items: [
         { href: "/balance-sheet", icon: "balanceSheet", label: t("nav.balanceSheet") },
         { href: "/income-statement", icon: "incomeStatement", label: t("nav.incomeStatement") },
-        { href: "/day-end", icon: "dayEnd", label: t("nav.dayEnd") },
+        { href: "/reports/statement", icon: "statement", label: t("nav.statement") },
+        { href: "/reports/books-check", icon: "booksCheck", label: t("nav.booksCheck") },
       ],
     });
   if (canManageSettings(roles)) groups.push({ label: t("nav.admin"), items: [{ href: "/settings", icon: "settings", label: t("nav.settings") }] });

@@ -7,6 +7,7 @@ export {
   balanceSheet,
   CASH_BOOK_KEYS,
   cashBook,
+  controlBalances,
   incomeStatement,
   trialBalance,
   type BalanceSheet,
@@ -14,6 +15,7 @@ export {
   type StatementLine,
   type CashBook,
   type CashBookRow,
+  type ControlBalance,
   type TrialBalance,
   type TrialBalanceRow,
 } from "./reports";
